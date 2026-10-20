@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The starter questions on an empty chat, ported from Pulse's src/server/coach/suggestions.ts: today's signals (Recovery
 // and why it is missing, HRV against the 30 days before today, last night's sleep, Strain against today's target).
 import { suggestionsFor } from "@/core/algorithms/coachSuggestions";
@@ -18,5 +19,18 @@ export async function coachSuggestions(ctx: QueryCtx) {
     asleepMinutes: row?.sleep?.main?.asleepMin ?? null,
     strain: dayStrainOf(row?.s1),
     targetHigh: target?.reason === null ? target.high : null,
+  }, {
+    brief: tr("coach.suggestion.brief"),
+    sync: tr("coach.suggestion.sync"),
+    provisional: tr("coach.suggestion.provisional"),
+    trainingEasy: tr("coach.suggestion.trainingEasy"),
+    trainingControlled: tr("coach.suggestion.trainingControlled"),
+    trainingHard: tr("coach.suggestion.trainingHard"),
+    enough: tr("coach.suggestion.enough"),
+    hrv: tr("coach.suggestion.hrv"),
+    poorSleep: tr("coach.suggestion.poorSleep"),
+    betterSleep: tr("coach.suggestion.betterSleep"),
+    recovery: tr("coach.suggestion.recovery"),
+    training: tr("coach.suggestion.training"),
   });
 }

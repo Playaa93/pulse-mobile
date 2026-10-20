@@ -1,3 +1,5 @@
+import { i18n, language } from "@/i18n";
+import { useLanguage } from "@/i18n/react";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { QueryCtx } from "@/queries/ctx";
 import { dataChanged, dataVersion, queryCtx, useDataVersion } from "@/state/app";
@@ -18,6 +20,15 @@ type Entry = { data: unknown; version: number; at: number };
 const cache = new Map<string, Entry>();
 const loading = new Map<string, { p: Promise<void>; version: number }>();
 const cacheListeners = new Set<() => void>();
+// A locale change invalidates translated view models and in-flight reads. Do not
+// reuse the old language's text when returning to an already visited screen.
+let languageRevision = 0;
+i18n.on("languageChanged", () => {
+  languageRevision++;
+  cache.clear();
+  loading.clear();
+  for (const listener of cacheListeners) listener();
+});
 const FRESH_MS = 60_000;
 // ponytail: a plain size cap, oldest first; a byte budget if results ever grow large.
 const MAX_ENTRIES = 100;
@@ -36,12 +47,14 @@ const fresh = (e: Entry | undefined): e is Entry => !!e && e.version === dataVer
  */
 function load(k: string, query: (ctx: QueryCtx) => Promise<unknown>): Promise<void> {
   const started = dataVersion();
+  const startedLanguage = languageRevision;
   const running = loading.get(k);
   if (running?.version === started) return running.p;
   const at = performance.now();
   const p: Promise<void> = ctxOf()
     .then(query)
     .then((data) => {
+      if (startedLanguage !== languageRevision) return;
       if (__DEV__) console.info(`[screen] ${k} loaded ms=${Math.round(performance.now() - at)}`);
       const prev = cache.get(k);
       if (prev && prev.version > started) return;
@@ -55,7 +68,7 @@ function load(k: string, query: (ctx: QueryCtx) => Promise<unknown>): Promise<vo
   return p;
 }
 
-const cacheKey = (key: readonly unknown[]) => JSON.stringify(key);
+const cacheKey = (key: readonly unknown[]) => JSON.stringify([language(), ...key]);
 
 /** Loads a screen's result ahead of its navigation, so the screen opens with content. A fresh result is kept. */
 export function prefetch<T>(query: (ctx: QueryCtx) => Promise<T>, key: ScreenKey): Promise<void> {
@@ -92,6 +105,7 @@ export type ScreenKey = readonly [string, ...unknown[]];
 export type ScreenState<T> = { data?: T; error?: Error; loading: boolean; reload: () => void };
 
 export function useScreen<T>(query: (ctx: QueryCtx) => Promise<T>, key: ScreenKey): ScreenState<T> {
+  useLanguage();
   const k = cacheKey(key);
   const ready = useScreenReady();
   const v = useDataVersion(ready);
@@ -120,5 +134,13 @@ export function useScreen<T>(query: (ctx: QueryCtx) => Promise<T>, key: ScreenKe
   }, [k, v, ready, tick]);
 
   const shown = entry && settled ? (entry.data as T) : undefined;
-  return { data: shown, error: error?.k === k ? error.error : undefined, loading: !fresh(entry), reload };
+  // Keep the same screen mounted while its translated view model is refreshed.
+  // A new date/item still gets its own loading state; unsaved forms on the current
+  // screen must not disappear just because Android changed the app language.
+  const identity = JSON.stringify(key);
+  const [lastShown, setLastShown] = useState<{ identity: string; data: T }>();
+  if (shown !== undefined && (lastShown?.identity !== identity || lastShown.data !== shown)) {
+    setLastShown({ identity, data: shown });
+  }
+  return { data: shown ?? (lastShown?.identity === identity ? lastShown.data : undefined), error: error?.k === k ? error.error : undefined, loading: !fresh(entry), reload };
 }

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Home's loading state (spec §5.19), ported from pulse (app)/_lib/skeletons.tsx `HomeSkeleton`: the real shell and each
 // section's own box with its static titles and labels; only values are bars, so nothing moves when data arrives.
 import { Fragment } from "react";
@@ -20,6 +22,7 @@ const rows = (n: number, Row: (i: number) => React.ReactNode) => Array.from({ le
 
 /** A monitor card body: the chip box and two lines. */
 function MonitorLineSkeleton() {
+  useLanguage();
   return (
     <View className="flex-row items-center gap-2">
       <Skeleton className="size-7 rounded-md" />
@@ -34,13 +37,14 @@ function MonitorLineSkeleton() {
 }
 
 /** The 32 px icon link in a Home card's header (open Strain, Journal, Sleep Planner). */
-const ICON_SLOT = <View accessibilityElementsHidden className="size-8" />;
+const renderIconSlot = () => <View accessibilityElementsHidden className="size-8" />;
 
 /** Home's 56 px gradient banner rows (day outlook, week in review). */
-const BannerSkeleton = () => <Skeleton className="h-14 rounded-2xl" />;
+const BannerSkeleton = () => { useLanguage(); return <Skeleton className="h-14 rounded-2xl" />; };
 
 /** Today's coach cards (HomeInsight): a title and two lines, the next card peeking underneath. */
 function InsightSkeleton() {
+  useLanguage();
   const shadow = useCardStyle();
   return (
     <View accessibilityElementsHidden className="pb-2">
@@ -59,10 +63,11 @@ function InsightSkeleton() {
 
 /** `stats`: My Dashboard's chosen metrics (getHome's order), so the skeleton has as many rows as the page will. */
 export function HomeSkeleton({ stats = DASHBOARD_DEFAULT }: { stats?: DashboardKey[] }) {
+  useLanguage();
   return (
     <PageShell
       loading
-      title="Home"
+      title={tr("ui.shells.TabBar.home")}
       layout="home"
       slots={{
         top: (
@@ -86,26 +91,26 @@ export function HomeSkeleton({ stats = DASHBOARD_DEFAULT }: { stats?: DashboardK
             <View className="-mt-2 gap-6">
               <View className="flex-row gap-3">
                 <View className="min-w-0 flex-1 flex-row">
-                  <SectionShell variant="card" title="Health Monitor" info={false} href="/health/monitor" fill>
+                  <SectionShell variant="card" title={tr("settings.NotificationsSection.healthMonitor")} info={false} href="/health/monitor" fill>
                     <MonitorLineSkeleton />
                   </SectionShell>
                 </View>
                 <View className="min-w-0 flex-1 flex-row">
-                  <SectionShell variant="card" title="Stress Monitor" info={false} href="/health/stress" fill>
+                  <SectionShell variant="card" title={tr("lib.dashboard.stressMonitor")} info={false} href="/health/stress" fill>
                     <MonitorLineSkeleton />
                   </SectionShell>
                 </View>
               </View>
               <InsightSkeleton />
             </View>
-            <SectionShell variant="section" title="My Day" action={<View accessibilityElementsHidden className="size-[34px] rounded-lg bg-foreground/90" />}>
+            <SectionShell variant="section" title={tr("home.HomeScreen.myDay")} action={<View accessibilityElementsHidden className="size-[34px] rounded-lg bg-foreground/90" />}>
               <View className="gap-3">
                 <BannerSkeleton />
-                <SectionShell variant="card" title="Today’s activities" action={ICON_SLOT}>
+                <SectionShell variant="card" title={tr("queries.home.todaySActivities")} action={renderIconSlot()}>
                   <TimelineSkeleton />
                   <Skeleton className="mt-3 h-12 rounded-xl" />
                 </SectionShell>
-                <SectionShell variant="card" title="My journal" action={ICON_SLOT}>
+                <SectionShell variant="card" title={tr("home.HomeScreen.myJournal")} action={renderIconSlot()}>
                   <View className="flex-row pt-1">
                     {rows(7, () => (
                       <View className="min-h-16 flex-1 items-center justify-center gap-2">
@@ -116,7 +121,7 @@ export function HomeSkeleton({ stats = DASHBOARD_DEFAULT }: { stats?: DashboardK
                   </View>
                   <Skeleton className="mt-3 h-12 rounded-xl" />
                 </SectionShell>
-                <SectionShell variant="card" title="Energy Bank" info={ENERGY_INFO} fill>
+                <SectionShell variant="card" title={tr("queries.chart.energyBank")} info={ENERGY_INFO} fill>
                   <View className="flex-1 gap-4">
                     <View className="gap-1.5">
                       <TickScaleSkeleton />
@@ -130,7 +135,7 @@ export function HomeSkeleton({ stats = DASHBOARD_DEFAULT }: { stats?: DashboardK
                     <View className="gap-1">{rows(3, () => <SkeletonText className="w-28" />)}</View>
                   </View>
                 </SectionShell>
-                <SectionShell variant="card" title="Tonight’s sleep" info={TONIGHT_INFO} action={ICON_SLOT} fill>
+                <SectionShell variant="card" title={tr("info.tonightSSleep")} info={TONIGHT_INFO} action={renderIconSlot()} fill>
                   <View className="flex-1 gap-4">
                     <Skeleton className="my-auto h-[60px] rounded-lg bg-skeleton" />
                     <Skeleton className="mt-auto h-11 rounded-lg" />
@@ -142,13 +147,13 @@ export function HomeSkeleton({ stats = DASHBOARD_DEFAULT }: { stats?: DashboardK
           </View>
         ),
         aside: (
-          <SectionShell variant="section" title="My Dashboard" aside="vs. 30-day average" action={ICON_SLOT}>
+          <SectionShell variant="section" title={tr("home.EditDashboard.myDashboard")} aside="vs. 30-day average" action={renderIconSlot()}>
             <View accessibilityElementsHidden className="gap-2">
               {stats.map((key) => (
                 <KeyStatRowSkeleton key={key} variant="card" label={DASHBOARD_LABEL[key]} icon={statIcon(key)} />
               ))}
             </View>
-            <SectionShell variant="card" title="Strain & recovery" info={STRAIN_RECOVERY_INFO} fill className="mt-3">
+            <SectionShell variant="card" title={tr("info.strainRecovery")} info={STRAIN_RECOVERY_INFO} fill className="mt-3">
               <View accessibilityElementsHidden className="flex-1">
                 <Skeleton className="h-[232px] rounded-lg bg-skeleton" />
               </View>

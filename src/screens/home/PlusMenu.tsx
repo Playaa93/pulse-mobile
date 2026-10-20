@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // My Day's "+": a white key that opens the action menu (the reference app, home-08), ported from pulse
 // (app)/_lib/PlusMenu.tsx. On a phone the menu is a sheet route (app/plus.tsx) instead of a dropdown under the key,
 // and the key does not turn into an X while it is open. Entries without a data source in Pulse (Start activity, Strength
@@ -19,6 +21,7 @@ import { push } from "@/ui/navigate";
 
 /** The ~34 pt white key with a soft top light; the hit area grows to 44 px without moving it. */
 export function PlusKey({ label }: { label: string }) {
+  useLanguage();
   const { c } = useTheme();
   return (
     <Press
@@ -40,6 +43,7 @@ export function PlusKey({ label }: { label: string }) {
 
 /** The sheet's body: "Add activity" explains where workouts come from (§11 R2), "Complete your journal" opens the check-in. */
 export function PlusPage({ label }: { label: string }) {
+  useLanguage();
   const [info, setInfo] = useState(false);
   const item = "h-12 flex-row items-center gap-3 rounded-xl px-3";
   return (
@@ -47,12 +51,12 @@ export function PlusPage({ label }: { label: string }) {
       <View accessibilityRole="menu">
         <Press activeBg="bg-fill-pressed" accessibilityRole="menuitem" onPress={() => setInfo(true)} className={item}>
           <Icon icon={Plus} size={20} tone="foreground-secondary" strokeWidth={1.75} />
-          <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">Add activity</Text>
+          <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">{tr("home.HomeScreen.addActivity")}</Text>
         </Press>
         {/* Replaces the menu with the check-in rather than stacking a second sheet on it. */}
         <Press activeBg="bg-fill-pressed" accessibilityRole="menuitem" onPress={() => router.replace("/checkin" as Href)} className={item}>
           <Icon icon={NotebookPen} size={20} tone="foreground-secondary" strokeWidth={1.75} />
-          <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">Complete your journal</Text>
+          <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">{tr("home.PlusMenu.completeYourJournal")}</Text>
         </Press>
       </View>
       <InfoDialog open={info} onClose={() => setInfo(false)} {...ADD_ACTIVITY_INFO} />

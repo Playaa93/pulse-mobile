@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp } from "react-native-reanimated";
@@ -46,6 +48,7 @@ type Months = Record<string, Map<string, CalendarDay>>;
  * they are shown and kept while the switcher lives. (The web adds arrow-key navigation, which a phone has no use for.)
  */
 export function CalendarPanel(props: CalendarPanelProps) {
+  useLanguage();
   const { loadMonth } = useShellCalendar();
   const [months, setMonths] = useState<Months>({});
   const requested = useRef(new Set<string>());
@@ -62,7 +65,7 @@ export function CalendarPanel(props: CalendarPanelProps) {
       {/* Reanimated's Animated.View takes no className, so the animated views carry layout in `style` and the classes go on plain Views inside. */}
       <Animated.View entering={FadeIn.duration(DURATION.base)} exiting={FadeOut.duration(DURATION.base)} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
         <View className="flex-1 bg-dim">
-          <Pressable accessibilityRole="button" accessibilityLabel="Close calendar" onPress={props.onClose} className="flex-1" />
+          <Pressable accessibilityRole="button" accessibilityLabel={tr("ui.shells.CalendarPanel.closeCalendar")} onPress={props.onClose} className="flex-1" />
         </View>
       </Animated.View>
       <Animated.View entering={SlideInUp.duration(DURATION.base)} exiting={SlideOutUp.duration(DURATION.base)} pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
@@ -73,6 +76,7 @@ export function CalendarPanel(props: CalendarPanelProps) {
 }
 
 function MonthPanel({ selected, context, onSelect, weekStartsOn = WEEK_STARTS_ON, months, load }: CalendarPanelProps & { months: Months; load: (month: string) => void }) {
+  useLanguage();
   const { today, firstDay } = useShellCalendar();
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
@@ -120,8 +124,8 @@ function MonthPanel({ selected, context, onSelect, weekStartsOn = WEEK_STARTS_ON
       <View className="mt-2 min-h-11 flex-row items-center gap-3 px-3">
         {/* Back to today from a past day or another month (spec §11 UX1). */}
         {(selected !== today || month !== monthOf(today)) && (
-          <Press activeScale={0.96} accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => onSelect(today)} hitSlop={6} className="h-8 justify-center rounded-full bg-fill-hover px-3.5">
-            <Text className="text-[11px] font-bold uppercase leading-4 tracking-[0.1em]">Today</Text>
+          <Press activeScale={0.96} accessibilityRole="button" accessibilityLabel={tr("ui.shells.CalendarPanel.backToToday")} onPress={() => onSelect(today)} hitSlop={6} className="h-8 justify-center rounded-full bg-fill-hover px-3.5">
+            <Text className="text-[11px] font-bold uppercase leading-4 tracking-[0.1em]">{tr("common.today")}</Text>
           </Press>
         )}
         <Legend context={context} />
@@ -132,11 +136,12 @@ function MonthPanel({ selected, context, onSelect, weekStartsOn = WEEK_STARTS_ON
 }
 
 function ChevronButton({ dir, disabled, onPress }: { dir: "prev" | "next"; disabled: boolean; onPress: () => void }) {
+  useLanguage();
   return (
     <Press
       activeScale={0.96}
       accessibilityRole="button"
-      accessibilityLabel={dir === "prev" ? "Previous month" : "Next month"}
+      accessibilityLabel={dir === "prev" ? tr("ui.shells.CalendarPanel.previousMonth") : tr("ui.shells.CalendarPanel.nextMonth")}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -148,18 +153,19 @@ function ChevronButton({ dir, disabled, onPress }: { dir: "prev" | "next"; disab
 }
 
 const VALUE_TEXT: Record<CalendarContext, (v: number) => string> = {
-  recovery: (v) => `Recovery ${Math.round(v)}%`,
-  strain: (v) => `Strain ${formatValue("pct", v)}`,
-  sleep: (v) => `Sleep ${Math.round(v)}%`,
+  recovery: (v) => tr("ui.shells.CalendarPanel.recovery", { v0: Math.round(v) }),
+  strain: (v) => tr("ui.shells.CalendarPanel.strain", { v0: formatValue("pct", v) }),
+  sleep: (v) => tr("ui.shells.CalendarPanel.sleep", { v0: Math.round(v) }),
 };
 
 function Day({ day, context, value, selected, today, disabled, onSelect }: { day: string; context: CalendarContext; value: number | null; selected: boolean; today: boolean; disabled: boolean; onSelect: (day: string) => void }) {
+  useLanguage();
   const tone = disabled ? { text: NO_SCORE, dot: null } : dayTone(context, value);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
-      accessibilityLabel={`${today ? "Today, " : ""}${formatDay(day, DAY.long)}${value !== null && !disabled ? `, ${VALUE_TEXT[context](value)}` : ""}`}
+      accessibilityLabel={`${today ? tr("ui.shells.CalendarPanel.today") : ""}${formatDay(day, DAY.long)}${value !== null && !disabled ? `, ${VALUE_TEXT[context](value)}` : ""}`}
       disabled={disabled}
       onPress={() => onSelect(day)}
       className="h-12 flex-1 items-center justify-center"
@@ -179,11 +185,12 @@ const LEGEND: Record<CalendarContext, { label: string; color: keyof typeof DATA_
     { label: "34% - 66%", color: "recovery-yellow" },
     { label: ">66%", color: "recovery-green" },
   ],
-  strain: [{ label: `Day Strain ${STRAIN_DOT}+`, color: "strain" }],
-  sleep: [{ label: `Sleep ${SLEEP_DOT}%+`, color: "sleep" }],
+  strain: [{ get label() { return tr("ui.shells.CalendarPanel.dayStrain", { v0: STRAIN_DOT }); }, color: "strain" }],
+  sleep: [{ get label() { return tr("ui.shells.CalendarPanel.sleep_5a4676", { v0: SLEEP_DOT }); }, color: "sleep" }],
 };
 
 function Legend({ context }: { context: CalendarContext }) {
+  useLanguage();
   return (
     <View className="ml-auto flex-row gap-3">
       {LEGEND[context].map(({ label, color }) => (

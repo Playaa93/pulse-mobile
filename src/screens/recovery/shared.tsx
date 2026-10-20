@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Small pieces the Recovery, Strain and Activity screens share (src/screens/{recovery,strain,activity}).
 import { type ReactNode } from "react"
 import { View } from "react-native"
@@ -16,7 +18,8 @@ export { Divided }
 
 /** pulse's (app)/error.tsx: every screen's error view, with a retry that runs the query again. */
 export function ScreenError({ retry }: { retry: () => void }) {
-  return <DetailShell title="Pulse" primary={<View accessibilityRole="alert" className="pt-16"><EmptyState icon={CircleAlert} body="Couldn’t load this screen." action={{ label: "Try again", onClick: retry }} /></View>} />
+  useLanguage();
+  return <DetailShell title="Pulse" primary={<View accessibilityRole="alert" className="pt-16"><EmptyState icon={CircleAlert} body={tr("health.ErrorView.couldnTLoadThisScreen")} action={{ label: tr("common.retry"), onClick: retry }} /></View>} />
 }
 
 /** Recovery and Strain's loading shape (pulse's skeletons.tsx `DialDetail`): the dial, the notched summary card, the insight card, then the page's own cards. */
@@ -39,6 +42,7 @@ export function DialDetailSkeleton({
   footer?: ReactNode
   bodySkeleton?: ReactNode
 }) {
+  useLanguage();
   return (
     <DetailShell
       loading

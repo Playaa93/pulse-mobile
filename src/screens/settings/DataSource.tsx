@@ -1,3 +1,6 @@
+import { HEALTH_RECORD_LABEL } from "@/lib/healthRecordLabels";
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Settings › Data source: Health Connect, as halo's src/screens/settings/sections.tsx shows it, in Pulse's section look.
 // The source row (availability, last sync), what needs doing (access revoked, permissions missing, the last failure),
 // the running import, Sync now and Re-import, the sample data, the source policy, the data check, and every record
@@ -7,7 +10,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { AppState, Pressable, Share, View } from "react-native";
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { Check, ChevronDown, Minus, RefreshCw, TriangleAlert } from "lucide-react-native";
-import { askPermissions, openHealthConnectSettings, permissionState, READ_TYPES, type PermissionState, type ReadType } from "@/health/connect";
+import { askPermissions, openHealthConnectSettings, permissionState, READ_TYPES, type PermissionState } from "@/health/connect";
 import { runDataCheck } from "@/health/dataCheck";
 import { getSourcePolicy, setSourcePolicy, SOURCE_POLICIES, SOURCE_POLICY_LABELS, type SourcePolicy } from "@/health/sourcePolicy";
 import { ago } from "@/lib/format";
@@ -16,7 +19,7 @@ import { BandIcon } from "@/ui/brand";
 import { HealthConnectMark } from "@/ui/HealthConnectMark";
 import { cn } from "@/ui/cn";
 import { haptic } from "@/ui/haptics";
-import { Button } from "@/ui/Button";
+import { Button, BUTTON_LABEL } from "@/ui/Button";
 import { Icon } from "@/ui/Icon";
 import { CAPTION } from "@/ui/metrics/primitives";
 import { push } from "@/ui/navigate";
@@ -26,35 +29,6 @@ import { toast } from "@/ui/Toast";
 import { useTheme } from "@/ui/theme";
 import { DURATION } from "@/ui/motion";
 import { BODY, ConfirmDialog, HINT, ProgressBar, RadioSegments, ROW_LABEL, ROW_RULE } from "./controls";
-
-/** Health Connect's record types as Settings lists them. */
-const TYPE_LABEL: Record<ReadType, string> = {
-  SleepSession: "Sleep",
-  HeartRate: "Heart rate",
-  RestingHeartRate: "Resting heart rate",
-  HeartRateVariabilityRmssd: "Heart rate variability",
-  RespiratoryRate: "Respiratory rate",
-  OxygenSaturation: "Blood oxygen",
-  SkinTemperature: "Skin temperature",
-  Steps: "Steps",
-  Distance: "Distance",
-  ExerciseSession: "Exercise",
-  TotalCaloriesBurned: "Calories",
-  ActiveCaloriesBurned: "Active calories",
-  Vo2Max: "VO2 max",
-  Weight: "Weight",
-  BodyFat: "Body fat",
-  FloorsClimbed: "Floors",
-  ElevationGained: "Elevation gain",
-  Hydration: "Water",
-  Nutrition: "Food",
-  BloodGlucose: "Blood glucose",
-  BodyTemperature: "Body temperature",
-  MenstruationPeriod: "Periods",
-  MenstruationFlow: "Period flow",
-  IntermenstrualBleeding: "Spotting",
-  OvulationTest: "Ovulation tests",
-};
 
 /** What Health Connect has granted, re-read whenever the app comes back to the foreground (from its settings). */
 function usePermissions(enabled: boolean) {
@@ -71,9 +45,10 @@ function usePermissions(enabled: boolean) {
 
 /** Per record type, folded under one summary line; it opens itself when something is not allowed. */
 function DataTypes({ perms }: { perms: PermissionState }) {
+  useLanguage();
   const missing = perms.missing.length + (perms.history ? 0 : 1);
-  const rows = [...READ_TYPES.map((t) => ({ key: t, label: TYPE_LABEL[t], ok: perms.granted.includes(t) })), { key: "history", label: "Past data", ok: perms.history }];
-  const summary = missing ? `${missing} not allowed` : "All allowed";
+  const rows = [...READ_TYPES.map((t) => ({ key: t, label: HEALTH_RECORD_LABEL[t], ok: perms.granted.includes(t) })), { key: "history", label: tr("settings.DataSource.pastData"), ok: perms.history }];
+  const summary = missing ? tr("settings.DataSource.notAllowed_7326f9", { v0: missing }) : tr("settings.DataSource.allAllowed");
   const [open, setOpen] = useState(missing > 0);
   const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(open ? "180deg" : "0deg", { duration: DURATION.base }) }] }), [open]);
   return (
@@ -87,7 +62,7 @@ function DataTypes({ perms }: { perms: PermissionState }) {
         }}
         className="min-h-13 flex-row items-center justify-between gap-3 rounded-md py-2"
       >
-        <Text className={ROW_LABEL}>Data types</Text>
+        <Text className={ROW_LABEL}>{tr("settings.DataSource.dataTypes")}</Text>
         <View className="shrink flex-row items-center gap-2">
           <Text className={cn("text-[13px] leading-[18px]", missing ? "text-warning-text" : "text-muted-foreground")}>{summary}</Text>
           <Animated.View style={chevron}>
@@ -98,11 +73,11 @@ function DataTypes({ perms }: { perms: PermissionState }) {
       {open && (
         <View className="border-t border-border">
           {rows.map((r, i) => (
-            <View key={r.key} accessible accessibilityLabel={`${r.label}, ${r.ok ? "allowed" : "not allowed"}`} className={cn("min-h-12 flex-row items-center gap-3 py-2", i > 0 && ROW_RULE)}>
+            <View key={r.key} accessible accessibilityLabel={`${r.label}, ${r.ok ? tr("settings.DataSource.allowed") : tr("settings.DataSource.notAllowed")}`} className={cn("min-h-12 flex-row items-center gap-3 py-2", i > 0 && ROW_RULE)}>
               <Text numberOfLines={1} className="min-w-0 flex-1 text-[15px] leading-[22px]">
                 {r.label}
               </Text>
-              <Text className={cn(CAPTION, "shrink-0", !r.ok && "text-warning-text")}>{r.ok ? "Allowed" : "Not allowed"}</Text>
+              <Text className={cn(CAPTION, "shrink-0", !r.ok && "text-warning-text")}>{r.ok ? tr("settings.DataSource.allowed") : tr("settings.DataSource.notAllowed_e03151")}</Text>
               {r.ok ? <Icon icon={Check} size={16} tone="optimal-text" strokeWidth={2.5} /> : <Icon icon={Minus} size={16} tone="muted-foreground" strokeWidth={2} />}
             </View>
           ))}
@@ -112,9 +87,8 @@ function DataTypes({ perms }: { perms: PermissionState }) {
   );
 }
 
-const LABEL = "text-[13px] font-bold uppercase tracking-[0.1em]";
-
 function Spinner({ spinning }: { spinning: boolean }) {
+  useLanguage();
   const turn = useSharedValue(0);
   useEffect(() => {
     if (spinning) turn.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1);
@@ -132,27 +106,29 @@ function Spinner({ spinning }: { spinning: boolean }) {
 }
 
 function SyncNowButton({ syncing }: { syncing: boolean }) {
+  useLanguage();
   return (
     <Button
       variant="secondary"
-      className="flex-1"
+      className="basis-48 grow"
       disabled={syncing}
       onPress={async () => {
         haptic.tap();
         await refresh();
         const { error } = appState();
-        if (error) toast.error(`Sync failed: ${error}`);
-        else toast.success("Synced");
+        if (error) toast.error(tr("settings.DataSource.lastSyncFailed", { v0: error }));
+        else toast.success(tr("settings.DataSource.synced"));
       }}
     >
       <Spinner spinning={syncing} />
-      <Text className={cn(LABEL, "text-secondary-foreground")}>{syncing ? "Syncing…" : "Sync now"}</Text>
+      <Text className={cn(BUTTON_LABEL, "text-secondary-foreground")}>{syncing ? tr("settings.DataSource.syncing") : tr("settings.DataSource.syncNow")}</Text>
     </Button>
   );
 }
 
 /** Which Health Connect records Pulse uses: Fitbit only (default), Fitbit first, or every app. A change re-imports. */
 function SourcePolicyPicker({ syncing }: { syncing: boolean }) {
+  useLanguage();
   const [policy, setPolicy] = useState<SourcePolicy | null>(null);
   useEffect(() => {
     let live = true;
@@ -165,13 +141,19 @@ function SourcePolicyPicker({ syncing }: { syncing: boolean }) {
     if (p === policy || syncing) return;
     setPolicy(p);
     await setSourcePolicy(p);
-    toast.success(`${SOURCE_POLICY_LABELS[p].label}: re-importing your history`);
+    toast.success(tr("settings.DataSource.reImportingYourHistory", { v0: SOURCE_POLICY_LABELS[p].label }));
     void reimport();
   };
   return (
     <View className="mt-4 gap-2 border-t border-border pt-4">
-      <Text className={ROW_LABEL}>Use data from</Text>
-      <RadioSegments label="Use data from" value={policy} options={SOURCE_POLICIES.map((p) => ({ value: p, label: SOURCE_POLICY_LABELS[p].label }))} onChange={(p) => void choose(p)} />
+      <Text className={ROW_LABEL}>{tr("settings.DataSource.useDataFrom")}</Text>
+      <RadioSegments
+        label={tr("settings.DataSource.useDataFrom")}
+        value={policy}
+        textClassName="text-[13px] leading-[18px]"
+        options={SOURCE_POLICIES.map((p) => ({ value: p, label: tr(`sourcePolicy.${p}.short`), accessibilityLabel: SOURCE_POLICY_LABELS[p].label }))}
+        onChange={(p) => void choose(p)}
+      />
       {policy && <Text className={HINT}>{SOURCE_POLICY_LABELS[policy].detail}</Text>}
     </View>
   );
@@ -181,6 +163,7 @@ type Confirm = "sample" | "reimport" | null;
 
 /** The running sync's step and percent. It reads the progress itself, so a tick redraws this line, not the card. */
 function SyncProgress() {
+  useLanguage();
   const progress = useApp((s) => s.progress);
   if (!progress || progress.total <= 0) return null;
   return (
@@ -188,12 +171,13 @@ function SyncProgress() {
       <Text className="text-[15px] leading-[22px] tabular-nums">
         {stepLabel(progress.step)}… {Math.floor((progress.done / progress.total) * 100)}%
       </Text>
-      <ProgressBar value={(progress.done / progress.total) * 100} label="Sync progress" />
+      <ProgressBar value={(progress.done / progress.total) * 100} label={tr("settings.DataSource.syncProgress")} />
     </View>
   );
 }
 
 export function DataSource({ now }: { now: number }) {
+  useLanguage();
   const { c } = useTheme();
   const source = useApp((s) => s.source);
   const status = useApp((s) => s.status);
@@ -211,18 +195,18 @@ export function DataSource({ now }: { now: number }) {
   const revoked = hc && !!perms.state && perms.state.granted.length === 0;
   const needsPermissions = hc && !!perms.state && !revoked && (perms.state.missing.length > 0 || !perms.state.history);
 
-  const label = sample ? "Sample data" : hc ? "Health Connect" : "Not connected";
+  const label = sample ? tr("settings.DataSource.sampleData") : hc ? "Health Connect" : tr("settings.DataSource.notConnected");
   const state: { line: string; tone?: string; body?: string } = sample
-    ? { line: "180 days of a demo person", body: "Every screen runs on generated data. Connect Health Connect to score your own Fitbit data." }
+    ? { line: tr("settings.DataSource.180DaysOfADemoPerson"), body: tr("settings.DataSource.everyScreenRunsOnGeneratedDataConnect") }
     : !hc
-      ? { line: "Not connected", body: "Connect Health Connect, where the Google Health app writes your Fitbit data. Pulse only reads it; nothing leaves your phone." }
+      ? { line: tr("settings.DataSource.notConnected"), body: tr("settings.DataSource.connectHealthConnectWhereTheGoogleHealth") }
       : revoked
-        ? { line: "Access revoked", tone: "text-recovery-red-text", body: "Health Connect access was removed. Sync is paused until you allow it again." }
+        ? { line: tr("settings.DataSource.accessRevoked"), tone: "text-recovery-red-text", body: tr("settings.DataSource.healthConnectAccessWasRemovedSyncIs") }
         : availability === "update_required"
-          ? { line: last ? `Synced ${ago(last, Math.max(now, last))}` : "Not synced yet", tone: "text-warning-text", body: "Health Connect needs an update. Update it from the Play Store, then sync again." }
+          ? { line: last ? tr("ui.shells.SyncStatus.synced", { v0: ago(last, Math.max(now, last)) }) : tr("settings.DataSource.notSyncedYet"), tone: "text-warning-text", body: tr("settings.DataSource.healthConnectNeedsAnUpdateUpdateIt") }
           : availability === "unavailable"
-            ? { line: "Not available", tone: "text-warning-text", body: "Health Connect isn’t available on this phone." }
-            : { line: syncing ? "Syncing…" : last ? `Synced ${ago(last, Math.max(now, last))}` : "Not synced yet" };
+            ? { line: tr("settings.LiveHeartRate.notAvailable"), tone: "text-warning-text", body: tr("onboarding.Connect.healthConnectIsnTAvailableOnThis") }
+            : { line: syncing ? tr("settings.DataSource.syncing") : last ? tr("ui.shells.SyncStatus.synced", { v0: ago(last, Math.max(now, last)) }) : tr("settings.DataSource.notSyncedYet") };
 
   const allow = async () => {
     const p = await askPermissions().catch(() => null);
@@ -234,15 +218,15 @@ export function DataSource({ now }: { now: number }) {
     setChecking(true);
     try {
       const { text } = await runDataCheck(appStore(), { timeZone: appState().profile?.timeZone ?? "UTC" });
-      await Share.share({ message: text, title: "Pulse data check" });
+      await Share.share({ message: text, title: tr("settings.DataSource.pulseDataCheck") });
     } catch {
-      toast.error("Couldn’t run the data check. Try again.");
+      toast.error(tr("settings.DataSource.couldnTRunTheDataCheckTry"));
     }
     setChecking(false);
   };
 
   return (
-    <SectionShell variant="card" title="Data source">
+    <SectionShell variant="card" title={tr("settings.DataSource.dataSource")}>
       <View className="min-h-11 flex-row items-center gap-3">
         <View accessibilityElementsHidden className="size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-fill-faint">
           {sample ? <BandIcon size={24} color={c.foreground} /> : <HealthConnectMark size={26} />}
@@ -257,24 +241,22 @@ export function DataSource({ now }: { now: number }) {
       {state.body && <Text className={cn(BODY, "mt-3")}>{state.body}</Text>}
       {!!error && !syncing && (
         <Text accessibilityRole="alert" className={cn(CAPTION, "mt-3 text-recovery-red-text")}>
-          {`Last sync failed: ${error}`}
+          {tr("settings.DataSource.lastSyncFailed", { v0: error })}
         </Text>
       )}
       {hc && !syncing && warnings.includes("no_fitbit_records") && (
         <Callout
-          title="Nothing from your Fitbit yet"
-          body="With “Fitbit only”, Pulse found no records from the Google Health app that weren’t measured by the phone. Either Google Health isn’t sharing with Health Connect yet, or it labels its records as the phone’s. “Fitbit first” uses the phone’s data on days the Fitbit has none."
+          title={tr("settings.DataSource.nothingFromYourFitbitYet")}
+          body={tr("settings.DataSource.withFitbitOnlyPulseFoundNoRecords")}
         />
       )}
       {needsPermissions && (
-        <Callout title="Pulse needs more permissions" body="Allow every data type, including past data, so Pulse can read all of what your Fitbit writes. Sync keeps working until then.">
+        <Callout title={tr("settings.DataSource.pulseNeedsMorePermissions")} body={tr("settings.DataSource.allowEveryDataTypeIncludingPastData")}>
           <View className="mt-3 flex-row gap-2">
             <Button className="flex-1" onPress={() => void allow()}>
-              Allow
-            </Button>
+              {tr("settings.DataSource.allow")}</Button>
             <Button variant="secondary" className="flex-1" onPress={() => void openHealthConnectSettings()}>
-              Open settings
-            </Button>
+              {tr("settings.DataSource.openSettings")}</Button>
           </View>
         </Callout>
       )}
@@ -282,48 +264,43 @@ export function DataSource({ now }: { now: number }) {
       <View className="mt-4 gap-2">
         {hc ? (
           <>
-            <View className="flex-row gap-2">
+            <View className="flex-row flex-wrap gap-2">
               {revoked ? (
-                <Button className="flex-1" onPress={() => void allow()}>
-                  Allow access
-                </Button>
+                <Button className="basis-48 grow" onPress={() => void allow()}>
+                  {tr("settings.DataSource.allowAccess")}</Button>
               ) : (
                 <SyncNowButton syncing={syncing} />
               )}
-              <Button variant="outline" className="flex-1" disabled={syncing} onPress={() => setConfirm("reimport")}>
-                Re-import
-              </Button>
+              <Button variant="outline" className="basis-36 grow" disabled={syncing} onPress={() => setConfirm("reimport")}>
+                {tr("settings.DataSource.reImport")}</Button>
             </View>
             <Button variant="secondary" onPress={() => void openHealthConnectSettings()}>
-              Open Health Connect
-            </Button>
+              {tr("onboarding.Connect.openHealthConnect")}</Button>
             <Button variant="secondary" disabled={syncing} onPress={() => setConfirm("sample")}>
-              Use sample data
-            </Button>
+              {tr("settings.DataSource.useSampleData")}</Button>
           </>
         ) : (
           <Button disabled={syncing || availability === "unavailable"} onPress={() => push("/connect")}>
-            Connect Health Connect
-          </Button>
+            {tr("settings.DataSource.connectHealthConnect")}</Button>
         )}
       </View>
       {hc && <SourcePolicyPicker syncing={syncing} />}
       {hc && (
         <View className="mt-4 gap-2 border-t border-border pt-4">
-          <Text className={ROW_LABEL}>Data check</Text>
-          <Text className={HINT}>Compares the last 10 days in Health Connect, app by app, with what Pulse stored. Shares the report.</Text>
+          <Text className={ROW_LABEL}>{tr("settings.DataSource.dataCheck")}</Text>
+          <Text className={HINT}>{tr("settings.DataSource.comparesTheLast10DaysInHealth")}</Text>
           <Button variant="secondary" disabled={checking} onPress={() => void dataCheck()}>
-            {checking ? "Checking…" : "Run data check"}
+            {checking ? tr("settings.DataSource.checking") : tr("settings.DataSource.runDataCheck")}
           </Button>
         </View>
       )}
       {hc && perms.state && <DataTypes key={String(perms.state.missing.length)} perms={perms.state} />}
       <ConfirmDialog
         open={confirm === "reimport"}
-        title="Re-import your history?"
-        description="Pulse reads the last 180 days from Health Connect again and rescores them, for data an app shared late. Your journal and profile stay."
-        confirmLabel="Re-import"
-        pendingLabel="Re-import"
+        title={tr("settings.DataSource.reImportYourHistory")}
+        description={tr("settings.DataSource.pulseReadsTheLast180DaysFrom")}
+        confirmLabel={tr("settings.DataSource.reImport")}
+        pendingLabel={tr("settings.DataSource.reImport")}
         pending={false}
         confirmVariant="primary"
         onCancel={() => setConfirm(null)}
@@ -334,16 +311,16 @@ export function DataSource({ now }: { now: number }) {
       />
       <ConfirmDialog
         open={confirm === "sample"}
-        title="Use sample data?"
-        description="Pulse removes what it imported from Health Connect and fills every screen with 180 days of generated data. Your profile is kept for when you switch back."
-        confirmLabel="Use sample data"
-        pendingLabel="Use sample data"
+        title={tr("settings.DataSource.useSampleData_65e361")}
+        description={tr("settings.DataSource.pulseRemovesWhatItImportedFromHealth")}
+        confirmLabel={tr("settings.DataSource.useSampleData")}
+        pendingLabel={tr("settings.DataSource.useSampleData")}
         pending={false}
         confirmVariant="primary"
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
           setConfirm(null);
-          exploreSample().catch(() => toast.error("Couldn’t build the sample data. Try again."));
+          exploreSample().catch(() => toast.error(tr("onboarding.OnboardingScreen.couldnTBuildTheSampleDataTry")));
         }}
       />
     </SectionShell>
@@ -352,6 +329,7 @@ export function DataSource({ now }: { now: number }) {
 
 /** Something that needs doing: the section's callout (a tinted box with a warning title). */
 function Callout({ title, body, children }: { title: string; body: string; children?: ReactNode }) {
+  useLanguage();
   return (
     <View accessibilityRole="summary" className="mt-4 rounded-xl bg-foreground/[0.04] p-4">
       <View className="flex-row items-center gap-2">

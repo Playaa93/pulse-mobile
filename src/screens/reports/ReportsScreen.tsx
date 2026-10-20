@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Reports archive `/reports` (web: (app)/reports/page.tsx, loading.tsx; More, U21): one period kind at a time (Weekly /
 // Monthly), newest first. Weeks are grouped by month and only the last few months show until "Show earlier weeks"; months
 // are grouped by year. `?view=` and `?all=` live in the route's params, so Back and a link keep them.
@@ -19,10 +21,11 @@ import { Press } from "@/ui/Press";
 
 /** The period's average Recovery as the reference app's 22 px ring and its value. */
 function Aside({ r }: { r: ReportListItem }) {
+  useLanguage();
   return (
     <View className="shrink-0 flex-row items-center gap-2">
       <MiniRing variant="recovery" value={r.recovery} />
-      <Text accessibilityLabel={`Average Recovery ${formatValue("int", r.recovery)}${r.recovery !== null ? " percent" : ""}`} className="w-9 text-right font-numeric text-[15px] font-bold leading-5 tabular-nums">
+      <Text accessibilityLabel={tr("reports.ReportsScreen.averageRecovery", { v0: formatValue("int", r.recovery), v1: r.recovery !== null ? tr("reports.ReportsScreen.percent") : "" })} className="w-9 text-right font-numeric text-[15px] font-bold leading-5 tabular-nums">
         {formatValue("int", r.recovery)}
         {r.recovery !== null && "%"}
       </Text>
@@ -47,8 +50,8 @@ function groupRows(items: ReportListItem[], key: (r: ReportListItem) => string, 
   return groups;
 }
 
-const weekRow = (r: ReportListItem): LinkListRow => ({ label: rangeLabel(r.start, r.end), href: `/reports/${r.period}`, aside: <Aside r={r} />, description: r.partial ? "Partial week" : undefined });
-const monthRow = (r: ReportListItem): LinkListRow => ({ label: formatDay(r.start, { month: "long" }), href: `/reports/${r.period}`, aside: <Aside r={r} />, description: r.partial ? "Partial month" : undefined });
+const weekRow = (r: ReportListItem): LinkListRow => ({ label: rangeLabel(r.start, r.end), href: `/reports/${r.period}`, aside: <Aside r={r} />, description: r.partial ? tr("reports.ReportsScreen.partialWeek") : undefined });
+const monthRow = (r: ReportListItem): LinkListRow => ({ label: formatDay(r.start, { month: "long" }), href: `/reports/${r.period}`, aside: <Aside r={r} />, description: r.partial ? tr("reports.ReportsScreen.partialMonth") : undefined });
 
 /** A first week can exist before any month has data, and vice versa: fall back to the kind that has rows. */
 const viewOf = (vm: ReportArchiveVM | undefined, q?: string): View_ => (vm && ((q === "months" && vm.months.length) || !vm.weeks.length) ? "months" : "weeks");
@@ -59,30 +62,31 @@ function groupsOf(vm: ReportArchiveVM, view: View_) {
 }
 
 export default function ReportsScreen() {
+  useLanguage();
   const { view: q, all: allParam } = useLocalSearchParams<{ view?: string; all?: string }>();
   const { data: vm, error, reload } = useScreen(getReportArchive, ["reports"]);
   const view = viewOf(vm, q);
   const groups = useMemo(() => (vm ? groupsOf(vm, view) : []), [vm, view]);
-  if (error && !vm) return <LoadError title="Reports" reload={reload} />;
+  if (error && !vm) return <LoadError title={tr("reports.ReportsScreen.reports")} reload={reload} />;
   if (!vm) return <Loading />;
 
   const empty = !vm.weeks.length && !vm.months.length;
   const shown = view === "weeks" && allParam !== "1" ? groups.slice(0, RECENT_MONTHS) : groups;
   return (
     <DetailShell
-      title="Reports"
-      bodySkeleton={LOADING_PRIMARY}
+      title={tr("reports.ReportsScreen.reports")}
+      bodySkeleton={renderLoadingPrimary()}
       primary={
         empty ? (
-          <EmptyState body="No reports yet. Your first weekly report appears once a week has data." />
+          <EmptyState body={tr("reports.ReportsScreen.noReportsYetYourFirstWeeklyReport")} />
         ) : (
           // One 640 px column like More and Settings: two columns of uneven month groups left holes.
           <View className={MORE_COLUMN}>
             <Segmented
-              label="Report period"
+              label={tr("reports.ReportScreen.reportPeriod")}
               fill
               value={view}
-              options={[{ value: "weeks", label: "Weekly" }, { value: "months", label: "Monthly" }]}
+              options={[{ value: "weeks", label: tr("reports.ReportsScreen.weekly") }, { value: "months", label: tr("reports.ReportsScreen.monthly") }]}
               onChange={(v) => router.setParams({ view: v === "weeks" ? "" : "months", all: "" })}
               textClassName="text-[13px] font-bold uppercase tracking-[0.1em]"
             />
@@ -91,7 +95,7 @@ export default function ReportsScreen() {
             ))}
             {shown.length < groups.length && (
               <Press activeBg="bg-fill-faint" accessibilityRole="button" onPress={() => (haptic.tap(), router.setParams({ all: "1" }))} className="mx-auto h-11 items-center justify-center rounded-full px-5">
-                <Text className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-body">Show earlier weeks</Text>
+                <Text className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-body">{tr("reports.ReportsScreen.showEarlierWeeks")}</Text>
               </Press>
             )}
           </View>
@@ -103,7 +107,7 @@ export default function ReportsScreen() {
 
 const rows = (n: number) => Array.from({ length: n }, () => ({ label: "" }));
 
-const LOADING_PRIMARY = (
+const renderLoadingPrimary = () => (
   <View accessibilityElementsHidden className={MORE_COLUMN}>
     <View className="h-11 rounded-lg bg-muted" />
     <LinkListSkeleton title="" rows={rows(4)} />
@@ -113,12 +117,13 @@ const LOADING_PRIMARY = (
 
 /** Reports archive: the view switch and two month groups at their final size (spec §5.19). */
 function Loading() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Reports"
-      primary={LOADING_PRIMARY}
-      bodySkeleton={LOADING_PRIMARY}
+      title={tr("reports.ReportsScreen.reports")}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderLoadingPrimary()}
     />
   );
 }

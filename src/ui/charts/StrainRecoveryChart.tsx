@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { RoundedRect } from "@shopify/react-native-skia";
 import { recoveryBand } from "@/lib/bands";
 import { DAY, formatDay, formatValue } from "@/lib/format";
@@ -54,6 +56,7 @@ function labelDy(rows: Row[], index: number, k: "strain" | "recovery") {
  * (0-100 %, band colours), hollow dots with value labels, today's column lit. Missing days are gaps, never interpolated.
  */
 export function StrainRecoveryChart({ points, today }: { points: StrainRecoveryPoint[]; today: string }) {
+  useLanguage();
   const { c, css } = useTheme();
   const rows: Row[] = points.map((p) => ({
     ...p,
@@ -64,9 +67,7 @@ export function StrainRecoveryChart({ points, today }: { points: StrainRecoveryP
   }));
   const strains = points.map((p) => p.strain).filter((v): v is number => v !== null);
   const recs = points.map((p) => p.recovery).filter((v): v is number => v !== null);
-  const summary = `Strain and Recovery over the last ${points.length} days: Strain ${
-    strains.length ? `from ${formatValue("int", Math.min(...strains))} to ${formatValue("int", Math.max(...strains))} percent` : "not recorded"
-  }, Recovery ${recs.length ? `from ${Math.round(Math.min(...recs))} to ${Math.round(Math.max(...recs))} percent` : "not recorded"}.`;
+  const summary = tr("ui.charts.StrainRecoveryChart.strainAndRecoveryOverTheLastDays", { v0: points.length, v1: strains.length ? tr("ui.charts.StrainRecoveryChart.fromToPercent", { v0: formatValue("int", Math.min(...strains)), v1: formatValue("int", Math.max(...strains)) }) : tr("ui.charts.StrainRecoveryChart.notRecorded"), v2: recs.length ? tr("ui.charts.StrainRecoveryChart.fromToPercent", { v0: Math.round(Math.min(...recs)), v1: Math.round(Math.max(...recs)) }) : tr("ui.charts.StrainRecoveryChart.notRecorded") });
 
   return (
     <ChartFigure summary={summary} height={HEIGHT}>
@@ -126,6 +127,7 @@ export function StrainRecoveryChart({ points, today }: { points: StrainRecoveryP
 }
 
 export function StrainRecoveryChartSkeleton() {
+  useLanguage();
   return <Skeleton className="h-[232px] rounded-lg bg-skeleton" />;
 }
 StrainRecoveryChart.Skeleton = StrainRecoveryChartSkeleton;

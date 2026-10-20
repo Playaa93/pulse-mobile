@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Live heart rate over Bluetooth, the shared pieces (from halo src/screens/settings/liveHr.tsx, drawn with the kit):
 // the beating heart, the "Live · Fitbit Air" pill, the 2-minute trace, and the Go live / Stop live buttons. They take
 // plain props; the state is src/state/liveBle.tsx's.
@@ -23,6 +25,7 @@ const clampBpm = (bpm: number) => Math.min(220, Math.max(30, bpm || 60));
  * restarting the beat. Still with reduced motion or when not live.
  */
 export function BeatingHeart({ bpm, live, size = 22 }: { bpm: number; live: boolean; size?: number }) {
+  useLanguage();
   const { c } = useTheme();
   const reduce = useReducedMotion();
   const period = useSharedValue(60_000 / clampBpm(bpm));
@@ -55,18 +58,19 @@ export function BeatingHeart({ bpm, live, size = 22 }: { bpm: number; live: bool
 
 /** "● Live · Fitbit Air" in the heart red; "Reconnecting…" muted while the link is being rebuilt. */
 export function LivePill({ name, lost = false, className }: { name: string | null; lost?: boolean; className?: string }) {
+  useLanguage();
   const { c } = useTheme();
   const tint = lost ? c["muted-foreground"] : c["recovery-red-text"];
   return (
     <View
       accessible
-      accessibilityLabel={lost ? "Reconnecting to the band" : `Live from ${name ?? "the band"}`}
+      accessibilityLabel={lost ? tr("ui.metrics.LiveHeartRate.reconnectingToTheBand") : tr("ui.metrics.LiveHeartRate.liveFrom", { v0: name ?? tr("display.band") })}
       className={cn("h-6 max-w-full flex-row items-center gap-1.5 self-start rounded-full px-2.5", className)}
       style={{ backgroundColor: alpha(tint, 0.14) }}
     >
       <View className="size-1.5 rounded-full" style={{ backgroundColor: tint }} />
       <Text numberOfLines={1} className="shrink text-xs font-bold uppercase leading-4 tracking-[0.1em]" style={{ color: tint }}>
-        {lost ? "Reconnecting…" : `Live · ${name ?? "Band"}`}
+        {lost ? tr("settings.LiveHeartRate.reconnecting") : tr("ui.metrics.LiveHeartRate.live", { v0: name ?? "Band" })}
       </Text>
     </View>
   );
@@ -78,22 +82,24 @@ export function LivePill({ name, lost = false, className }: { name: string | nul
  * while the first beats arrive.
  */
 export function LiveTrace({ history, height = 88 }: { history: { t: number; bpm: number }[]; height?: number }) {
+  useLanguage();
   const { c } = useTheme();
   const values = liveTrace(history, history.length ? history[history.length - 1].t : 0);
   return (
-    <View style={{ height }} className="w-full" accessibilityLabel="Live heart rate over the last 2 minutes">
-      <Sparkline values={values} color={c["recovery-red"]} caption="Last 2 min" className="flex-1" />
+    <View style={{ height }} className="w-full" accessibilityLabel={tr("ui.metrics.LiveHeartRate.liveHeartRateOverTheLast2")}>
+      <Sparkline values={values} color={c["recovery-red"]} caption={tr("ui.metrics.LiveHeartRate.last2Min")} className="flex-1" />
     </View>
   );
 }
 
 /** "Go live", or what the link is doing while it works on it. */
 export function GoLiveButton({ status, onPress, disabled, className }: { status: LiveStatus; onPress: () => void; disabled?: boolean; className?: string }) {
+  useLanguage();
   const { c } = useTheme();
   const busy = status === "connecting" || status === "scanning" || status === "lost";
-  const label = status === "connecting" ? "Connecting…" : status === "scanning" ? "Searching…" : status === "lost" ? "Reconnecting…" : "Go live";
+  const label = status === "connecting" ? tr("settings.LiveHeartRate.connecting") : status === "scanning" ? tr("settings.LiveHeartRate.searching") : status === "lost" ? tr("settings.LiveHeartRate.reconnecting") : tr("settings.LiveHeartRate.goLive");
   return (
-    <Button onPress={onPress} disabled={disabled} className={className} accessibilityLabel={`${label}: live heart rate over Bluetooth`}>
+    <Button onPress={onPress} disabled={disabled} className={className} accessibilityLabel={tr("ui.metrics.LiveHeartRate.liveHeartRateOverBluetooth", { v0: label })}>
       {busy ? <ActivityIndicator size="small" color={c["primary-foreground"]} /> : <Icon icon={Bluetooth} size={16} tone="primary-foreground" strokeWidth={2.25} />}
       <Text className="text-[13px] font-bold uppercase tracking-[0.1em] text-primary-foreground">{label}</Text>
     </Button>
@@ -102,10 +108,11 @@ export function GoLiveButton({ status, onPress, disabled, className }: { status:
 
 /** Stops live heart rate now; it stays off (even after a restart) until the next Go live. */
 export function StopLiveButton({ onPress, className }: { onPress: () => void; className?: string }) {
+  useLanguage();
   return (
-    <Button variant="outline" haptic onPress={onPress} className={className} accessibilityLabel="Stop live heart rate">
+    <Button variant="outline" haptic onPress={onPress} className={className} accessibilityLabel={tr("ui.metrics.LiveHeartRate.stopLiveHeartRate")}>
       <Icon icon={Square} size={12} tone="recovery-red-text" strokeWidth={2} />
-      <Text className="text-[13px] font-bold uppercase tracking-[0.1em] text-recovery-red-text">Stop live</Text>
+      <Text className="text-[13px] font-bold uppercase tracking-[0.1em] text-recovery-red-text">{tr("ui.metrics.LiveHeartRate.stopLive")}</Text>
     </Button>
   );
 }

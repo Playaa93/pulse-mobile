@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Trends `/trends?metric=&r=` (web: (app)/trends/page.tsx, loading.tsx): one daily metric over up to a year, each range
 // against the one before.
 import { useMemo } from "react";
@@ -25,6 +27,7 @@ function shape(vm: TrendsVM, m: TrendMetric) {
 }
 
 export default function TrendsScreen() {
+  useLanguage();
   const { metric, r } = useLocalSearchParams<{ metric?: string; r?: string }>();
   const m = parseTrendMetric(metric);
   const range = parseRange(r);
@@ -33,24 +36,24 @@ export default function TrendsScreen() {
   const vm = data?.metric === m.key ? data : undefined;
   const shaped = useMemo(() => (vm ? shape(vm, m) : undefined), [vm, m]);
 
-  if (error && !vm) return <LoadError title="Trends" reload={reload} />;
+  if (error && !vm) return <LoadError title={tr("more.MoreScreen.trends")} reload={reload} />;
   if (!vm || !shaped) return <Loading current={m.key} r={r} />;
 
   return (
     <DetailShell
-      title="Trends"
+      title={tr("more.MoreScreen.trends")}
       bodySkeleton={<LoadingBody current={m.key} r={r} />}
       primary={
         <View className="gap-4">
           <MetricPicker current={m.key} r={r} />
           <View className="gap-3">
-            <SectionShell variant="card" title={m.label} aside={<ActionLink label="Explore" href={chartHref({ metric: m.key, r: range as ChartRange })} />} action={{ label: "Details", href: m.href }}>
+            <SectionShell variant="card" title={m.label} aside={<ActionLink label={tr("metric.MetricScreen.explore")} href={chartHref({ metric: m.key, r: range as ChartRange })} />} action={{ label: tr("trends.TrendsScreen.details"), href: m.href }}>
               <RangedTrendChart key={m.key} range={range} label={m.label} unit={m.unit} format={m.format} colorBy={m.colorBy} direction={m.direction} data={shaped.data} deltas={shaped.deltas} />
             </SectionShell>
-            <SectionShell variant="card" title="Averages">
+            <SectionShell variant="card" title={tr("cardInfo.title.averages")}>
               <Divided>
                 {vm.periods.map((p) => (
-                  <KeyStatRow key={p.range} variant="row" label={PERIOD[p.range].label} caption={`vs. ${PERIOD[p.range].prior}`} metric={p.average} unit={m.unit} format={m.format} average={p.prior} averageLabel={PERIOD[p.range].prior} direction={m.direction} />
+                  <KeyStatRow key={p.range} variant="row" label={PERIOD[p.range].label} caption={tr("metric.RangeStats.vs", { v0: PERIOD[p.range].prior })} metric={p.average} unit={m.unit} format={m.format} average={p.prior} averageLabel={PERIOD[p.range].prior} direction={m.direction} />
                 ))}
               </Divided>
             </SectionShell>
@@ -63,10 +66,11 @@ export default function TrendsScreen() {
 
 /** Trends: the real picker, the chart card with its plot and toggle, the Averages rows with their labels (spec §5.19). */
 function Loading({ current, r }: { current: TrendMetric["key"]; r?: string }) {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Trends"
+      title={tr("more.MoreScreen.trends")}
       primary={<LoadingBody current={current} r={r} />}
       bodySkeleton={<LoadingBody current={current} r={r} />}
     />
@@ -75,6 +79,7 @@ function Loading({ current, r }: { current: TrendMetric["key"]; r?: string }) {
 
 /** The loading state's page: also what a cold push shows below the header while it slides in. */
 function LoadingBody({ current, r }: { current: TrendMetric["key"]; r?: string }) {
+  useLanguage();
   return (
     <View accessibilityElementsHidden className="gap-4">
       <MetricPicker current={current} r={r} />
@@ -82,7 +87,7 @@ function LoadingBody({ current, r }: { current: TrendMetric["key"]; r?: string }
         <SectionShell variant="card" title={" "} aside={<SkeletonText className="w-20" />}>
           <TrendChartSkeleton chip ranges={RANGES} />
         </SectionShell>
-        <SectionShell variant="card" title="Averages">
+        <SectionShell variant="card" title={tr("cardInfo.title.averages")}>
           <Divided>
             {RANGES.map((x) => (
               <KeyStatRowSkeleton key={x} variant="row" label={PERIOD[x].label} />

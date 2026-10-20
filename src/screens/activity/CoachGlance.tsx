@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // activity-01's coach pill: "Analyzing…" while the coach reads the workout, then its one-line take; tapping opens the
 // coach with a question about this workout. Pinned over the page's foot, clear of the round action. One request per
 // workout per app session (kept in memory, as the web keeps it in sessionStorage); a failure hides the pill. Ported
@@ -22,6 +24,7 @@ const session = new Map<string, string>()
 
 /** Pulse's mark in an indigo ring, as the coach's own empty state draws it. */
 function CoachGlyph() {
+  useLanguage();
   const { c } = useTheme()
   return (
     <View accessibilityElementsHidden className="size-7 shrink-0 overflow-hidden rounded-full p-px">
@@ -33,24 +36,27 @@ function CoachGlyph() {
   )
 }
 
-type State = { text: string | null; failed: boolean }
+type State = { key: string; text: string | null; failed: boolean }
 
 export function CoachGlance({ id, question }: { id: string; question: string }) {
-  const [s, setS] = useState<State>({ text: session.get(id) ?? null, failed: false })
+  const locale = useLanguage();
+  const key = `${locale}:${id}`;
+  const [state, setS] = useState<State>({ key, text: session.get(key) ?? null, failed: false });
+  const s = state.key === key ? state : { key, text: session.get(key) ?? null, failed: false };
   useEffect(() => {
-    if (session.has(id)) return // already in the initial state
+    if (session.has(key)) return // already in the initial state
     let live = true
     deviceWorkoutGlance(id).then(
       (text) => {
-        session.set(id, text)
-        if (live) setS({ text, failed: false })
+        session.set(key, text)
+        if (live) setS({ key, text, failed: false })
       },
-      () => live && setS({ text: null, failed: true }),
+      () => live && setS({ key, text: null, failed: true }),
     )
     return () => {
       live = false
     }
-  }, [id])
+  }, [id, key])
   const inset = useSafeAreaInsets().bottom
   if (s.failed) return null
   return (
@@ -59,13 +65,13 @@ export function CoachGlance({ id, question }: { id: string; question: string }) 
       <Press
         activeScale={0.98}
         accessibilityRole="link"
-        accessibilityLabel={s.text ? `Coach: ${s.text} Ask the coach about this workout.` : "Coach is analyzing this workout. Ask the coach about it."}
+        accessibilityLabel={s.text ? tr("activity.CoachGlance.coachAskTheCoachAboutThisWorkout", { v0: s.text }) : tr("activity.CoachGlance.coachIsAnalyzingThisWorkoutAskThe")}
         onPress={() => push(`/coach?q=${encodeURIComponent(question)}`)}
       >
         <Glass radius={RADIUS["4xl"]} className="min-h-14 flex-row items-center gap-3 py-2 pl-2 pr-3">
           <CoachGlyph />
           <Text accessibilityElementsHidden className={cn("min-w-0 flex-1 text-[15px] font-medium leading-5", s.text ? "text-foreground" : "animate-pulse text-foreground-secondary")} numberOfLines={s.text ? 2 : undefined}>
-            {s.text ?? "Analyzing…"}
+            {s.text ?? tr("coach.analyzing")}
           </Text>
           <Icon icon={ChevronUp} size={20} tone="foreground-secondary" strokeWidth={2} />
         </Glass>

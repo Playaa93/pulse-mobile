@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { Easing } from "react-native";
 import { Tabs } from "expo-router";
 import { TabBar } from "@/ui/shells/TabBar";
@@ -7,6 +9,7 @@ import { useTheme } from "@/ui/theme";
 // the round check-in action (src/ui/shells/TabBar.tsx), the same on iOS and Android; Expo Router's <Tabs> supplies the
 // navigation state and keeps each tab's screen alive.
 export default function TabsLayout() {
+  useLanguage();
   const { c } = useTheme();
   // `sceneStyle`: the ground behind a tab while it switches, not the navigation theme's default. `shift`: the tabs
   // cross-fade and move 50 px toward the tapped side (native driver), over the spec's base duration and standard ease.
@@ -20,10 +23,10 @@ export default function TabsLayout() {
         transitionSpec: { animation: "timing", config: { duration: 200, easing: Easing.bezier(0.2, 0, 0, 1) } },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="health" options={{ title: "Health" }} />
-      <Tabs.Screen name="journal" options={{ title: "Journal" }} />
-      <Tabs.Screen name="more" options={{ title: "More" }} />
+      <Tabs.Screen name="index" options={{ title: tr("ui.shells.TabBar.home") }} />
+      <Tabs.Screen name="health" options={{ title: tr("ui.shells.TabBar.health") }} />
+      <Tabs.Screen name="journal" options={{ title: tr("ui.shells.TabBar.journal") }} />
+      <Tabs.Screen name="more" options={{ title: tr("ui.shells.TabBar.more") }} />
     </Tabs>
   );
 }

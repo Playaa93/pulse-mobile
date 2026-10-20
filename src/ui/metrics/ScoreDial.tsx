@@ -1,9 +1,11 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { View } from "react-native";
 
 import Svg, { Defs, LinearGradient, Path, Polygon, RadialGradient, Stop } from "react-native-svg";
 import { ChevronRight } from "lucide-react-native";
 import { BAND_WORD, DATA_COLORS, dialColor, recoveryBand, STRESS_COLOR, STRESS_WORD, stressLevel, type DataColor } from "@/lib/bands";
-import { dialAriaLabel, formatValue, type FormatKey } from "@/lib/format";
+import { displayUnit, dialAriaLabel, formatValue, type FormatKey } from "@/lib/format";
 import { reasonCopy, type MetricTag, type ReasonCode } from "@/lib/reasons";
 import { Wordmark } from "../brand";
 import { arcPath, polar } from "../charts/geometry";
@@ -94,7 +96,7 @@ function resolve(p: ScoreDialProps): Resolved {
       // Strain is a percent: the ring is full at 100 and stays full above it; the label keeps the real value.
       return { label: p.label ?? "Strain", max: 100, color: DATA_COLORS[dialColor("strain", p.value ?? 0)].css, unit: "%", text: formatValue("int", p.value) };
     case "sleep":
-      return { label: p.label ?? (lg ? "Sleep performance" : "Sleep"), max: 100, color: DATA_COLORS[dialColor("sleep", p.value ?? 0)].css, unit: "%", text: formatValue("int", p.value) };
+      return { label: p.label ?? (lg ? tr("lib.dashboard.sleepPerformance") : tr("ui.shells.HomeHeader.sleep")), max: 100, color: DATA_COLORS[dialColor("sleep", p.value ?? 0)].css, unit: "%", text: formatValue("int", p.value) };
     case "gauge": {
       const level = p.value === null ? null : stressLevel(p.value);
       return {
@@ -112,6 +114,7 @@ function resolve(p: ScoreDialProps): Resolved {
 
 /** The reference app's ring (spec §5.1): a track, a fill arc, the Strain Target band and tick, or the stress gauge; the centre text over it. */
 export function ScoreDial(props: ScoreDialProps) {
+  useLanguage();
   const { variant, size, value, href, loading, compact } = props;
   const { c, css } = useTheme();
   const r = resolve(props);
@@ -224,7 +227,7 @@ export function ScoreDial(props: ScoreDialProps) {
             style={{ fontSize: valueSize, ...capTrim(valueSize, "numeric"), letterSpacing: s.tracking * valueSize }}
           >
             {r.text}
-            {r.unit && !empty && <Text style={{ fontSize: valueSize * 0.55 }}>{r.unit}</Text>}
+            {r.unit && !empty && <Text style={{ fontSize: valueSize * 0.55 }}>{displayUnit(r.unit)}</Text>}
           </Text>
         )}
         {gauge && !compact && r.word && <Text className={cn(DIAL_LABEL, r.word.className)} style={{ ...LABEL_TRIM, marginTop: 8 * cqi + LABEL_TRIM.marginTop }}>{r.word.text}</Text>}
@@ -278,7 +281,7 @@ export function ScoreDial(props: ScoreDialProps) {
       <Press
         activeScale={0.96}
         accessibilityRole="link"
-        accessibilityLabel={`${aria}. Open ${r.label} details`}
+        accessibilityLabel={tr("ui.metrics.ScoreDial.openDetails", { v0: aria, v1: r.label })}
         onPress={() => push(href)}
         className="min-w-24 items-center gap-1 rounded-xl p-1"
       >
@@ -290,6 +293,7 @@ export function ScoreDial(props: ScoreDialProps) {
 }
 
 function ReasonCentre({ code, text, cqi }: { code: ReasonCode; text: string; cqi: number }) {
+  useLanguage();
   const glyph = REASON_ICON[code];
   return (
     <View className="items-center gap-2">
@@ -306,6 +310,7 @@ function ReasonCentre({ code, text, cqi }: { code: ReasonCode; text: string; cqi
  * so the swap moves nothing.
  */
 export function ScoreDialSkeleton({ size, variant = "stat", label }: { size: DialSize; variant?: DialVariant; label?: string }) {
+  useLanguage();
   return (
     <View accessibilityElementsHidden>
       <ScoreDial variant={variant} size={size} value={null} label={label} loading />

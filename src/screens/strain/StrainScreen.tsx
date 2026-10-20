@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Strain `/strain?d=` (spec §7.3): the ring with Strain Target, today against the prior 30 days, heart rate, zones,
 // activities and trends. Ported from pulse src/app/(app)/strain/{page,loading}.tsx.
 import { View } from "react-native"
@@ -52,6 +54,7 @@ export const strainKey = (raw?: string) => ["strain", raw || null] as const
 const dayZones = (m: StrainVM["zones"]) => ({ ...m, value: m.value?.map(({ typical: _typical, ...z }) => z) ?? null })
 
 export function StrainScreen() {
+  useLanguage();
   const { d: raw } = useLocalSearchParams<{ d?: string }>()
   const { data, error, reload } = useScreen(strainQuery(raw), strainKey(raw))
 
@@ -62,8 +65,8 @@ export function StrainScreen() {
 
   return (
     <DetailShell
-      title="Strain"
-      bodySkeleton={BODY_SKELETON}
+      title={tr("ui.shells.HomeHeader.strain")}
+      bodySkeleton={renderBodySkeleton()}
       info={STRAIN_INFO}
       dateSwitcher={{ mode: "day", placement: "header", steppers: false }}
       notch
@@ -76,22 +79,22 @@ export function StrainScreen() {
               <KeyStatRow key={k.key} variant="row" {...statProps(k, { d, today })} />
             ))}
           </Divided>
-          <TodayVsLegend period="prior 30 days" />
+          <TodayVsLegend period={tr("strain.StrainScreen.prior30Days")} />
         </Card>
       }
-      insight={vm.coach ? <InsightCard body={vm.coach} action={{ label: "Explore your strain insights", href: trendHref("strain", { d, today }) }} /> : null}
+      insight={vm.coach ? <InsightCard body={vm.coach} action={{ label: tr("strain.StrainScreen.exploreYourStrainInsights"), href: trendHref("strain", { d, today }) }} /> : null}
       // The day's goals and the weekly plan lead, as halo's Activity tab has them (spec §11).
       primary={<GoalsCard day={d} isToday={vm.isToday} />}
       secondary={[
         <WeeklyPlanCard key="plan" day={d} />,
         <TrainingSection key="training" d={d} timeZone={timeZone} />,
-        <SectionShell key="hr" variant="card" title="Heart rate" action={{ label: "Explore", href: chartHref({ metric: "strain", r: "day", d }) }}>
+        <SectionShell key="hr" variant="card" title={tr("queries.chart.heartRate")} action={{ label: tr("metric.MetricScreen.explore"), href: chartHref({ metric: "strain", r: "day", d }) }}>
           <IntradayHrChart data={hrSeries(vm.hr, vm.maxHr)} />
         </SectionShell>,
-        <SectionShell key="zones" variant="card" title="Time in zones">
-          <ZoneBars variant="rows" data={dayZones(vm.zones)} note={vm.zoneNote} emptyCopy={vm.isToday ? "No heart-rate zones yet today." : "No heart-rate zones on this day."} />
+        <SectionShell key="zones" variant="card" title={tr("activity.ActivityScreen.timeInZones")}>
+          <ZoneBars variant="rows" data={dayZones(vm.zones)} note={vm.zoneNote} emptyCopy={vm.isToday ? tr("health.HeartRateScreen.noHeartRateZonesYetToday") : tr("health.HeartRateScreen.noHeartRateZonesOnThisDay")} />
         </SectionShell>,
-        <SectionShell key="activities" variant="card" title="Activities">
+        <SectionShell key="activities" variant="card" title={tr("queries.home.activities")}>
           {vm.activities.length ? (
             <View className="gap-1.5">
               {vm.activities.map((a) => (
@@ -99,10 +102,10 @@ export function StrainScreen() {
               ))}
             </View>
           ) : (
-            <EmptyState body="No activities on this day." />
+            <EmptyState body={tr("home.HomeScreen.noActivitiesOnThisDay")} />
           )}
           {/* Strain Coach on the band's live heart rate (/workout-live), today only, as halo's activities card. */}
-          {vm.isToday && <CardButtonLink href="/workout-live" icon={Activity} label="Live workout" className="mt-3" />}
+          {vm.isToday && <CardButtonLink href="/workout-live" icon={Activity} label={tr("more.MoreScreen.liveWorkout")} className="mt-3" />}
         </SectionShell>,
       ]}
       footer={<WeeklyTrends cards={weekly} d={d} today={today} />}
@@ -112,23 +115,24 @@ export function StrainScreen() {
 
 /** "Strain Target 40 - 60%": a range, so it is drawn beside the KeyStatRows rather than as one (no arrow). */
 function TargetRow({ vm }: { vm: StrainVM }) {
+  useLanguage();
   const t = vm.target
   const text = t.value ? `${formatValue("int", t.value.low)} - ${formatValue("pct", t.value.high)}` : "--"
   const reason = t.value ? null : reasonCopy(t.reason, t.nightsLeft).short
   return (
-    <View accessible accessibilityLabel={reason ? `Strain Target: ${reason}` : `Strain Target ${text.replace(" - ", " to ")}`} className="min-h-[52px] flex-row items-center gap-3 py-2">
+    <View accessible accessibilityLabel={reason ? tr("strain.StrainScreen.strainTarget", { v0: reason }) : tr("strain.StrainScreen.strainTarget_074e0d", { v0: text.replace(" - ", tr("strain.StrainScreen.to")) })} className="min-h-[52px] flex-row items-center gap-3 py-2">
       <View className="size-5 shrink-0 items-center justify-center">
         <Icon icon={Flame} size={20} tone="muted-foreground" />
       </View>
       <View className="min-w-0 flex-1">
-        <Text className={LABEL}>Strain Target</Text>
+        <Text className={LABEL}>{tr("info.strainTarget")}</Text>
         {reason && (
           <Text className={cn(CAPTION, "mt-0.5")} numberOfLines={1}>
             {reason}
           </Text>
         )}
       </View>
-      <InfoButton info={STRAIN_TARGET_INFO} label="Strain Target" variant="card" />
+      <InfoButton info={STRAIN_TARGET_INFO} label={tr("info.strainTarget")} variant="card" />
       {/* Same columns as KeyStatRow's value + arrow, so the values right-align down the card. */}
       <View className="shrink-0 flex-row gap-2">
         <Text className={cn("font-numeric text-xl font-bold leading-6 tabular-nums", reason && "text-muted-foreground")}>{text}</Text>
@@ -140,22 +144,22 @@ function TargetRow({ vm }: { vm: StrainVM }) {
   )
 }
 
-const LOADING_PRIMARY = (
-  <SectionShell variant="card" title="Heart rate">
+const renderLoadingPrimary = () => (
+  <SectionShell variant="card" title={tr("queries.chart.heartRate")}>
     <View accessibilityElementsHidden>
       <IntradayHrChartSkeleton />
     </View>
   </SectionShell>
 )
 
-const LOADING_SECONDARY = [
-  <SectionShell key="zones" variant="card" title="Time in zones">
+const renderLoadingSecondary = () => [
+  <SectionShell key="zones" variant="card" title={tr("activity.ActivityScreen.timeInZones")}>
     <View accessibilityElementsHidden>
       <ZoneBarsSkeleton variant="rows" />
       <SkeletonText className="mt-3 w-56" />
     </View>
   </SectionShell>,
-  <SectionShell key="activities" variant="card" title="Activities">
+  <SectionShell key="activities" variant="card" title={tr("queries.home.activities")}>
     <View accessibilityElementsHidden>
       <TimelineSkeleton rows={1} />
     </View>
@@ -163,25 +167,26 @@ const LOADING_SECONDARY = [
 ]
 
 /** Below the fold while a cold push slides in: the loading state's first sections. */
-const BODY_SKELETON = (
+const renderBodySkeleton = () => (
   <>
-    {LOADING_PRIMARY}
-    <View className="gap-3">{LOADING_SECONDARY.slice(0, 2)}</View>
+    {renderLoadingPrimary()}
+    <View className="gap-3">{renderLoadingSecondary().slice(0, 2)}</View>
   </>
 )
 
 /** The route's loading state (pulse's StrainSkeleton). */
 function StrainSkeleton() {
+  useLanguage();
   return (
     <DialDetailSkeleton
-      title="Strain"
+      title={tr("ui.shells.HomeHeader.strain")}
       dial="strain"
-      labels={["Strain Target", "Heart rate zones 1-3", "Heart rate zones 4-5", "Strength activity time", "Steps"]}
-      legend="Today vs. prior 30 days"
-      primary={LOADING_PRIMARY}
-      bodySkeleton={BODY_SKELETON}
-      secondary={LOADING_SECONDARY}
-      footer={<WeeklyTrendsSkeleton titles={["Strain", "HR Zones 1-3", "HR Zones 4-5", "Steps", "Calories", "Strength Activity Time"]} />}
+      labels={[tr("info.strainTarget"), tr("queries.strain.heartRateZones13"), tr("queries.health.heartRateZones45"), tr("queries.health.strengthActivityTime"), tr("health.dataCheckSummary.steps")]}
+      legend={tr("strain.legend")}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderBodySkeleton()}
+      secondary={renderLoadingSecondary()}
+      footer={<WeeklyTrendsSkeleton titles={[tr("ui.shells.HomeHeader.strain"), tr("queries.trendView.hrZones13"), tr("queries.trendView.hrZones45"), tr("health.dataCheckSummary.steps"), tr("health.dataCheckSummary.calories"), tr("queries.trendView.strengthActivityTime")]} />}
     />
   )
 }

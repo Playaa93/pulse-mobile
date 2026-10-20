@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Strain `/strain` (spec §7.3). Ported from Pulse's src/server/queries/strain.ts.
 import { ZONE_NAMES } from "@/core/scoring/zones";
 import { addDays } from "@/lib/time";
@@ -72,10 +73,10 @@ export async function getStrain(day: string, ctx: QueryCtx): Promise<StrainVM> {
   const worn = (d: string) => (rows.get(d)?.s1?.hrCount ?? 0) > 0;
   const summary: KeyStat[] = [
     // Each row leads to its own detail: the zones to the page's "Time in zones" (`#zones`), strength to its workouts.
-    { ...stat("zones13", "Heart rate zones 1-3", (d) => zoneMin(rows.get(d), 0, 3), "min"), href: "#zones" },
-    { ...stat("zones45", "Heart rate zones 4-5", (d) => zoneMin(rows.get(d), 3, 5), "min"), href: "#zones" },
-    { ...stat("strength", "Strength activity time", (d) => (worn(d) ? strengthMin(d) : null), "min"), href: "/activities?kind=strength" },
-    { ...stat("steps", "Steps", (d) => rows.get(d)?.metrics?.steps ?? null, undefined), href: metricHref("steps") },
+    { ...stat("zones13", tr("queries.strain.heartRateZones13"), (d) => zoneMin(rows.get(d), 0, 3), "min"), href: "#zones" },
+    { ...stat("zones45", tr("queries.health.heartRateZones45"), (d) => zoneMin(rows.get(d), 3, 5), "min"), href: "#zones" },
+    { ...stat("strength", tr("queries.health.strengthActivityTime"), (d) => (worn(d) ? strengthMin(d) : null), "min"), href: "/activities?kind=strength" },
+    { ...stat("steps", tr("health.dataCheckSummary.steps"), (d) => rows.get(d)?.metrics?.steps ?? null, undefined), href: metricHref("steps") },
     ...STRAIN_EXTRAS.map(extra),
   ];
 
@@ -133,14 +134,14 @@ export function coach(strain: Metric<number>, target: { low: number; high: numbe
   if (strain.value == null || !target) return null;
   const { low, high } = target;
   const range = `${Math.round(low)} - ${pct(high)}`;
-  if (row?.recovery?.value != null && row.recovery.value < 34) return `Your body needs rest today. Keep strain between ${range.replace(" - ", " and ")}.`;
+  if (row?.recovery?.value != null && row.recovery.value < 34) return tr("queries.strain.yourBodyNeedsRestTodayKeepStrain", { v0: range.replace(" - ", tr("queries.strain.and")) });
   if (strain.value < low) {
     // ponytail: about 1.7 minutes of moderate activity per strain percent near the target; a rough guide, not a model.
     const minutes = Math.max(10, Math.round(((low - strain.value) * 1.7) / 5) * 5);
-    return `Your target today is ${range}. You are at ${pct(strain.value)}, so about ${minutes} minutes of moderate activity would put you in range.`;
+    return tr("queries.strain.yourTargetTodayIsYouAreAt", { v0: range, v1: pct(strain.value), v2: minutes });
   }
-  if (strain.value <= high) return `You are inside today’s target of ${range}. More strain from here adds load faster than benefit.`;
-  return "You are past today’s target. Prioritise sleep tonight to recover.";
+  if (strain.value <= high) return tr("queries.strain.youAreInsideTodaySTargetOf", { v0: range });
+  return tr("queries.strain.youArePastTodaySTargetPrioritise");
 }
 
 /**
@@ -152,14 +153,14 @@ export const zoneBounds = (lower: number[]): ZoneRow[] =>
 
 /** How the day's zones are set, under the zone rows. */
 export const zoneNote = (row: DayRow | undefined, ctx: QueryCtx) =>
-  `Zones on % of your max heart rate (${row?.s1?.maxHr ?? maxHrOf(ctx)} bpm): zone 1 from 50%, zone 5 from 90%.`;
+  tr("queries.strain.zonesOnOfYourMaxHeartRate", { v0: row?.s1?.maxHr ?? maxHrOf(ctx) });
 
 export function zoneRows(row: DayRow | undefined, seconds = row?.s1?.zoneSeconds, below = row?.s1?.zoneBelowSeconds): Metric<ZoneRow[]> {
   const s1 = row?.s1;
   if (!s1 || s1.hrCount === 0 || !seconds) return none(hrReason(s1 ?? null));
   const rows = zoneBounds(s1.zoneLower).map((z, i) => ({ ...z, seconds: Math.round(seconds[i]) }));
   // Zone 0: time under Zone 1, from the Zone 1 floor. Days stored before it was kept have no such row.
-  if (below != null) rows.push({ zone: 0, label: "Zone 0", min: 0, max: rows[0].min - 1, seconds: Math.round(below) });
+  if (below != null) rows.push({ zone: 0, label: tr("queries.strain.zone0"), min: 0, max: rows[0].min - 1, seconds: Math.round(below) });
   return ok(rows);
 }
 

@@ -1,7 +1,9 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { Group, RoundedRect } from "@shopify/react-native-skia";
 import { DATA_COLORS } from "@/lib/bands";
-import { formatValue, type FormatKey } from "@/lib/format";
+import { displayUnit, formatValue, type FormatKey } from "@/lib/format";
 import { alpha } from "../color";
 import { Skeleton } from "../Skeleton";
 import { useTheme } from "../theme";
@@ -39,11 +41,12 @@ const MAX_BAR = 28;
  * Columns with `highlight` take the data colour; when none is highlighted every column does. Tap or drag to read one.
  */
 export function ColumnChart({ summary, data, format, unit, tickEvery = 1, reference }: ColumnChartProps) {
+  useLanguage();
   const { css, c } = useTheme();
   const [x, setX] = useState<number | null>(null);
   const ON = css(DATA_COLORS["chart-5"].css);
   const any = data.some((d) => d.highlight);
-  const unitText = unit ? (unit === "%" ? "%" : ` ${unit}`) : "";
+  const unitText = unit ? (unit === "%" ? "%" : ` ${displayUnit(unit)}`) : "";
   const margin = { top: 8, right: labelGutter([reference?.label], 12), bottom: 0, left: 12 };
   return (
     <ChartFigure summary={summary} height={HEIGHT}>
@@ -86,7 +89,7 @@ export function ColumnChart({ summary, data, format, unit, tickEvery = 1, refere
             <ScrubTick index={active} />
             {a && (
               <TooltipCard x={centers[active]} width={width} title={a.title ?? a.label}>
-                <TooltipLine color={!any || a.highlight ? ON : c["dial-track"]}>{a.value === null ? "No data" : `${formatValue(format, a.value)}${unitText}`}</TooltipLine>
+                <TooltipLine color={!any || a.highlight ? ON : c["dial-track"]}>{a.value === null ? tr("lib.reasons.noData") : `${formatValue(format, a.value)}${unitText}`}</TooltipLine>
               </TooltipCard>
             )}
           </>
@@ -97,6 +100,7 @@ export function ColumnChart({ summary, data, format, unit, tickEvery = 1, refere
 }
 
 export function ColumnChartSkeleton() {
+  useLanguage();
   return <Skeleton className="h-44 rounded-lg bg-skeleton" />;
 }
 ColumnChart.Skeleton = ColumnChartSkeleton;

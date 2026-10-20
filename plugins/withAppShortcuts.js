@@ -8,11 +8,10 @@ const { AndroidConfig, withAndroidManifest, withDangerousMod } = require("expo/c
 
 // The PWA's shortcut glyphs (pulse scripts/shortcuts/*.svg, lucide icons) in its deep brand tones: Android draws them
 // on the launcher's own grey disc, where the bright brand colours all but vanish (pulse scripts/gen-pwa-assets.py).
+const STRINGS = { en: require("../src/i18n/locales/en.json"), fr: require("../src/i18n/locales/fr.json") };
 const SHORTCUTS = [
   {
     id: "checkin",
-    short: "Check in",
-    long: "Check in",
     color: "#101518",
     paths: [
       "M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4",
@@ -25,8 +24,6 @@ const SHORTCUTS = [
   },
   {
     id: "recovery",
-    short: "Recovery",
-    long: "Today’s recovery",
     color: "#00643E",
     paths: [
       "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5",
@@ -35,8 +32,6 @@ const SHORTCUTS = [
   },
   {
     id: "sleep",
-    short: "Sleep",
-    long: "Last night’s sleep",
     color: "#0D47A1",
     paths: ["M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"],
   },
@@ -64,9 +59,9 @@ ${SHORTCUTS.map(
 `;
 
 // Labels must be string resources. A file of their own, so expo's strings.xml mods never meet them.
-const stringsXml = () => `<?xml version="1.0" encoding="utf-8"?>
+const stringsXml = (locale = "en") => `<?xml version="1.0" encoding="utf-8"?>
 <resources>
-${SHORTCUTS.map((s) => `  <string name="shortcut_${s.id}_short">${esc(s.short)}</string>\n  <string name="shortcut_${s.id}_long">${esc(s.long)}</string>`).join("\n")}
+${SHORTCUTS.map((s) => `  <string name="shortcut_${s.id}_short">${esc(STRINGS[locale][`native.shortcut.${s.id}.short`])}</string>\n  <string name="shortcut_${s.id}_long">${esc(STRINGS[locale][`native.shortcut.${s.id}.long`])}</string>`).join("\n")}
 </resources>
 `;
 
@@ -93,6 +88,7 @@ const withShortcutFiles = (config) =>
       };
       write("xml/shortcuts.xml", shortcutsXml(pkg));
       write("values/strings_shortcuts.xml", stringsXml());
+      write("values-fr/strings_shortcuts.xml", stringsXml("fr"));
       for (const s of SHORTCUTS) write(`drawable/shortcut_${s.id}.xml`, drawable(s));
       return c;
     },

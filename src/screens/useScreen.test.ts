@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { keepEqual } from "./keepEqual";
+import { language, setLanguage } from "@/i18n";
 
 let version = 0;
 vi.mock("expo-router", () => ({ router: {} }));
@@ -72,5 +73,27 @@ describe("the screen cache", () => {
     const query = async () => ({ n: ++n });
     await Promise.all([prefetch(query, ["joined"]), prefetch(query, ["joined"])]);
     expect(n).toBe(1);
+  });
+
+  it("reloads translated results on language changes and discards an old language's pending result", async () => {
+    const first = gate();
+    const calls: string[] = [];
+    const query = async () => {
+      const lang = language();
+      calls.push(lang);
+      if (calls.length === 1) await first.wait;
+      return { label: lang };
+    };
+    const old = prefetch(query, ["language"]);
+    await Promise.resolve();
+    setLanguage("fr");
+    await prefetch(query, ["language"]);
+    first.open();
+    await old;
+    await prefetch(query, ["language"]);
+    expect(calls).toEqual(["en", "fr"]);
+    setLanguage("en");
+    await prefetch(query, ["language"]);
+    expect(calls).toEqual(["en", "fr", "en"]);
   });
 });

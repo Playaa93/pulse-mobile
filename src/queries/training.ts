@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Garmin-style training answers (version 19): Training Readiness, Recovery Time and Training Status for the Activity tab,
 // each workout's Training Effect for its Activity screen, and HRV Status for the Health tab. Each is Halo's own
 // implementation of Garmin's published method (src/core/algorithms: trainingReadiness.ts, trainingEffect.ts,
@@ -15,34 +16,34 @@ import type { TimePoint } from "./types";
 
 // ── Words ────────────────────────────────────────────────────────────────────
 
-export const READINESS_WORD: Record<ReadinessBand, string> = { prime: "Prime", high: "High", moderate: "Moderate", low: "Low", poor: "Poor" };
+export const READINESS_WORD: Record<ReadinessBand, string> = { get prime() { return tr("more.howItWorksContent.prime"); }, get high() { return tr("more.howItWorksContent.high"); }, get moderate() { return tr("queries.training.moderate"); }, get low() { return tr("health.StressScreen.low"); }, get poor() { return tr("queries.training.poor"); } };
 export const READINESS_TONE: Record<ReadinessBand, ChipTone> = { prime: "optimal", high: "optimal", moderate: "neutral", low: "warning", poor: "alert" };
 export const FACTOR_LABEL: Record<ReadinessFactorKey, string> = {
-  sleep: "Last night’s sleep",
-  recoveryTime: "Recovery time",
-  hrv: "HRV status",
-  load: "Load ratio",
-  sleepHistory: "Sleep, last 3 nights",
-  stressHistory: "Stress, last 3 days",
+  get sleep() { return tr("queries.home.lastNightSSleep"); },
+  get recoveryTime() { return tr("queries.training.recoveryTime"); },
+  get hrv() { return tr("queries.training.hrvStatus"); },
+  get load() { return tr("queries.training.loadRatio"); },
+  get sleepHistory() { return tr("queries.training.sleepLast3Nights"); },
+  get stressHistory() { return tr("queries.training.stressLast3Days"); },
 };
 const LIMIT_LINE: Record<ReadinessFactorKey, string> = {
-  sleep: "Last night’s sleep is holding it back.",
-  recoveryTime: "Your body is still recovering from recent training.",
-  hrv: "Your HRV is off your usual range.",
-  load: "Your recent load is high for you.",
-  sleepHistory: "Your sleep over the last few nights is holding it back.",
-  stressHistory: "Stress over the last few days is holding it back.",
+  get sleep() { return tr("queries.training.lastNightSSleepIsHoldingIt"); },
+  get recoveryTime() { return tr("queries.training.yourBodyIsStillRecoveringFromRecent"); },
+  get hrv() { return tr("queries.training.yourHrvIsOffYourUsualRange"); },
+  get load() { return tr("queries.training.yourRecentLoadIsHighForYou"); },
+  get sleepHistory() { return tr("queries.training.yourSleepOverTheLastFewNights"); },
+  get stressHistory() { return tr("queries.training.stressOverTheLastFewDaysIs"); },
 };
 
 export const STATUS_WORD: Record<TrainingStatusKind, string> = {
-  productive: "Productive",
-  maintaining: "Maintaining",
-  recovery: "Recovery",
-  peaking: "Peaking",
-  unproductive: "Unproductive",
-  overreaching: "Overreaching",
-  strained: "Strained",
-  detraining: "Detraining",
+  get productive() { return tr("queries.training.productive"); },
+  get maintaining() { return tr("more.howItWorksContent.maintaining"); },
+  get recovery() { return tr("ui.shells.HomeHeader.recovery"); },
+  get peaking() { return tr("queries.training.peaking"); },
+  get unproductive() { return tr("queries.training.unproductive"); },
+  get overreaching() { return tr("more.howItWorksContent.overreaching"); },
+  get strained() { return tr("queries.training.strained"); },
+  get detraining() { return tr("health.FitnessScreen.detraining"); },
 };
 export const STATUS_TONE: Record<TrainingStatusKind, ChipTone> = {
   productive: "optimal",
@@ -55,23 +56,23 @@ export const STATUS_TONE: Record<TrainingStatusKind, ChipTone> = {
   overreaching: "alert",
 };
 const STATUS_LINE: Record<TrainingStatusKind, string> = {
-  productive: "Your training is building fitness.",
-  maintaining: "Your training keeps your fitness where it is; more load would build it.",
-  recovery: "A lighter stretch lets your body recover, ready for harder work.",
-  peaking: "Fitness is up while load eases: good timing for a race or a test.",
-  unproductive: "Load is steady but fitness is slipping. Check your sleep, stress and recovery.",
-  overreaching: "Load is very high and is starting to cost you. Ease off.",
-  strained: "Your HRV is low under this load: your body is struggling to recover.",
-  detraining: "Training is well below your usual, so fitness will slowly fall.",
+  get productive() { return tr("queries.training.yourTrainingIsBuildingFitness"); },
+  get maintaining() { return tr("queries.training.yourTrainingKeepsYourFitnessWhereIt"); },
+  get recovery() { return tr("queries.training.aLighterStretchLetsYourBodyRecover"); },
+  get peaking() { return tr("queries.training.fitnessIsUpWhileLoadEasesGood"); },
+  get unproductive() { return tr("queries.training.loadIsSteadyButFitnessIsSlipping"); },
+  get overreaching() { return tr("queries.training.loadIsVeryHighAndIsStarting"); },
+  get strained() { return tr("queries.training.yourHrvIsLowUnderThisLoad"); },
+  get detraining() { return tr("queries.training.trainingIsWellBelowYourUsualSo"); },
 };
 
 export const TE_WORD: Record<TeLabel, string> = {
-  no_benefit: "No benefit",
-  minor: "Minor",
-  maintaining: "Maintaining",
-  improving: "Improving",
-  highly_improving: "Highly improving",
-  overreaching: "Overreaching",
+  get no_benefit() { return tr("more.howItWorksContent.noBenefit"); },
+  get minor() { return tr("more.howItWorksContent.minor"); },
+  get maintaining() { return tr("more.howItWorksContent.maintaining"); },
+  get improving() { return tr("more.howItWorksContent.improving"); },
+  get highly_improving() { return tr("more.howItWorksContent.highlyImproving"); },
+  get overreaching() { return tr("more.howItWorksContent.overreaching"); },
 };
 export const TE_TONE: Record<TeLabel, ChipTone> = {
   no_benefit: "neutral",
@@ -81,16 +82,16 @@ export const TE_TONE: Record<TeLabel, ChipTone> = {
   highly_improving: "optimal",
   overreaching: "warning",
 };
-export const BENEFIT_WORD: Record<PrimaryBenefit, string> = { recovery: "Recovery", base: "Base", tempo: "Tempo", threshold: "Threshold", vo2max: "VO2 max" };
+export const BENEFIT_WORD: Record<PrimaryBenefit, string> = { get recovery() { return tr("ui.shells.HomeHeader.recovery"); }, get base() { return tr("queries.training.base"); }, get tempo() { return tr("queries.training.tempo"); }, get threshold() { return tr("queries.training.threshold"); }, get vo2max() { return tr("health.dataCheckSummary.vo2Max"); } };
 const BENEFIT_LINE: Record<PrimaryBenefit, string> = {
-  recovery: "Light work that helps you recover.",
-  base: "Steady aerobic work that builds your base.",
-  tempo: "Harder aerobic work that lifts your endurance.",
-  threshold: "Sustained hard work that raises the pace you can hold.",
-  vo2max: "Hard efforts that raise your aerobic ceiling.",
+  get recovery() { return tr("queries.training.lightWorkThatHelpsYouRecover"); },
+  get base() { return tr("queries.training.steadyAerobicWorkThatBuildsYourBase"); },
+  get tempo() { return tr("queries.training.harderAerobicWorkThatLiftsYourEndurance"); },
+  get threshold() { return tr("queries.training.sustainedHardWorkThatRaisesThePace"); },
+  get vo2max() { return tr("queries.training.hardEffortsThatRaiseYourAerobicCeiling"); },
 };
 
-export const HRV_WORD = { balanced: "Balanced", unbalanced: "Unbalanced", low: "Low" } as const;
+export const HRV_WORD = { get balanced() { return tr("queries.reports.balanced"); }, get unbalanced() { return tr("more.howItWorksContent.unbalanced"); }, get low() { return tr("health.StressScreen.low"); } } as const;
 export const HRV_TONE = { balanced: "optimal", unbalanced: "warning", low: "alert" } as const satisfies Record<keyof typeof HRV_WORD, ChipTone>;
 
 // ── View models ──────────────────────────────────────────────────────────────
@@ -173,7 +174,7 @@ export function readinessVM(t: TrainingRow | null, isToday: boolean): Metric<Tra
     band: READINESS_WORD[r.band],
     tone: READINESS_TONE[r.band],
     atWake: r.atWake?.score ?? null,
-    line: r.limiting ? LIMIT_LINE[r.limiting] : r.longDay ? "A very long day awake before last night holds it back." : "Everything that feeds it is in good shape.",
+    line: r.limiting ? LIMIT_LINE[r.limiting] : r.longDay ? tr("queries.training.aVeryLongDayAwakeBeforeLast") : tr("queries.training.everythingThatFeedsItIsInGood"),
     factors: (Object.keys(FACTOR_LABEL) as ReadinessFactorKey[]).map((key) => ({ key, label: FACTOR_LABEL[key], value: r.factors[key] == null ? null : Math.round(r.factors[key]!) })),
   });
 }
@@ -215,12 +216,12 @@ export async function getHrvStatus(day: string, ctx: QueryCtx): Promise<Metric<H
   const nights = [...rows.values()].map((r) => ({ t: ms(Date.parse(`${r.day}T12:00:00Z`) / 1000), v: r.recovery?.inputs.hrv ?? r.metrics?.hrvMs ?? null }));
   const line =
     h.status === "balanced"
-      ? "Your 7-day average sits in your usual range."
+      ? tr("queries.training.your7DayAverageSitsInYour")
       : h.status === "low"
-        ? "Your 7-day average is well below your usual range: often a sign of strain, illness or poor sleep."
+        ? tr("queries.training.your7DayAverageIsWellBelow")
         : h.direction === "high"
-          ? "Your 7-day average is above your usual range."
-          : "Your 7-day average is a little below your usual range.";
+          ? tr("queries.training.your7DayAverageIsAboveYour")
+          : tr("queries.training.your7DayAverageIsALittle");
   return ok({
     status: HRV_WORD[h.status],
     tone: HRV_TONE[h.status],

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Barlow (numerals) and Figtree (words) as Skia fonts for the chart explorer, whose axes and readout are drawn on the
 // UI thread inside the canvas (our other charts lay RN <Text> over theirs; a chart that pans every frame can't). From
 // halo src/ui/components/ChartFrame.tsx's typeface loader: the same TTFs expo-font registers, read once.
@@ -26,7 +27,7 @@ function loadFaces(): Promise<void> {
   if (!pending)
     pending = Promise.all(KEYS.map((k) => loadData<SkTypeface>(SOURCES[k], (d) => Skia.Typeface.MakeFreeTypeFaceFromData(d))))
       .then((list) => {
-        if (list.some((t) => !t)) throw new Error("A chart typeface did not load");
+        if (list.some((t) => !t)) throw new Error(tr("chart.fonts.aChartTypefaceDidNotLoad"));
         faces = Object.fromEntries(KEYS.map((k, i) => [k, list[i]])) as Record<FaceKey, SkTypeface>;
         listeners.forEach((l) => l());
       })

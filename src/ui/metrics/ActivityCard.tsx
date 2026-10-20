@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { clock, formatValue, spoken } from "@/lib/format";
@@ -39,7 +41,7 @@ export type ActivityCardProps = {
 /** "5.21 km at 5:32 /km", "18.40 km", or null with no distance. */
 export function distanceText(km: number | null | undefined, paceS?: number | null) {
   if (km == null) return null;
-  return paceS == null ? `${formatValue("decimal2", km)} km` : `${formatValue("decimal2", km)} km at ${formatValue("pace", paceS)} /km`;
+  return paceS == null ? `${formatValue("decimal2", km)} km` : tr("ui.metrics.ActivityCard.kmAtKm", { v0: formatValue("decimal2", km), v1: formatValue("pace", paceS) });
 }
 
 // Rows are 10 px inside a 16 px card with a 6 px inset; the chip is 8 px inside the row (concentric, spec §2.4).
@@ -70,6 +72,7 @@ export function TimelineRow({
   end: string;
   label: string;
 }) {
+  useLanguage();
   return (
     <Press activeScale={0.96} activeBg="bg-accent" accessibilityRole="link" accessibilityLabel={label} onPress={() => push(href)} className={ROW}>
       <View className={cn(CHIP, chipClass)}>{chip}</View>
@@ -91,6 +94,7 @@ export function TimelineRow({
 }
 
 export function ActivityCard({ name, kind, strain, start, end, href, timeZone, distanceKm, paceS }: ActivityCardProps) {
+  useLanguage();
   const glyph = ACTIVITY_ICON[kind];
   const s = clock(start, timeZone);
   const e = clock(end, timeZone);
@@ -98,8 +102,8 @@ export function ActivityCard({ name, kind, strain, start, end, href, timeZone, d
   const distance = distanceText(distanceKm, paceS);
   const noStrain = strain.value === null;
   // The full reason when it is the only caption; beside a distance, the short form keeps the row on one line.
-  const caption = distance ? (noStrain ? `${distance} · No strain` : distance) : noStrain ? "No strain: not enough heart-rate data" : undefined;
-  const spokenDistance = distanceKm == null ? "" : `, ${spoken(formatValue("decimal2", distanceKm), "km")}${paceS == null ? "" : ` at ${spoken(formatValue("pace", paceS), "/km")}`}`;
+  const caption = distance ? (noStrain ? tr("ui.metrics.ActivityCard.noStrain_b379d5", { v0: distance }) : distance) : noStrain ? tr("ui.metrics.ActivityCard.noStrainNotEnoughHeartRateData") : undefined;
+  const spokenDistance = distanceKm == null ? "" : `, ${spoken(formatValue("decimal2", distanceKm), "km")}${paceS == null ? "" : tr("ui.metrics.ActivityCard.at", { v0: spoken(formatValue("pace", paceS), "/km") })}`;
   return (
     <TimelineRow
       href={href}
@@ -115,13 +119,14 @@ export function ActivityCard({ name, kind, strain, start, end, href, timeZone, d
       caption={caption}
       start={s}
       end={e}
-      label={`${name}${spokenDistance}, ${noStrain ? "no strain" : `strain ${value}`}, ${s} to ${e}`}
+      label={tr("ui.metrics.ActivityCard.to", { v0: name, v1: spokenDistance, v2: noStrain ? tr("ui.metrics.ActivityCard.noStrain") : tr("ui.metrics.ActivityCard.strain", { v0: value }), v3: s, v4: e })}
     />
   );
 }
 
 /** Two timeline rows in their real box: the row, its chip, bars for the name and times. */
 export function TimelineSkeleton({ rows = 2 }: { rows?: number }) {
+  useLanguage();
   return (
     <View accessibilityElementsHidden className="gap-1.5">
       {Array.from({ length: rows }, (_, i) => (

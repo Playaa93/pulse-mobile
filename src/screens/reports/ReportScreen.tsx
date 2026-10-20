@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Reports `/reports/[period]` (web: (app)/reports/[period]/page.tsx, loading.tsx; spec §7.13, journey 8): `YYYY-Www` or
 // `YYYY-MM`.
 import { useState } from "react";
@@ -54,8 +56,9 @@ async function load(period: string, ctx: Parameters<typeof getReport>[1], target
 
 /** Previous / next period; the next arrow is disabled at the latest period (spec §7.13). Replaces the route's period in place. */
 function PeriodSwitcher({ vm }: { vm: ReportVM }) {
+  useLanguage();
   const step = (to: string | null, dir: "prev" | "next") => {
-    const label = `${dir === "prev" ? "Previous" : "Next"} ${vm.kind}`;
+    const label = tr(vm.kind === "week" ? (dir === "prev" ? "report.previousWeek" : "report.nextWeek") : (dir === "prev" ? "report.previousMonth" : "report.nextMonth"));
     return (
       <Press activeScale={0.96} activeBg="bg-accent" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !to }} disabled={!to} onPress={() => to && (haptic.tap(), router.setParams({ period: to }))} hitSlop={4} className={cn("size-9 items-center justify-center rounded-full", !to && "opacity-40")}>
         <Icon icon={dir === "prev" ? ChevronLeft : ChevronRight} size={18} tone="foreground" strokeWidth={2} />
@@ -73,6 +76,7 @@ function PeriodSwitcher({ vm }: { vm: ReportVM }) {
 
 /** Week / Month: each goes to the latest period of its kind. */
 function KindToggle({ kind, week, month }: { kind: "week" | "month"; week: string | null; month: string | null }) {
+  useLanguage();
   const item = (k: "week" | "month", label: string, to: string | null) => (
     <Pressable
       accessibilityRole="button"
@@ -85,15 +89,16 @@ function KindToggle({ kind, week, month }: { kind: "week" | "month"; week: strin
     </Pressable>
   );
   return (
-    <View accessibilityLabel="Report period" className="flex-row gap-0.5 self-center rounded-lg bg-muted p-0.5">
-      {item("week", "Week", week)}
-      {item("month", "Month", month)}
+    <View accessibilityLabel={tr("reports.ReportScreen.reportPeriod")} className="flex-row gap-0.5 self-center rounded-lg bg-muted p-0.5">
+      {item("week", tr("reports.ReportScreen.week"), week)}
+      {item("month", tr("onboarding.BirthDatePicker.month"), month)}
     </View>
   );
 }
 
 function Dials({ vm }: { vm: ReportVM }) {
-  const word = vm.kind === "week" ? "last week" : "last month";
+  useLanguage();
+  const word = vm.kind === "week" ? tr("reports.ReportScreen.lastWeek") : tr("reports.ReportScreen.lastMonth");
   // The web's row is as wide as its columns' contents laid end to end (the hero shrinks to fit), then shares that
   // width equally (flex-1 basis-0), so a long label ("AVG RECOVERY") wraps in its column. A first pass measures the
   // natural width; the second lays the equal columns out in it. Remeasured when the dials change. Never wider than the
@@ -115,7 +120,7 @@ function Dials({ vm }: { vm: ReportVM }) {
             <ScoreDial variant={dl.key} size="md" value={dl.metric.value} reason={dl.metric.reason} label={dl.label} />
             {dl.delta !== null && (
               <Text className={cn(CAPTION, "text-center tabular-nums", tone)}>
-                {formatValue(f === "int" ? "signedInt" : "signed1", dl.delta)} vs. {word}
+                {formatValue(f === "int" ? "signedInt" : "signed1", dl.delta)} {tr("reports.ReportScreen.vs")}{word}
               </Text>
             )}
           </View>
@@ -126,6 +131,7 @@ function Dials({ vm }: { vm: ReportVM }) {
 }
 
 function Averages({ stats, word }: { stats: KeyStat[]; word: string }) {
+  useLanguage();
   return (
     <Divided>
       {stats.map((s) => {
@@ -140,7 +146,7 @@ function Averages({ stats, word }: { stats: KeyStat[]; word: string }) {
             unit={f.unit}
             format={f.format}
             average={s.average === null ? null : s.average * k}
-            averageLabel={`${word}'s average`}
+            averageLabel={tr("reports.ReportScreen.sAverage", { v0: word })}
             direction={s.direction}
           />
         );
@@ -151,27 +157,29 @@ function Averages({ stats, word }: { stats: KeyStat[]; word: string }) {
 
 /** The header's share action: the report as text through the system share sheet (halo's Report.tsx ShareButton). */
 function ShareButton({ vm }: { vm: ReportPageVM }) {
+  useLanguage();
   const share = () => {
     // The sheet's own cancel resolves; a failure to open it leaves nothing to undo.
-    Share.share({ message: reportShareText(vm) }, { dialogTitle: `Share ${vm.kind === "week" ? "weekly" : "monthly"} report` }).catch(() => {});
+    Share.share({ message: reportShareText(vm) }, { dialogTitle: tr(vm.kind === "week" ? "report.share.week" : "report.share.month") }).catch(() => {});
   };
   return (
-    <Button variant="ghost" size="icon-touch" onPress={share} accessibilityLabel={`Share this ${vm.kind}'s report`}>
+    <Button variant="ghost" size="icon-touch" onPress={share} accessibilityLabel={tr(vm.kind === "week" ? "report.share.week" : "report.share.month")}>
       <Icon icon={Share2} size={22} tone="foreground" strokeWidth={1.75} />
     </Button>
   );
 }
 
 export default function ReportScreen() {
+  useLanguage();
   const { period } = useLocalSearchParams<{ period: string }>();
   const isWeek = WEEK.test(period);
   const valid = isWeek || MONTH.test(period);
   // The assessment scores the period against the Weekly plan's targets (src/state/weeklyPlan.ts), as halo's report does.
   const { plan } = useWeeklyPlan();
   const { data, error, reload } = useScreen((ctx) => load(period, ctx, plan.targets), ["report", period, plan.targets]);
-  const title = isWeek ? "Weekly report" : "Monthly report";
+  const title = isWeek ? tr("settings.NotificationsSection.weeklyReport") : tr("reports.ReportScreen.monthlyReport");
 
-  if (!valid) return <DetailShell title="Report" primary={<EmptyState body="Page not found." />} />;
+  if (!valid) return <DetailShell title={tr("reports.ReportScreen.report")} primary={<EmptyState body={tr("reports.ReportScreen.pageNotFound")} />} />;
   if (error && !data) return <LoadError title={title} reload={reload} />;
   if (!data) return <Loading />;
 
@@ -180,15 +188,15 @@ export default function ReportScreen() {
     return (
       <DetailShell
         title={title}
-        hero={<EmptyState body={`No data for this ${isWeek ? "week" : "month"}.`} action={latest ? { label: `Latest ${isWeek ? "week" : "month"}`, href: `/reports/${latest.period}` } : undefined} />}
+        hero={<EmptyState body={tr("reports.ReportScreen.noDataForThis", { v0: isWeek ? "week" : "month" })} action={latest ? { label: tr("reports.ReportScreen.latest", { v0: isWeek ? "week" : "month" }), href: `/reports/${latest.period}` } : undefined} />}
       />
     );
 
-  const word = vm.kind === "week" ? "last week" : "last month";
+  const word = vm.kind === "week" ? tr("reports.ReportScreen.lastWeek") : tr("reports.ReportScreen.lastMonth");
   return (
     <DetailShell
       title={title}
-      bodySkeleton={BODY_SKELETON}
+      bodySkeleton={bodySkeleton()}
       action={<ShareButton vm={vm} />}
       hero={
         <View className="w-full items-center gap-5">
@@ -201,7 +209,7 @@ export default function ReportScreen() {
       }
       insight={vm.insight && <InsightCard body={vm.insight} />}
       primary={
-        <SectionShell variant="card" title="Recovery breakdown" aside={<Text className={CAPTION}>Days</Text>}>
+        <SectionShell variant="card" title={tr("cardInfo.title.recovery.breakdown")} aside={<Text className={CAPTION}>{tr("app.log.days")}</Text>}>
           <ZoneBars
             variant="stacked"
             unit="days"
@@ -211,33 +219,33 @@ export default function ReportScreen() {
         </SectionShell>
       }
       secondary={[
-        <SectionShell key="avg" variant="card" title="Averages" aside={<Text className={CAPTION}>vs. {word}</Text>}>
+        <SectionShell key="avg" variant="card" title={tr("cardInfo.title.averages")} aside={<Text className={CAPTION}>{tr("reports.ReportScreen.vs_97c08e")}{word}</Text>}>
           <Averages stats={vm.averages} word={word} />
         </SectionShell>,
-        <SectionShell key="balance" variant="card" title="Training balance">
+        <SectionShell key="balance" variant="card" title={tr("cardInfo.title.training.balance")}>
           {vm.trainingBalance.value ? (
             <View className="gap-1">
               <Text className={cn("font-numeric text-xl font-bold leading-6", BALANCE_TONE[vm.trainingBalance.value.status])}>{vm.trainingBalance.value.word}</Text>
-              <Text className={cn(CAPTION, "tabular-nums")}>Fatigue ÷ Fitness {formatValue("decimal2", vm.trainingBalance.value.acwr)}</Text>
+              <Text className={cn(CAPTION, "tabular-nums")}>{tr("reports.ReportScreen.fatigueFitness")}{formatValue("decimal2", vm.trainingBalance.value.acwr)}</Text>
               <Text className="pt-2 text-[15px] leading-[22px] text-foreground-secondary">{vm.trainingBalance.value.line}</Text>
             </View>
           ) : (
-            <EmptyState body="Not enough data for a training balance." className="py-4" />
+            <EmptyState body={tr("reports.ReportScreen.notEnoughDataForATrainingBalance")} className="py-4" />
           )}
         </SectionShell>,
-        <SectionShell key="journal" variant="card" title="Top journal effects" action={{ label: "View all", href: "/journal/insights" }}>
-          {vm.topImpacts.length ? <DriverList variant="impact" unit="%" data={{ value: vm.topImpacts.slice(0, 3), reason: null, provisional: false }} /> : <EmptyState body="No journal effects yet." className="py-4" />}
+        <SectionShell key="journal" variant="card" title={tr("cardInfo.title.top.journal.effects")} action={{ label: tr("reports.ReportScreen.viewAll"), href: "/journal/insights" }}>
+          {vm.topImpacts.length ? <DriverList variant="impact" unit="%" data={{ value: vm.topImpacts.slice(0, 3), reason: null, provisional: false }} /> : <EmptyState body={tr("reports.ReportScreen.noJournalEffectsYet")} className="py-4" />}
         </SectionShell>,
         ...(vm.bestWorst
           ? [
-              <SectionShell key="best" variant="card" title="Best and worst day">
+              <SectionShell key="best" variant="card" title={tr("cardInfo.title.best.and.worst.day")}>
                 <Divided>
                   {vm.bestWorst.map((b) => (
                     <Press
                       activeBg="bg-accent"
                       key={b.label}
                       accessibilityRole="link"
-                      accessibilityLabel={`${b.label}: ${formatDay(b.day, DAY.long)}, Recovery ${Math.round(b.recovery)} percent${b.strain === null ? "" : `, strain ${formatValue("int", b.strain)} percent`}`}
+                      accessibilityLabel={tr("reports.ReportScreen.recoveryPercent", { v0: b.label, v1: formatDay(b.day, DAY.long), v2: Math.round(b.recovery), v3: b.strain === null ? "" : tr("reports.ReportScreen.strainPercent", { v0: formatValue("int", b.strain) }) })}
                       onPress={() => push(dayHref("/", b.day, today))}
                       className="-mx-2 min-h-16 flex-row items-center gap-3 rounded-lg px-2 py-2"
                     >
@@ -249,7 +257,7 @@ export default function ReportScreen() {
                         <ScoreDial variant="recovery" size="sm" value={b.recovery} />
                         <View className="w-12 items-end">
                           <Text className="font-numeric text-xl font-bold leading-6 tabular-nums text-strain-text">{formatValue("pct", b.strain)}</Text>
-                          <Text className={CAPTION}>Strain</Text>
+                          <Text className={CAPTION}>{tr("ui.shells.HomeHeader.strain")}</Text>
                         </View>
                       </View>
                       <Icon icon={ChevronRight} size={16} tone="muted-foreground" strokeWidth={1.75} />
@@ -264,30 +272,30 @@ export default function ReportScreen() {
   );
 }
 
-const DIALS = [
-  ["sleep", "Avg sleep"],
-  ["recovery", "Avg recovery"],
-  ["strain", "Avg strain"],
+const dialLabels = () => [
+  ["sleep", tr("reports.ReportScreen.avgSleep")],
+  ["recovery", tr("reports.ReportScreen.avgRecovery")],
+  ["strain", tr("activity.ActivitiesScreen.avgStrain")],
 ] as const;
-const AVERAGES = ["Recovery", "Day strain", "Sleep performance", "Hours of sleep", "Sleep consistency", "Heart rate variability", "Resting heart rate"];
+const averageLabels = () => [tr("ui.shells.HomeHeader.recovery"), tr("lib.dashboard.dayStrain"), tr("lib.dashboard.sleepPerformance"), tr("lib.dashboard.hoursOfSleep"), tr("lib.dashboard.sleepConsistency"), tr("lib.dashboard.heartRateVariability"), tr("lib.dashboard.restingHeartRate")];
 
-const LOADING_PRIMARY = (
-  <SectionShell variant="card" title="Recovery breakdown" aside={<Text className={CAPTION}>Days</Text>}>
+const loadingPrimary = () => (
+  <SectionShell variant="card" title={tr("cardInfo.title.recovery.breakdown")} aside={<Text className={CAPTION}>{tr("app.log.days")}</Text>}>
     <ZoneBarsSkeleton variant="stacked" />
   </SectionShell>
 );
 
-const LOADING_SECONDARY = [
-  <SectionShell key="avg" variant="card" title="Averages" aside={<SkeletonText className="w-20" />}>
+const loadingSecondary = () => [
+  <SectionShell key="avg" variant="card" title={tr("cardInfo.title.averages")} aside={<SkeletonText className="w-20" />}>
     <View accessibilityElementsHidden>
       <Divided>
-        {AVERAGES.map((l) => (
+        {averageLabels().map((l) => (
           <KeyStatRowSkeleton key={l} variant="row" label={l} />
         ))}
       </Divided>
     </View>
   </SectionShell>,
-  <SectionShell key="balance" variant="card" title="Training balance">
+  <SectionShell key="balance" variant="card" title={tr("cardInfo.title.training.balance")}>
     <View accessibilityElementsHidden className="gap-1">
       <SkeletonText className="w-24" fs={20} lh={24} />
       <SkeletonText className="w-36" />
@@ -297,13 +305,13 @@ const LOADING_SECONDARY = [
       </View>
     </View>
   </SectionShell>,
-  <SectionShell key="journal" variant="card" title="Top journal effects" action={{ label: "View all", href: "/journal/insights" }}>
+  <SectionShell key="journal" variant="card" title={tr("cardInfo.title.top.journal.effects")} action={{ label: tr("reports.ReportScreen.viewAll"), href: "/journal/insights" }}>
     <DriverListSkeleton />
   </SectionShell>,
-  <SectionShell key="best" variant="card" title="Best and worst day">
+  <SectionShell key="best" variant="card" title={tr("cardInfo.title.best.and.worst.day")}>
     <View accessibilityElementsHidden>
       <Divided>
-        {["Best day", "Worst day"].map((l) => (
+        {[tr("reports.ReportScreen.bestDay"), tr("reports.ReportScreen.worstDay")].map((l) => (
           <View key={l} className="min-h-16 flex-row items-center gap-3 py-2">
             <View className="min-w-0 flex-1">
               <Text className={cn(LABEL, "text-foreground")}>{l}</Text>
@@ -312,7 +320,7 @@ const LOADING_SECONDARY = [
             <ScoreDialSkeleton variant="recovery" size="sm" />
             <View className="w-12 items-end">
               <SkeletonText className="w-9" fs={20} lh={24} />
-              <Text className={CAPTION}>Strain</Text>
+              <Text className={CAPTION}>{tr("ui.shells.HomeHeader.strain")}</Text>
             </View>
             <Icon icon={ChevronRight} size={16} tone="muted-foreground" strokeWidth={1.75} />
           </View>
@@ -323,10 +331,10 @@ const LOADING_SECONDARY = [
 ];
 
 /** Below the fold while a cold push slides in: the loading state's first sections. */
-const BODY_SKELETON = (
+const bodySkeleton = () => (
   <>
-    {LOADING_PRIMARY}
-    <View className="gap-3">{LOADING_SECONDARY.slice(0, 2)}</View>
+    {loadingPrimary()}
+    <View className="gap-3">{loadingSecondary().slice(0, 2)}</View>
   </>
 );
 
@@ -336,16 +344,17 @@ const BODY_SKELETON = (
  * the title cannot say week or month.
  */
 function Loading() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Report"
+      title={tr("reports.ReportScreen.report")}
       hero={
         <View accessibilityElementsHidden className="w-full items-center gap-5">
           <View className="items-center gap-3">
             <Skeleton className="h-9 w-[168px] rounded-full bg-secondary" />
             <View className="flex-row gap-0.5 rounded-lg bg-muted p-0.5">
-              {["Week", "Month"].map((l) => (
+              {[tr("reports.ReportScreen.week"), tr("onboarding.BirthDatePicker.month")].map((l) => (
                 <View key={l} className="h-10 min-w-11 justify-center px-3">
                   <Text className="text-[13px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{l}</Text>
                 </View>
@@ -353,7 +362,7 @@ function Loading() {
             </View>
           </View>
           <View className="w-full flex-row items-start justify-center gap-5">
-            {DIALS.map(([k, l]) => (
+            {dialLabels().map(([k, l]) => (
               <View key={k} className="min-w-0 flex-1 basis-0 items-center gap-1.5">
                 <ScoreDialSkeleton variant={k} size="md" label={l} />
                 <SkeletonText className="w-20" />
@@ -363,9 +372,9 @@ function Loading() {
         </View>
       }
       insight={<InsightCardSkeleton />}
-      primary={LOADING_PRIMARY}
-      bodySkeleton={BODY_SKELETON}
-      secondary={LOADING_SECONDARY}
+      primary={loadingPrimary()}
+      bodySkeleton={bodySkeleton()}
+      secondary={loadingSecondary()}
     />
   );
 }

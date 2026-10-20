@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ReactNode } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { X } from "lucide-react-native";
@@ -27,11 +29,12 @@ export type InfoContent = {
  * blur. A native <Modal> (fade), so the OS back gesture closes it and focus returns to the opener on its own.
  */
 export function InfoDialog({ open, onClose, title, body, icon, chip, action }: InfoContent & { open: boolean; onClose: () => void }) {
+  useLanguage();
   const { c } = useTheme();
   const panel = usePanelStyle({ ring: "popover-ring" });
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable accessibilityLabel="Close" onPress={onClose} className="flex-1 items-center justify-center bg-dim-strong px-4">
+      <Pressable accessibilityLabel={tr("common.close")} onPress={onClose} className="flex-1 items-center justify-center bg-dim-strong px-4">
         {/* The card swallows taps, so only the dim closes the dialog. */}
         <Pressable
           accessible={false}
@@ -61,7 +64,7 @@ export function InfoDialog({ open, onClose, title, body, icon, chip, action }: I
               </Button>
             )}
           </ScrollView>
-          <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} className="absolute right-3 top-3 size-11 items-center justify-center rounded-full">
+          <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel={tr("common.close")} onPress={onClose} className="absolute right-3 top-3 size-11 items-center justify-center rounded-full">
             <X size={22} color={c.foreground} strokeWidth={1.75} />
           </Press>
         </Pressable>

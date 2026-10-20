@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Weekly Trends (web: components/metrics/WeeklyTrends.tsx, spec §11 R32): the closing stack of a score screen, one card per
 // metric over the 7 days ending on the selected day, that day's column highlighted. Each card is a link with a chevron
 // into its Trend View on W. The cards come from `getWeeklyTrends` (trendView.ts), loaded with the screen's own view model.
@@ -10,9 +12,10 @@ import { SectionShell } from "@/ui/shells/SectionShell";
 import { TrendViewChart } from "./TrendViewChart";
 
 export function WeeklyTrends({ cards, d, today }: { cards: TrendViewVM[]; d: string; today: string }) {
+  useLanguage();
   if (!cards.length) return null;
   return (
-    <SectionShell variant="section" title="Weekly Trends">
+    <SectionShell variant="section" title={tr("trends.WeeklyTrends.weeklyTrends")}>
       <View className="gap-3">
         {cards.map((vm) => (
           <SectionShell key={vm.key} variant="card" title={vm.card} info={false} href={trendHref(vm.key, { d, today, r: "w" })}>
@@ -43,8 +46,9 @@ export function WeeklyTrends({ cards, d, today }: { cards: TrendViewVM[]; d: str
 
 /** The loading shape: the heading and one card per title, each a legend row over the chart's height. */
 export function WeeklyTrendsSkeleton({ titles }: { titles: string[] }) {
+  useLanguage();
   return (
-    <SectionShell variant="section" title="Weekly Trends">
+    <SectionShell variant="section" title={tr("trends.WeeklyTrends.weeklyTrends")}>
       <View accessibilityElementsHidden className="gap-3">
         {titles.map((t) => (
           <SectionShell key={t} variant="card" title={t} info={false}>

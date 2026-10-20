@@ -1,93 +1,427 @@
-// Copied from pulse src/components/shells/cardInfo.ts: the one-line explanation behind every card header's info button.
-import type { InfoContent } from "./InfoButton"
+import { tr, type TranslationKey } from "@/i18n";
+import type { InfoContent } from "./InfoButton";
 
-const COPY: Record<string, string> = {
-  "Stress": "How hard your body is working, from 0 to 100, from heart rate against your usual range and HRV at night. Workouts are left out.",
-  "Hours of sleep": "Time asleep during your main sleep session, excluding awake periods.",
-  "Stress Monitor": "How hard your body is working, from 0 to 100, from heart rate against your last 30 days and HRV at night. Workouts are left out.",
-  "Health Monitor": "Your nightly vital signs against your last 30 nights. Unusual readings are signals to watch, not diagnoses.",
-  "Healthspan": "Pulse Age turns nine sleep, activity and fitness factors from the 28 days ending each Sunday into years older or younger than your age.",
-  "Fitness": "Your estimated aerobic fitness and training load, based on the measurements available from Health Connect.",
-  "Heart rate": "Heartbeats per minute recorded throughout the day. Gaps mean no reading was available.",
-  "Heart rate variability": "Variation in time between heartbeats during sleep, in milliseconds. Compare it with your own usual range.",
-  "Resting heart rate": "Your heart rate at rest. Recovery uses your average heart rate while asleep.",
-  "Respiratory rate": "Breaths per minute during sleep, measured by your Fitbit.",
-  "Blood oxygen": "Estimated oxygen saturation during sleep, measured by your Fitbit. Compare changes with your usual readings.",
-  "Skin temperature": "Nightly temperature difference from your personal baseline, not your absolute body temperature.",
-  "Sleep performance": "How your sleep met tonight's need: time asleep, deep and REM sleep, heart-rate dip, efficiency and how rarely you woke.",
-  "Recovery": "Your readiness for the day, from last night's HRV, resting heart rate and Sleep Performance against your last 60 days.",
-  "Strain": "The load of your day as a percent, 0 to 100 on most days. Workouts and everyday activity both contribute.",
-  "Calories": "Estimated energy burned for the day or activity shown.",
-  "Steps": "Steps counted through the day. Today's count builds as new activity syncs.",
-  "Weight": "Your latest weight from a connected scale or a manual log.",
-  "Body fat": "Body fat percentage from a smart scale or a manual log.",
-  "Distance": "Distance covered during the day or activity shown.",
-  "Floors": "Floors climbed, counted from changes in altitude while walking.",
-  "Elevation gain": "Total height gained during the day.",
-  "Active minutes": "Minutes recorded as moderate or vigorous physical activity.",
-  "Light activity": "Minutes of light physical activity recorded through the day.",
-  "Active Zone Minutes": "Activity minutes weighted by intensity. Higher-intensity minutes can count more than once.",
-  "Active calories": "Energy burned through movement, excluding resting energy.",
-  "Sedentary time": "Minutes recorded as sedentary during the day.",
-  "Average heart rate": "Average of the heart rate readings during the day or activity shown.",
-  "Water": "Water logged for the day. This reflects entries, not measured hydration.",
-  "Calories eaten": "Energy from food logged for the day. Missing entries make the total incomplete.",
-  "Protein": "Protein in the food logged for the day, in grams.",
-  "Carbohydrates": "Carbohydrates in the food logged for the day, in grams.",
-  "Fat": "Fat in the food logged for the day, in grams.",
-  "Blood glucose": "Your latest blood glucose reading from a connected meter or a manual log.",
-  "Core temperature": "Logged body temperature readings in degrees Celsius.",
-  "Swim strokes": "Total swim strokes recorded in the day's activities.",
-  "Recovery trend": "Daily recovery scores over the selected period. Missing scores remain gaps.",
-  "What shaped it": "The overnight measurements that contributed to this day's recovery, compared with your baseline.",
-  "Tomorrow’s forecast": "An estimate based on your recent recovery and today's strain. Your next overnight measurements can change it.",
-  "Time in zones": "Recorded minutes grouped by heart rate zone. Higher zones represent greater cardiovascular effort.",
-  "Activities": "Activities imported from your connected source for the selected day.",
-  "Last night’s sleep": "Your main sleep session compared with your previous 30 days.",
-  "Hours vs. needed": "Sleep obtained compared with your sleep need: a 7.5-hour goal plus extra for strain and sleep debt.",
-  "Sleep consistency": "How closely the times you are asleep agree across the last 7 days.",
-  "Restorative sleep": "Time spent in deep and REM sleep, the stages grouped here as restorative sleep.",
-  "Sleep efficiency": "Time asleep as a percentage of the main sleep session's duration.",
-  "Sleep debt": "Your sleep shortfall over the last 7 days, recent nights counting most. A quarter of it adds to your sleep need.",
-  "Restorative sleep (%)": "The share of your time asleep spent in deep and REM sleep.",
-  "Restorative sleep (hours)": "Time spent in deep and REM sleep, the stages grouped here as restorative sleep.",
-  "Day strain": "The load of your day as a percent, 0 to 100 on most days. Workouts and everyday activity both contribute.",
-  "HR zones 1-3 (weekly)": "Time in heart-rate zones 1 to 3 over the last 7 days, compared with your usual 7-day total.",
-  "HR zones 4-5 (weekly)": "Time in heart-rate zones 4 and 5 over the last 7 days, compared with your usual 7-day total.",
-  "HR zones all (weekly)": "Time in all heart-rate zones over the last 7 days, compared with your usual 7-day total.",
-  "Strength activity time (weekly)": "Time in strength workouts over the last 7 days, compared with your usual 7-day total.",
-  "VO2 max": "Your estimated aerobic fitness, in millilitres of oxygen per kilogram per minute.",
-  "Lean body mass": "Your weight minus body fat, from your latest weight and body fat readings.",
-  "Pace of Aging": "Your Pulse Age divided by your age: below 1.0x your body behaves younger than your years.",
-  "Pulse Age history": "Changes in your estimated Pulse Age over time. This is a model estimate, not a clinical measurement.",
-  "Percentile": "How your estimated aerobic fitness compares with the reference population for your profile.",
-  "VO2 max trend": "Estimated aerobic capacity over time. It reflects the VO2 max measurements available from your source.",
-  "Training load": "Recent training effort compared with your longer-term load, showing how quickly workload is changing.",
-  "Fitness, fatigue and form": "Fitness reflects longer-term load, fatigue reflects recent load, and form is the balance between them.",
-  "Recovery breakdown": "Number of days in each recovery range during the report period.",
-  "Averages": "Averages use days with recorded values. Missing days are excluded rather than counted as zero.",
-  "Training balance": "How strain and recovery lined up during the report period.",
-  "Top journal effects": "Associations between logged habits and your scores. These comparisons do not prove a habit caused a change.",
-  "Best and worst day": "The highest and lowest recovery days with available scores in this period.",
-  "History": "Recorded values over the selected range. Gaps mean data was unavailable, not zero.",
-  "By weekday": "Average recorded values grouped by weekday across the available period.",
-  "Minutes by intensity": "Activity time split into the intensity levels reported by your source.",
-  "Workouts": "Recorded workouts contributing to this day's activity.",
-  "Logged entries": "Individual entries available for the selected day. Daily totals depend on what was logged.",
-  "Eaten vs. burned": "Logged food energy compared with estimated energy burned. Missing food entries can make intake look low.",
-  "Macros": "Protein, carbohydrates and fat from the day's logged food.",
-  "Readings": "Individual measurements available on or before the selected day.",
-  "Unusual days": "Recorded values outside your recent personal range. An unusual value is not a diagnosis.",
-  "Movement by hour": "Hourly steps show when movement was recorded. A gap does not prove you were sedentary.",
-  "Steps by hour": "Steps recorded in each hour of the selected day.",
-  "This week": "Recorded activity for the week containing the selected day. Missing days remain incomplete.",
-  "Last 7 days": "Summary of recorded values in the last 7 days, compared with the 7 days before.",
-  "Last 30 days": "Summary of recorded values in the last 30 days, compared with the 30 days before.",
-  "Last 6 months": "Summary of recorded values in the last 6 months, compared with the 6 months before.",
-  "Last 12 months": "Summary of recorded values in the last year, compared with the year before.",
-}
+// Keep the original title as a stable lookup for existing callers. Translated card
+// titles resolve to the same explanation when the language changes.
+export const CARD_INFO: readonly { sourceTitle: string; title: TranslationKey; body: TranslationKey }[] = [
+  {
+    "sourceTitle": "Stress",
+    "title": "cardInfo.title.stress",
+    "body": "cardInfo.body.stress"
+  },
+  {
+    "sourceTitle": "Hours of sleep",
+    "title": "lib.dashboard.hoursOfSleep",
+    "body": "cardInfo.body.hours.of.sleep"
+  },
+  {
+    "sourceTitle": "Stress Monitor",
+    "title": "lib.dashboard.stressMonitor",
+    "body": "cardInfo.body.stress.monitor"
+  },
+  {
+    "sourceTitle": "Health Monitor",
+    "title": "settings.NotificationsSection.healthMonitor",
+    "body": "cardInfo.body.health.monitor"
+  },
+  {
+    "sourceTitle": "Healthspan",
+    "title": "health.HealthScreen.healthspan",
+    "body": "cardInfo.body.healthspan"
+  },
+  {
+    "sourceTitle": "Fitness",
+    "title": "health.FirstAge.fitness",
+    "body": "cardInfo.body.fitness"
+  },
+  {
+    "sourceTitle": "Heart rate",
+    "title": "queries.chart.heartRate",
+    "body": "cardInfo.body.heart.rate"
+  },
+  {
+    "sourceTitle": "Heart rate variability",
+    "title": "lib.dashboard.heartRateVariability",
+    "body": "cardInfo.body.heart.rate.variability"
+  },
+  {
+    "sourceTitle": "Resting heart rate",
+    "title": "lib.dashboard.restingHeartRate",
+    "body": "cardInfo.body.resting.heart.rate"
+  },
+  {
+    "sourceTitle": "Respiratory rate",
+    "title": "lib.dashboard.respiratoryRate",
+    "body": "cardInfo.body.respiratory.rate"
+  },
+  {
+    "sourceTitle": "Blood oxygen",
+    "title": "lib.dashboard.bloodOxygen",
+    "body": "cardInfo.body.blood.oxygen"
+  },
+  {
+    "sourceTitle": "Skin temperature",
+    "title": "lib.dashboard.skinTemperature",
+    "body": "cardInfo.body.skin.temperature"
+  },
+  {
+    "sourceTitle": "Sleep performance",
+    "title": "lib.dashboard.sleepPerformance",
+    "body": "cardInfo.body.sleep.performance"
+  },
+  {
+    "sourceTitle": "Recovery",
+    "title": "ui.shells.HomeHeader.recovery",
+    "body": "cardInfo.body.recovery"
+  },
+  {
+    "sourceTitle": "Strain",
+    "title": "ui.shells.HomeHeader.strain",
+    "body": "cardInfo.body.strain"
+  },
+  {
+    "sourceTitle": "Calories",
+    "title": "health.dataCheckSummary.calories",
+    "body": "cardInfo.body.calories"
+  },
+  {
+    "sourceTitle": "Steps",
+    "title": "health.dataCheckSummary.steps",
+    "body": "cardInfo.body.steps"
+  },
+  {
+    "sourceTitle": "Weight",
+    "title": "lib.dashboard.weight",
+    "body": "cardInfo.body.weight"
+  },
+  {
+    "sourceTitle": "Body fat",
+    "title": "lib.dashboard.bodyFat",
+    "body": "cardInfo.body.body.fat"
+  },
+  {
+    "sourceTitle": "Distance",
+    "title": "health.dataCheckSummary.distance",
+    "body": "cardInfo.body.distance"
+  },
+  {
+    "sourceTitle": "Floors",
+    "title": "lib.extraMetrics.floors",
+    "body": "cardInfo.body.floors"
+  },
+  {
+    "sourceTitle": "Elevation gain",
+    "title": "lib.extraMetrics.elevationGain",
+    "body": "cardInfo.body.elevation.gain"
+  },
+  {
+    "sourceTitle": "Active minutes",
+    "title": "lib.extraMetrics.activeMinutes",
+    "body": "cardInfo.body.active.minutes"
+  },
+  {
+    "sourceTitle": "Light activity",
+    "title": "lib.extraMetrics.lightActivity",
+    "body": "cardInfo.body.light.activity"
+  },
+  {
+    "sourceTitle": "Active Zone Minutes",
+    "title": "lib.extraMetrics.activeZoneMinutes",
+    "body": "cardInfo.body.active.zone.minutes"
+  },
+  {
+    "sourceTitle": "Active calories",
+    "title": "lib.extraMetrics.activeCalories",
+    "body": "cardInfo.body.active.calories"
+  },
+  {
+    "sourceTitle": "Sedentary time",
+    "title": "lib.extraMetrics.sedentaryTime",
+    "body": "cardInfo.body.sedentary.time"
+  },
+  {
+    "sourceTitle": "Average heart rate",
+    "title": "lib.extraMetrics.averageHeartRate",
+    "body": "cardInfo.body.average.heart.rate"
+  },
+  {
+    "sourceTitle": "Water",
+    "title": "lib.extraMetrics.water",
+    "body": "cardInfo.body.water"
+  },
+  {
+    "sourceTitle": "Calories eaten",
+    "title": "lib.extraMetrics.caloriesEaten",
+    "body": "cardInfo.body.calories.eaten"
+  },
+  {
+    "sourceTitle": "Protein",
+    "title": "lib.extraMetrics.protein",
+    "body": "cardInfo.body.protein"
+  },
+  {
+    "sourceTitle": "Carbohydrates",
+    "title": "lib.extraMetrics.carbohydrates",
+    "body": "cardInfo.body.carbohydrates"
+  },
+  {
+    "sourceTitle": "Fat",
+    "title": "lib.extraMetrics.fat",
+    "body": "cardInfo.body.fat"
+  },
+  {
+    "sourceTitle": "Blood glucose",
+    "title": "lib.extraMetrics.bloodGlucose",
+    "body": "cardInfo.body.blood.glucose"
+  },
+  {
+    "sourceTitle": "Core temperature",
+    "title": "lib.extraMetrics.coreTemperature",
+    "body": "cardInfo.body.core.temperature"
+  },
+  {
+    "sourceTitle": "Swim strokes",
+    "title": "lib.extraMetrics.swimStrokes",
+    "body": "cardInfo.body.swim.strokes"
+  },
+  {
+    "sourceTitle": "Recovery trend",
+    "title": "cardInfo.title.recovery.trend",
+    "body": "cardInfo.body.recovery.trend"
+  },
+  {
+    "sourceTitle": "What shaped it",
+    "title": "cardInfo.title.what.shaped.it",
+    "body": "cardInfo.body.what.shaped.it"
+  },
+  {
+    "sourceTitle": "Tomorrow’s forecast",
+    "title": "cardInfo.title.tomorrow.s.forecast",
+    "body": "cardInfo.body.tomorrow.s.forecast"
+  },
+  {
+    "sourceTitle": "Time in zones",
+    "title": "activity.ActivityScreen.timeInZones",
+    "body": "cardInfo.body.time.in.zones"
+  },
+  {
+    "sourceTitle": "Activities",
+    "title": "queries.home.activities",
+    "body": "cardInfo.body.activities"
+  },
+  {
+    "sourceTitle": "Last night’s sleep",
+    "title": "queries.home.lastNightSSleep",
+    "body": "cardInfo.body.last.night.s.sleep"
+  },
+  {
+    "sourceTitle": "Hours vs. needed",
+    "title": "queries.sleep.hoursVsNeeded",
+    "body": "cardInfo.body.hours.vs.needed"
+  },
+  {
+    "sourceTitle": "Sleep consistency",
+    "title": "lib.dashboard.sleepConsistency",
+    "body": "cardInfo.body.sleep.consistency"
+  },
+  {
+    "sourceTitle": "Restorative sleep",
+    "title": "queries.chart.restorativeSleep",
+    "body": "cardInfo.body.restorative.sleep"
+  },
+  {
+    "sourceTitle": "Sleep efficiency",
+    "title": "queries.chart.sleepEfficiency",
+    "body": "cardInfo.body.sleep.efficiency"
+  },
+  {
+    "sourceTitle": "Sleep debt",
+    "title": "lib.dashboard.sleepDebt",
+    "body": "cardInfo.body.sleep.debt"
+  },
+  {
+    "sourceTitle": "Restorative sleep (%)",
+    "title": "lib.dashboard.restorativeSleep",
+    "body": "cardInfo.body.restorative.sleep"
+  },
+  {
+    "sourceTitle": "Restorative sleep (hours)",
+    "title": "lib.dashboard.restorativeSleepHours",
+    "body": "cardInfo.body.restorative.sleep.hours"
+  },
+  {
+    "sourceTitle": "Day strain",
+    "title": "lib.dashboard.dayStrain",
+    "body": "cardInfo.body.day.strain"
+  },
+  {
+    "sourceTitle": "HR zones 1-3 (weekly)",
+    "title": "lib.dashboard.hrZones13Weekly",
+    "body": "cardInfo.body.hr.zones.1.3.weekly"
+  },
+  {
+    "sourceTitle": "HR zones 4-5 (weekly)",
+    "title": "lib.dashboard.hrZones45Weekly",
+    "body": "cardInfo.body.hr.zones.4.5.weekly"
+  },
+  {
+    "sourceTitle": "HR zones all (weekly)",
+    "title": "lib.dashboard.hrZonesAllWeekly",
+    "body": "cardInfo.body.hr.zones.all.weekly"
+  },
+  {
+    "sourceTitle": "Strength activity time (weekly)",
+    "title": "lib.dashboard.strengthActivityTimeWeekly",
+    "body": "cardInfo.body.strength.activity.time.weekly"
+  },
+  {
+    "sourceTitle": "VO2 max",
+    "title": "health.dataCheckSummary.vo2Max",
+    "body": "cardInfo.body.vo2.max"
+  },
+  {
+    "sourceTitle": "Lean body mass",
+    "title": "lib.dashboard.leanBodyMass",
+    "body": "cardInfo.body.lean.body.mass"
+  },
+  {
+    "sourceTitle": "Pace of Aging",
+    "title": "health.HealthScreen.paceOfAging",
+    "body": "cardInfo.body.pace.of.aging"
+  },
+  {
+    "sourceTitle": "Pulse Age history",
+    "title": "cardInfo.title.pulse.age.history",
+    "body": "cardInfo.body.pulse.age.history"
+  },
+  {
+    "sourceTitle": "Percentile",
+    "title": "health.FitnessScreen.percentile",
+    "body": "cardInfo.body.percentile"
+  },
+  {
+    "sourceTitle": "VO2 max trend",
+    "title": "health.FitnessScreen.vo2MaxTrend",
+    "body": "cardInfo.body.vo2.max.trend"
+  },
+  {
+    "sourceTitle": "Training load",
+    "title": "health.FitnessScreen.trainingLoad",
+    "body": "cardInfo.body.training.load"
+  },
+  {
+    "sourceTitle": "Fitness, fatigue and form",
+    "title": "health.FitnessScreen.fitnessFatigueAndForm",
+    "body": "cardInfo.body.fitness.fatigue.and.form"
+  },
+  {
+    "sourceTitle": "Recovery breakdown",
+    "title": "cardInfo.title.recovery.breakdown",
+    "body": "cardInfo.body.recovery.breakdown"
+  },
+  {
+    "sourceTitle": "Averages",
+    "title": "cardInfo.title.averages",
+    "body": "cardInfo.body.averages"
+  },
+  {
+    "sourceTitle": "Training balance",
+    "title": "cardInfo.title.training.balance",
+    "body": "cardInfo.body.training.balance"
+  },
+  {
+    "sourceTitle": "Top journal effects",
+    "title": "cardInfo.title.top.journal.effects",
+    "body": "cardInfo.body.top.journal.effects"
+  },
+  {
+    "sourceTitle": "Best and worst day",
+    "title": "cardInfo.title.best.and.worst.day",
+    "body": "cardInfo.body.best.and.worst.day"
+  },
+  {
+    "sourceTitle": "History",
+    "title": "cardInfo.title.history",
+    "body": "cardInfo.body.history"
+  },
+  {
+    "sourceTitle": "By weekday",
+    "title": "cardInfo.title.by.weekday",
+    "body": "cardInfo.body.by.weekday"
+  },
+  {
+    "sourceTitle": "Minutes by intensity",
+    "title": "cardInfo.title.minutes.by.intensity",
+    "body": "cardInfo.body.minutes.by.intensity"
+  },
+  {
+    "sourceTitle": "Workouts",
+    "title": "activity.ActivitiesScreen.workouts",
+    "body": "cardInfo.body.workouts"
+  },
+  {
+    "sourceTitle": "Logged entries",
+    "title": "cardInfo.title.logged.entries",
+    "body": "cardInfo.body.logged.entries"
+  },
+  {
+    "sourceTitle": "Eaten vs. burned",
+    "title": "cardInfo.title.eaten.vs.burned",
+    "body": "cardInfo.body.eaten.vs.burned"
+  },
+  {
+    "sourceTitle": "Macros",
+    "title": "cardInfo.title.macros",
+    "body": "cardInfo.body.macros"
+  },
+  {
+    "sourceTitle": "Readings",
+    "title": "cardInfo.title.readings",
+    "body": "cardInfo.body.readings"
+  },
+  {
+    "sourceTitle": "Unusual days",
+    "title": "cardInfo.title.unusual.days",
+    "body": "cardInfo.body.unusual.days"
+  },
+  {
+    "sourceTitle": "Movement by hour",
+    "title": "cardInfo.title.movement.by.hour",
+    "body": "cardInfo.body.movement.by.hour"
+  },
+  {
+    "sourceTitle": "Steps by hour",
+    "title": "cardInfo.title.steps.by.hour",
+    "body": "cardInfo.body.steps.by.hour"
+  },
+  {
+    "sourceTitle": "This week",
+    "title": "cardInfo.title.this.week",
+    "body": "cardInfo.body.this.week"
+  },
+  {
+    "sourceTitle": "Last 7 days",
+    "title": "cardInfo.title.last.7.days",
+    "body": "cardInfo.body.last.7.days"
+  },
+  {
+    "sourceTitle": "Last 30 days",
+    "title": "activity.ActivitiesScreen.last30Days",
+    "body": "cardInfo.body.last.30.days"
+  },
+  {
+    "sourceTitle": "Last 6 months",
+    "title": "cardInfo.title.last.6.months",
+    "body": "cardInfo.body.last.6.months"
+  },
+  {
+    "sourceTitle": "Last 12 months",
+    "title": "cardInfo.title.last.12.months",
+    "body": "cardInfo.body.last.12.months"
+  }
+];
 
 export function cardInfo(title: string): InfoContent | undefined {
-  const body = COPY[title]
-  return body ? { title, body } : undefined
+  const entry = CARD_INFO.find((item) => item.sourceTitle === title || tr(item.title) === title);
+  return entry ? { title: tr(entry.title), body: tr(entry.body) } : undefined;
 }

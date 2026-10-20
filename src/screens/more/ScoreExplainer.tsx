@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // One score's explainer `/more/how-it-works/[score]` (U21), written from src/core and docs/algorithms. Ported from pulse
 // (app)/more/how-it-works/[score]/page.tsx and loading.tsx (the copy is static, so there is nothing to load).
 import { View } from "react-native";
@@ -18,6 +20,7 @@ import { Press } from "@/ui/Press";
 const SHORT = 24;
 
 function Section({ s }: { s: HowSection }) {
+  useLanguage();
   return (
     <SectionShell variant="card" title={s.title}>
       <View className="gap-3">
@@ -47,6 +50,7 @@ function Section({ s }: { s: HowSection }) {
 const STEP = "min-h-14 min-w-0 flex-1 flex-row items-center gap-2 rounded-xl px-3";
 
 export function ScoreExplainerScreen() {
+  useLanguage();
   const { score } = useLocalSearchParams<{ score: string }>();
   const i = SCORE_DOCS.findIndex((d) => d.slug === score);
   // Web: notFound(). An unknown score has no page, so the index is the nearest real screen.
@@ -58,13 +62,13 @@ export function ScoreExplainerScreen() {
   return (
     <DetailShell
       title={doc.name}
-      subtitle="How it works"
+      subtitle={tr("more.ScoreExplainer.howItWorks")}
       primary={
         <View className="w-full gap-4">
           <Text className="text-[17px] leading-6">{doc.summary}</Text>
           {doc.href && (
             <Button variant="secondary" onPress={() => doc.href && push(doc.href)}>
-              {`Open ${doc.name}`}
+              {tr("more.ScoreExplainer.open", { v0: doc.name })}
             </Button>
           )}
         </View>
@@ -74,13 +78,13 @@ export function ScoreExplainerScreen() {
       ))}
       footer={
         <View className="gap-4">
-          <Text className="text-xs font-medium leading-4 text-muted-foreground">Not a medical device. Pulse’s scores are estimates from a wrist sensor, for personal use, not a diagnosis.</Text>
-          <View accessibilityLabel="Other scores" className="flex-row gap-2">
+          <Text className="text-xs font-medium leading-4 text-muted-foreground">{tr("more.ScoreExplainer.notAMedicalDevicePulseSScores")}</Text>
+          <View accessibilityLabel={tr("more.ScoreExplainer.otherScores")} className="flex-row gap-2">
             {prev ? (
               <Press activeScale={0.96} accessibilityRole="link" onPress={() => router.replace(`/more/how-it-works/${prev.slug}` as never)} className={STEP}>
                 <Icon icon={ChevronLeft} size={20} tone="muted-foreground" strokeWidth={1.75} />
                 <View className="min-w-0">
-                  <Text className="text-xs font-medium leading-4 text-muted-foreground">Previous</Text>
+                  <Text className="text-xs font-medium leading-4 text-muted-foreground">{tr("ui.shells.DateSwitcher.previous")}</Text>
                   <Text className="text-[15px] font-semibold leading-[22px]">{prev.name}</Text>
                 </View>
               </Press>
@@ -90,7 +94,7 @@ export function ScoreExplainerScreen() {
             {next && (
               <Press activeScale={0.96} accessibilityRole="link" onPress={() => router.replace(`/more/how-it-works/${next.slug}` as never)} className={cn(STEP, "justify-end")}>
                 <View className="min-w-0 items-end">
-                  <Text className="text-xs font-medium leading-4 text-muted-foreground">Next</Text>
+                  <Text className="text-xs font-medium leading-4 text-muted-foreground">{tr("common.next")}</Text>
                   <Text className="text-right text-[15px] font-semibold leading-[22px]">{next.name}</Text>
                 </View>
                 <Icon icon={ChevronRight} size={20} tone="muted-foreground" strokeWidth={1.75} />

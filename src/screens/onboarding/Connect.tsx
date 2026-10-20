@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Connecting Health Connect (docs/onboarding.md): the explainer that comes before Health Connect's permission sheet, then
 // the screen that waits behind it while the sheet is up, and "Allow Health Connect" when the person grants nothing.
 // Used by onboarding's connect step and by `/connect` (leaving sample data). The sheet is Health Connect's own, over the
@@ -19,16 +21,17 @@ import { Frame } from "./Frame";
 // What the read permissions in src/health/connect.ts READ_TYPES let Pulse read, in the person's words, with the app's
 // icons. Titles only, so the screen fits without scrolling; Health Connect's own sheet has the detail.
 const READS: { icon: LucideIcon; title: string }[] = [
-  { icon: Footprints, title: "Steps, distance and workouts" },
-  { icon: HeartPulse, title: "Heart rate and HRV" },
-  { icon: Moon, title: "Sleep and its stages" },
-  { icon: Activity, title: "Breathing, oxygen and temperature" },
-  { icon: Utensils, title: "Food and water you log in Fitbit" },
-  { icon: Weight, title: "Weight, body fat and VO2 max" },
+  { icon: Footprints, get title() { return tr("onboarding.Connect.stepsDistanceAndWorkouts"); } },
+  { icon: HeartPulse, get title() { return tr("onboarding.Connect.heartRateAndHrv"); } },
+  { icon: Moon, get title() { return tr("onboarding.Connect.sleepAndItsStages"); } },
+  { icon: Activity, get title() { return tr("onboarding.Connect.breathingOxygenAndTemperature"); } },
+  { icon: Utensils, get title() { return tr("onboarding.Connect.foodAndWaterYouLogInFitbit"); } },
+  { icon: Weight, get title() { return tr("onboarding.Connect.weightBodyFatAndVo2Max"); } },
 ];
 
 /** `sample`: the person is leaving sample data, so the explainer says it goes. */
 export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: () => void }) {
+  useLanguage();
   const [waiting, setWaiting] = useState(false);
   const [refused, setRefused] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: 
     return () => sub.remove();
   }, [waiting, onCancel]);
 
-  const unavailable = availability === "unavailable" ? "Health Connect isn’t available on this phone." : availability === "update_required" ? "Health Connect needs an update. Open it, update it, then come back." : null;
+  const unavailable = availability === "unavailable" ? tr("onboarding.Connect.healthConnectIsnTAvailableOnThis") : availability === "update_required" ? tr("onboarding.Connect.healthConnectNeedsAnUpdateOpenIt") : null;
 
   const connect = async () => {
     if (availability === "update_required") return void openHealthConnectSettings();
@@ -52,7 +55,7 @@ export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: 
       // Granted: the app state starts the import, and onboarding shows its progress.
       setRefused(!!perms && perms.granted.length === 0);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn’t open Health Connect. Try again.");
+      setError(e instanceof Error ? e.message : tr("onboarding.Connect.couldnTOpenHealthConnectTryAgain"));
       haptic.error();
     }
     setWaiting(false);
@@ -66,9 +69,8 @@ export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: 
           <ActivityIndicator size="large" color={c["foreground-secondary"]} />
           <View className="items-center gap-2">
             <Text accessibilityRole="header" className="text-center text-[22px] font-semibold leading-7 tracking-[-0.01em]">
-              Waiting for Health Connect
-            </Text>
-            <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">Choose what Pulse can read in Health Connect’s window. You come back here when you’re done.</Text>
+              {tr("onboarding.Connect.waitingForHealthConnect")}</Text>
+            <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">{tr("onboarding.Connect.chooseWhatPulseCanReadInHealth")}</Text>
           </View>
         </View>
       </Frame>
@@ -81,17 +83,15 @@ export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: 
         footer={
           <>
             <ConnectButton onPress={connect} />
-            <TextButton label="Not now" onPress={onCancel} />
+            <TextButton label={tr("onboarding.Connect.notNow")} onPress={onCancel} />
           </>
         }
       >
         <View className="items-center gap-2">
           <Text accessibilityRole="header" className="text-center text-[22px] font-semibold leading-7 tracking-[-0.01em]">
-            Allow Health Connect
-          </Text>
+            {tr("onboarding.Connect.allowHealthConnect")}</Text>
           <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">
-            Pulse needs at least heart rate and sleep. Allow every permission, including access to older data.
-          </Text>
+            {tr("onboarding.Connect.pulseNeedsAtLeastHeartRateAnd")}</Text>
         </View>
       </Frame>
     );
@@ -105,16 +105,15 @@ export function ConnectFlow({ sample, onCancel }: { sample?: boolean; onCancel: 
               {error ?? unavailable}
             </Text>
           )}
-          <ConnectButton label={availability === "update_required" ? "Open Health Connect" : undefined} onPress={connect} />
-          <TextButton label="Not now" onPress={onCancel} />
+          <ConnectButton label={availability === "update_required" ? tr("onboarding.Connect.openHealthConnect") : undefined} onPress={connect} />
+          <TextButton label={tr("onboarding.Connect.notNow")} onPress={onCancel} />
         </>
       }
     >
       <Text accessibilityRole="header" className="text-[28px] font-bold leading-[34px] tracking-[-0.02em]">
-        What Pulse reads
-      </Text>
+        {tr("onboarding.Connect.whatPulseReads")}</Text>
       <Text className="mt-2 text-[15px] leading-[22px] text-foreground-secondary">
-        From Health Connect, kept on this phone. The first import reads the last 180 days.{sample ? " Your sample data is cleared once you connect." : ""}
+        {tr("onboarding.Connect.fromHealthConnectKeptOnThisPhone")}{sample ? tr("onboarding.Connect.yourSampleDataIsClearedOnceYou") : ""}
       </Text>
       <Card className="mt-6 px-4 py-1">
         <Divided>

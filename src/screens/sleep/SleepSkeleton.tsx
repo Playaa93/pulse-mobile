@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Sleep's loading state (spec §5.19), ported from pulse (app)/_lib/skeletons.tsx `SleepSkeleton` and its DialDetail: the
 // real shell and each card's own box with its static titles and labels; only values are bars.
 import { Fragment } from "react";
@@ -18,6 +20,7 @@ import { cn } from "@/ui/cn";
 const rows = (n: number, Row: (i: number) => React.ReactNode) => Array.from({ length: n }, (_, i) => <Fragment key={i}>{Row(i)}</Fragment>);
 
 function CardSkeleton({ title, children }: { title: string; children: React.ReactNode }) {
+  useLanguage();
   return (
     <SectionShell variant="card" title={title}>
       <View accessibilityElementsHidden>{children}</View>
@@ -27,6 +30,7 @@ function CardSkeleton({ title, children }: { title: string; children: React.Reac
 
 /** A measure card's shape (sleep's hours vs. needed and efficiency): the percentage, a bar, then its legend rows. */
 function MeasureSkeleton({ rows: labels }: { rows: string[] }) {
+  useLanguage();
   return (
     <View accessibilityElementsHidden>
       <SkeletonText lh={40} fs={36} className="w-24" />
@@ -44,23 +48,23 @@ function MeasureSkeleton({ rows: labels }: { rows: string[] }) {
   );
 }
 
-const LOADING_PRIMARY = (
-  <SectionShell variant="card" title="Last night’s sleep" aside="vs. prior 30 days">
+const loadingPrimary = () => (
+  <SectionShell variant="card" title={tr("queries.home.lastNightSSleep")} aside="vs. prior 30 days">
     <SleepStagesSkeleton />
   </SectionShell>
 );
 
-const LOADING_SECONDARY = [
-  <CardSkeleton key="need" title="Hours vs. needed">
-    <MeasureSkeleton rows={["Healthy minimum", "Recent strain", "Sleep debt"]} />
+const loadingSecondary = () => [
+  <CardSkeleton key="need" title={tr("queries.sleep.hoursVsNeeded")}>
+    <MeasureSkeleton rows={[tr("sleep.SleepSkeleton.healthyMinimum"), tr("sleep.SleepSkeleton.recentStrain"), tr("lib.dashboard.sleepDebt")]} />
   </CardSkeleton>,
-  <CardSkeleton key="consistency" title="Sleep consistency">
+  <CardSkeleton key="consistency" title={tr("lib.dashboard.sleepConsistency")}>
     <View className="gap-4">
       <SkeletonText lh={40} fs={36} className="w-24" />
       <Skeleton className="h-52 rounded-lg" />
     </View>
   </CardSkeleton>,
-  <CardSkeleton key="efficiency" title="Sleep efficiency">
+  <CardSkeleton key="efficiency" title={tr("queries.chart.sleepEfficiency")}>
     <View accessibilityElementsHidden className="gap-4">
       <SkeletonText lh={40} fs={36} className="w-24" />
       <Skeleton className="h-3.5 rounded-[3px]" />
@@ -68,7 +72,7 @@ const LOADING_SECONDARY = [
       <SkeletonText className="w-32" />
     </View>
   </CardSkeleton>,
-  <SectionShell key="planner" variant="card" title="Tonight’s sleep" info={TONIGHT_INFO}>
+  <SectionShell key="planner" variant="card" title={tr("info.tonightSSleep")} info={TONIGHT_INFO}>
     <View accessibilityElementsHidden className="gap-2">
       <View>
         {rows(4, (i) => (
@@ -90,24 +94,25 @@ const LOADING_SECONDARY = [
 ];
 
 /** Below the fold while a cold push slides in: the loading state's first sections. */
-export const SLEEP_BODY_SKELETON = (
+export const sleepBodySkeleton = () => (
   <>
-    {LOADING_PRIMARY}
-    <View className="gap-3">{LOADING_SECONDARY.slice(0, 2)}</View>
+    {loadingPrimary()}
+    <View className="gap-3">{loadingSecondary().slice(0, 2)}</View>
   </>
 );
 
 export function SleepSkeleton() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Sleep"
+      title={tr("ui.shells.HomeHeader.sleep")}
       dateSwitcher={{ mode: "day", placement: "header", steppers: false }}
       notch
       hero={<ScoreDialSkeleton size="lg" variant="sleep" />}
       summary={
         <Card className="gap-0 px-4 py-1">
-          {["Hours vs. needed", "Sleep consistency", "Sleep efficiency"].map((l, i) => (
+          {[tr("queries.sleep.hoursVsNeeded"), tr("lib.dashboard.sleepConsistency"), tr("queries.chart.sleepEfficiency")].map((l, i) => (
             <Fragment key={l}>
               {i > 0 && <View className="h-px bg-border" />}
               <KeyStatRowSkeleton variant="row" label={l} />
@@ -119,10 +124,10 @@ export function SleepSkeleton() {
         </Card>
       }
       insight={<InsightCardSkeleton action={false} />}
-      primary={LOADING_PRIMARY}
-      bodySkeleton={SLEEP_BODY_SKELETON}
-      secondary={LOADING_SECONDARY}
-      footer={<WeeklyTrendsSkeleton titles={["Sleep Performance", "Hours vs. Needed (hours)", "Hours vs. Needed (%)", "Restorative Sleep", "Sleep Consistency", "Time in Bed", "Sleep Efficiency"]} />}
+      primary={loadingPrimary()}
+      bodySkeleton={sleepBodySkeleton()}
+      secondary={loadingSecondary()}
+      footer={<WeeklyTrendsSkeleton titles={[tr("queries.trendView.sleepPerformance"), tr("queries.trendView.hoursVsNeededHours"), tr("queries.trendView.hoursVsNeeded"), tr("queries.trendView.restorativeSleep"), tr("queries.trendView.sleepConsistency"), tr("queries.trendView.timeInBed"), tr("queries.trendView.sleepEfficiency")]} />}
     />
   );
 }

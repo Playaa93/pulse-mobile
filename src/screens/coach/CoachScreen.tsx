@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Coach `/coach` (spec §7.21), ported from pulse src/app/(app)/coach/page.tsx via halo: consent, then a provider and
 // key (BYOK), then the chat. `?c=` opens a saved chat, `?q=` fills the composer without sending, `?brief=1` asks for
 // today's brief at once, `?n=` starts a fresh chat.
@@ -25,6 +27,7 @@ import { ConnectProvider, Consent } from "./CoachSetup";
 const param = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
 function ChatSkeleton() {
+  useLanguage();
   return (
     <View className="gap-3 px-4 pt-4">
       <Skeleton className="h-16 w-4/5 rounded-[20px]" />
@@ -36,17 +39,18 @@ function ChatSkeleton() {
 
 /** The header's right side: Chats (with the count), New chat once a chat is open, and Coach settings. */
 function BarActions({ chatCount, chatOpen, onNew }: { chatCount: number; chatOpen: boolean; onNew: () => void }) {
+  useLanguage();
   return (
     <View className="flex-row items-center">
-      <Button variant="ghost" size="icon-touch" haptic={false} onPress={() => push("/coach/chats")} accessibilityLabel={chatCount ? `Chats (${chatCount})` : "Chats"}>
+      <Button variant="ghost" size="icon-touch" haptic={false} onPress={() => push("/coach/chats")} accessibilityLabel={chatCount ? tr("coach.CoachScreen.chats", { v0: chatCount }) : tr("coach.ChatsScreen.chats")}>
         <Icon icon={History} size={20} />
       </Button>
       {chatOpen && (
-        <Button variant="ghost" size="icon-touch" onPress={onNew} accessibilityLabel="New chat">
+        <Button variant="ghost" size="icon-touch" onPress={onNew} accessibilityLabel={tr("coach.ChatsScreen.newChat")}>
           <Icon icon={SquarePen} size={20} />
         </Button>
       )}
-      <Button variant="ghost" size="icon-touch" haptic={false} onPress={() => push("/coach/settings")} accessibilityLabel="Coach settings">
+      <Button variant="ghost" size="icon-touch" haptic={false} onPress={() => push("/coach/settings")} accessibilityLabel={tr("coach.CoachScreen.coachSettings")}>
         <Icon icon={Settings2} size={20} />
       </Button>
     </View>
@@ -54,6 +58,7 @@ function BarActions({ chatCount, chatOpen, onNew }: { chatCount: number; chatOpe
 }
 
 export function CoachScreen() {
+  useLanguage();
   const setup = useCoachSetup();
   const chatCount = useChatCount();
   const params = useLocalSearchParams<{ c?: string; q?: string; brief?: string; n?: string }>();
@@ -94,7 +99,7 @@ export function CoachScreen() {
             key={chat.id}
             id={chat.id}
             initial={chat.messages}
-            prefill={brief && !c ? "Today's brief" : (param(params.q) ?? "").slice(0, 500)}
+            prefill={brief && !c ? tr("coach.CoachScreen.todaySBrief") : (param(params.q) ?? "").slice(0, 500)}
             auto={brief && !c}
             providerLabel={providerLabel(setup.provider)}
             suggestions={data.suggestions}

@@ -1,3 +1,6 @@
+import { tr } from "@/i18n";
+import { useLanguage } from "@/i18n/react";
+import { trendGroupLabel, type TrendGroup } from "@/queries/trends";
 // The explorer's metric and compare pickers (halo src/screens/chart/MetricPage.tsx) as our route sheet
 // `/chart-metric?for=metric|compare&metric=&r=&d=&compare=`: Trends' metric sheet (one section open at a time, its
 // metrics as wrapping chips) over the explorer's catalogue. A choice goes back to /chart with the new params.
@@ -15,9 +18,10 @@ import { TaskPage } from "@/ui/shells/TaskPage";
 import { Text } from "@/ui/Text";
 import { DAY_COMPARE, NO_COMPARE, parseRange } from "./model";
 
-type Group = { group: string; metrics: { key: string; label: string }[] };
+type Group = { group: string; label: string; metrics: { key: string; label: string }[] };
 
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  useLanguage();
   return (
     <Press activeScale={0.96} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => (haptic.tap(), onPress())} className={cn("h-10 flex-row items-center rounded-full px-4", on ? "bg-foreground" : "bg-muted")}>
       <Text className={cn("text-[14px] font-medium leading-5", on ? "text-background" : "text-foreground")}>{label}</Text>
@@ -26,6 +30,7 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 export function ChartMetricPage() {
+  useLanguage();
   const p = useLocalSearchParams<{ for?: string; metric?: string; r?: string; d?: string; compare?: string }>();
   const def = chartDef(p.metric);
   const range = parseRange(p.r, !!def?.day);
@@ -33,9 +38,9 @@ export function ChartMetricPage() {
   const isCompare = p.for === "compare";
   const groups: Group[] = isCompare
     ? view
-      ? [{ group: "Same day", metrics: DAY_COMPARE.filter((x) => x.view !== view).map((x) => ({ key: x.key, label: DAY_VIEW[x.view].label })) }]
-      : CHART_GROUPS.map((g) => ({ group: g.group as string, metrics: g.metrics.filter((m) => m.key !== def?.key).map(({ key, label }) => ({ key, label })) })).filter((g) => g.metrics.length)
-    : CHART_GROUPS.map((g) => ({ group: g.group as string, metrics: g.metrics.map(({ key, label }) => ({ key, label })) }));
+      ? [{ group: "same-day", label: tr("chart.MetricPage.sameDay"), metrics: DAY_COMPARE.filter((x) => x.view !== view).map((x) => ({ key: x.key, label: DAY_VIEW[x.view].label })) }]
+      : CHART_GROUPS.map((g) => ({ group: g.group as string, label: trendGroupLabel(g.group as TrendGroup), metrics: g.metrics.filter((m) => m.key !== def?.key).map(({ key, label }) => ({ key, label })) })).filter((g) => g.metrics.length)
+    : CHART_GROUPS.map((g) => ({ group: g.group as string, label: trendGroupLabel(g.group as TrendGroup), metrics: g.metrics.map(({ key, label }) => ({ key, label })) }));
   const current = isCompare ? (p.compare ?? null) : (def?.key ?? null);
   const [open, setOpen] = useState(groups.find((g) => g.metrics.some((m) => m.key === current))?.group ?? groups[0]?.group ?? "");
 
@@ -50,19 +55,19 @@ export function ChartMetricPage() {
   const pickCompare = (key: string | null) => go({ compare: key ?? (view ? NO_COMPARE : null) });
 
   return (
-    <TaskPage title={isCompare ? "Compare with" : "Metric"}>
+    <TaskPage title={isCompare ? tr("chart.MetricPage.compareWith") : tr("chart.ChartExplorer.metric")}>
       <View className="px-4">
         {isCompare && (
           <View className="flex-row pb-3">
-            <Chip label="None" on={current === null || current === NO_COMPARE} onPress={() => pickCompare(null)} />
+            <Chip label={tr("chart.MetricPage.none")} on={current === null || current === NO_COMPARE} onPress={() => pickCompare(null)} />
           </View>
         )}
-        {groups.map(({ group, metrics }, i) => {
+        {groups.map(({ group, label, metrics }, i) => {
           const on = group === open || groups.length === 1;
           return (
             <View key={group} className={cn("border-b border-border", i === groups.length - 1 && "border-b-0")}>
               <Pressable accessibilityRole="button" accessibilityState={{ expanded: on }} onPress={() => (!on && haptic.toggle(true), setOpen(group))} className="min-h-[52px] flex-row items-center justify-between gap-3">
-                <Text className="text-[15px] font-semibold leading-[22px]">{group}</Text>
+                <Text className="text-[15px] font-semibold leading-[22px]">{label}</Text>
                 <View className="flex-row items-center gap-2">
                   <Text className="text-[13px] font-medium text-muted-foreground">{metrics.length}</Text>
                   <Turn on={on}>

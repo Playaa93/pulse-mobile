@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // First run `/onboarding` (docs/onboarding.md). Welcome (connect Health Connect or explore with sample data), then the
 // profile, then the explainer before Health Connect's permission sheet, then the first import with its progress. The
 // profile step is pulse's src/app/onboarding/Onboarding.tsx on the AuthShell frame: birth date, sex and the time zone
@@ -19,6 +21,7 @@ import { ProfileForm, SaveButton } from "./ProfileForm";
 type Step = "welcome" | "profile" | "connect";
 
 export function OnboardingScreen() {
+  useLanguage();
   const hasProfile = useApp((s) => s.profile !== null);
   const source = useApp((s) => s.source);
   const status = useApp((s) => s.status);
@@ -36,6 +39,7 @@ export function OnboardingScreen() {
 const fraction = (p: Progress | null) => (p && p.total > 0 ? Math.min(1, p.done / p.total) : 0);
 
 function ProgressFooter({ progress, fallback }: { progress: Progress | null; fallback: string }) {
+  useLanguage();
   const pct = Math.round(fraction(progress) * 100);
   return (
     <View accessibilityLiveRegion="polite" className="h-[132px] items-center justify-center gap-3 px-6">
@@ -48,6 +52,7 @@ function ProgressFooter({ progress, fallback }: { progress: Progress | null; fal
 }
 
 function Welcome({ onConnect }: { onConnect: () => void }) {
+  useLanguage();
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const progress = useApp((s) => (building ? s.progress : null));
@@ -61,7 +66,7 @@ function Welcome({ onConnect }: { onConnect: () => void }) {
       haptic.success();
     } catch (e) {
       setBuilding(false);
-      setError(e instanceof Error ? e.message : "Couldn’t build the sample data. Try again.");
+      setError(e instanceof Error ? e.message : tr("onboarding.OnboardingScreen.couldnTBuildTheSampleDataTry"));
       haptic.error();
     }
   };
@@ -71,7 +76,7 @@ function Welcome({ onConnect }: { onConnect: () => void }) {
       wordmark={false}
       footer={
         building ? (
-          <ProgressFooter progress={progress} fallback="Building sample data" />
+          <ProgressFooter progress={progress} fallback={tr("onboarding.buildingDemo")} />
         ) : (
           <>
             {error && (
@@ -80,10 +85,10 @@ function Welcome({ onConnect }: { onConnect: () => void }) {
               </Text>
             )}
             <ConnectButton onPress={onConnect} />
-            <TextButton label="Explore with sample data" onPress={explore} />
+            <TextButton label={tr("onboarding.OnboardingScreen.exploreWithSampleData")} onPress={explore} />
             <View className="mt-2 flex-row items-center justify-center gap-1.5">
               <Icon icon={Lock} size={13} tone="muted-foreground" strokeWidth={2} />
-              <Text className="text-[13px] leading-[18px] text-muted-foreground">Stays on this phone. No account, no server.</Text>
+              <Text className="text-[13px] leading-[18px] text-muted-foreground">{tr("onboarding.OnboardingScreen.staysOnThisPhoneNoAccountNo")}</Text>
             </View>
           </>
         )
@@ -93,9 +98,8 @@ function Welcome({ onConnect }: { onConnect: () => void }) {
         <HeartbeatMark />
         <View className="items-center gap-2">
           <Text accessibilityRole="header" className="text-center text-[24px] font-bold leading-[30px] tracking-[-0.02em]">
-            Your Fitbit, scored every morning
-          </Text>
-          <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">Sleep, Recovery and Strain from Health Connect, worked out on this phone.</Text>
+            {tr("onboarding.OnboardingScreen.yourFitbitScoredEveryMorning")}</Text>
+          <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">{tr("onboarding.OnboardingScreen.sleepRecoveryAndStrainFromHealthConnect")}</Text>
         </View>
       </View>
     </Frame>
@@ -103,12 +107,12 @@ function Welcome({ onConnect }: { onConnect: () => void }) {
 }
 
 function Profile({ onSaved }: { onSaved: () => void }) {
+  useLanguage();
   return (
     <Frame>
       <Text accessibilityRole="header" className="text-[28px] font-bold leading-[34px] tracking-[-0.02em]">
-        Two things Health Connect doesn’t share
-      </Text>
-      <Text className="mb-7 mt-2 text-base leading-6 text-foreground-secondary">Pulse scores your heart rate against your age and sex. You can change these later in Settings.</Text>
+        {tr("onboarding.OnboardingScreen.twoThingsHealthConnectDoesnTShare")}</Text>
+      <Text className="mb-7 mt-2 text-base leading-6 text-foreground-secondary">{tr("onboarding.OnboardingScreen.pulseScoresYourHeartRateAgainstYour")}</Text>
       <ProfileForm
         onboarding
         defaults={{ birthDate: "", sex: null, maxHr: null, heightCm: null, timeZone: null }}
@@ -119,7 +123,7 @@ function Profile({ onSaved }: { onSaved: () => void }) {
         }}
         footer={({ pending, submit }) => (
           <View className="mt-4">
-            <SaveButton pending={pending} label="Save and continue" onPress={submit} />
+            <SaveButton pending={pending} label={tr("onboarding.OnboardingScreen.saveAndContinue")} onPress={submit} />
           </View>
         )}
       />
@@ -129,6 +133,7 @@ function Profile({ onSaved }: { onSaved: () => void }) {
 
 /** The first import (or the sample's build), with its progress; the tabs open when it ends. */
 function Importing({ sample }: { sample: boolean }) {
+  useLanguage();
   const progress = useApp((s) => s.progress);
   const error = useApp((s) => (s.status === "error" ? s.error : null));
   return (
@@ -139,19 +144,19 @@ function Importing({ sample }: { sample: boolean }) {
             <Text accessibilityRole="alert" className="mb-2 text-center text-[13px] font-medium leading-[18px] text-recovery-red-text">
               {error}
             </Text>
-            <ConnectButton label="Try again" onPress={() => void refresh()} />
+            <ConnectButton label={tr("common.retry")} onPress={() => void refresh()} />
           </>
         ) : (
-          <ProgressFooter progress={progress} fallback={sample ? "Building sample data" : "Importing from Health Connect"} />
+          <ProgressFooter progress={progress} fallback={sample ? tr("onboarding.OnboardingScreen.buildingSampleData") : tr("onboarding.OnboardingScreen.importingFromHealthConnect")} />
         )
       }
     >
       <View className="items-center gap-2">
         <Text accessibilityRole="header" className="text-center text-[22px] font-semibold leading-7 tracking-[-0.01em]">
-          {error ? "The import stopped" : sample ? "Building your sample data" : "Importing your data"}
+          {error ? tr("onboarding.OnboardingScreen.theImportStopped") : sample ? tr("onboarding.OnboardingScreen.buildingYourSampleData") : tr("onboarding.OnboardingScreen.importingYourData")}
         </Text>
         <Text className="max-w-[300px] text-center text-[15px] leading-[22px] text-foreground-secondary">
-          {sample ? "Half a year of a demo person’s days, scored on this phone." : "Up to 180 days from Health Connect, scored on this phone. The first import takes a few minutes."}
+          {sample ? tr("onboarding.OnboardingScreen.halfAYearOfADemoPerson") : tr("onboarding.OnboardingScreen.upTo180DaysFromHealthConnect")}
         </Text>
       </View>
     </Frame>

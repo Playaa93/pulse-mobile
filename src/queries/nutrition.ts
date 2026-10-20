@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Nutrition `/nutrition` (a phone-only screen): today's calories and macros against the person's targets, their 7- and
 // 30-day averages, 30 days of daily protein and calories, and today's food, Pulse's entries (editable) beside those
 // read from Health Connect (logged in Fitbit). Every number is counted as the metric screens count it: the source's
@@ -7,7 +8,7 @@ import { addDays, localMidnight } from "@/lib/time";
 import { BURN_DAYS, NO_CUSTOM, resolveTargets, type CustomTargets, type Targets } from "@/nutrition/targets";
 import { type DayRow, finite, loadDays, type QueryCtx, todayOf } from "./common";
 import { countedPulse, EMPTY_TOTALS, foodEntry, mealOverlaps, roundNutrient, sumFood, type FoodEntry, type FoodVia, type Totals } from "./food";
-import { MEALS, type Meal } from "./log";
+import { mealOptions, type Meal } from "./log";
 
 /** The nutrients the overview averages and charts (fiber is Pulse's alone, so it shows only in today's total). */
 export const MACROS = ["kcal", "protein", "carbs", "fat"] as const;
@@ -73,7 +74,7 @@ export type NutritionVM = {
   pulseToday: number;
 };
 
-const MEAL_LABEL: Record<Meal | "UNKNOWN", string> = { ...(Object.fromEntries(MEALS) as Record<Meal, string>), UNKNOWN: "Other" };
+const mealLabels = (): Record<Meal | "UNKNOWN", string> => ({ ...(Object.fromEntries(mealOptions()) as Record<Meal, string>), get UNKNOWN() { return tr("onboarding.timeZones.other"); } });
 const MEAL_ORDER: (Meal | "UNKNOWN")[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK", "UNKNOWN"];
 const FOOD_PICK: Record<Macro, (r: DayRow) => number | undefined> = {
   kcal: (r) => r.extra.calories_in,
@@ -108,7 +109,7 @@ async function latestWeight(ctx: QueryCtx, day: string): Promise<number | null> 
 
 const itemOf = (e: FoodEntry, dup: Map<string, string>): FoodItem => ({
   id: e.id,
-  title: e.data.name ?? MEAL_LABEL[e.data.meal],
+  title: e.data.name ?? mealLabels()[e.data.meal],
   name: e.data.name,
   portion: e.data.portion ?? null,
   meal: e.data.meal,
@@ -132,7 +133,7 @@ export function mealGroups(entries: FoodEntry[]): MealGroup[] {
     const es = entries.filter((e) => e.data.meal === meal).sort((a, b) => a.ts - b.ts || a.id.localeCompare(b.id));
     if (!es.length) return [];
     const kcal = es.reduce((a, e) => a + (dup.has(e.id) ? 0 : e.data.kcal), 0);
-    return [{ meal, label: MEAL_LABEL[meal], kcal: Math.round(kcal), items: es.map((e) => itemOf(e, dup)), overlap: overlaps.has(meal) }];
+    return [{ meal, label: mealLabels()[meal], kcal: Math.round(kcal), items: es.map((e) => itemOf(e, dup)), overlap: overlaps.has(meal) }];
   });
 }
 

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The smart alerts beside decide.ts's two: "Strain target reached", the Health Monitor's rise, "Weekly report ready" and
 // the bedtime reminder's schedule. Pure like decide.ts (smart.test.ts); alerts.ts reads the store, sends and schedules.
 // The gates are ported from noop's notif/StrainTargetNotifier.kt, notif/IllnessAlertNotifier.kt,
@@ -87,22 +88,22 @@ const isoDow = (day: string) => (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) %
 export function strainBody(strain: number, target: { low: number; high: number }): string {
   const range = `${Math.round(target.low)} - ${pct(target.high)}`;
   return strain <= target.high
-    ? `Day Strain ${pct(strain)} is inside today’s target of ${range}.`
-    : `Day Strain ${pct(strain)} is past today’s target of ${range}. Prioritise sleep tonight to recover.`;
+    ? tr("background.smart.dayStrainIsInsideTodaySTarget", { v0: pct(strain), v1: range })
+    : tr("background.smart.dayStrainIsPastTodaySTarget", { v0: pct(strain), v1: range });
 }
 
 /** Home's monitor card as a notification: the illness signal, or the vitals out of range by name. */
 export function monitorCopy(s: MonitorState): { title: string; body: string } {
   if (s.level === "illness")
     return {
-      title: "Your body may be fighting something",
-      body: "Several vitals moved away from your normal range together, a pattern that often comes before feeling unwell. Consider an easier day.",
+      title: tr("background.smart.yourBodyMayBeFightingSomething"),
+      body: tr("background.smart.severalVitalsMovedAwayFromYourNormal"),
     };
   const n = s.names.length;
-  const names = n > 1 ? `${s.names.slice(0, -1).join(", ")} and ${s.names[n - 1]}` : (s.names[0] ?? "A vital");
+  const names = n > 1 ? tr("background.smart.and", { v0: s.names.slice(0, -1).join(", "), v1: s.names[n - 1] }) : (s.names[0] ?? tr("notify.vital"));
   return {
-    title: `${n || 1} ${n > 1 ? "vitals" : "vital"} outside your normal range`,
-    body: `${names} ${n > 1 ? "are" : "is"} outside your usual range. This can be an early sign of illness or heavy strain.`,
+    title: tr("notify.outside", { count: n || 1 }),
+    body: tr("notify.outsideBody", { names, count: n || 1 }),
   };
 }
 
@@ -110,17 +111,17 @@ export function monitorCopy(s: MonitorState): { title: string; body: string } {
 export function reportBody(r: WeekReport): string {
   const range = rangeLabel(r.start, r.end);
   const parts = [
-    r.averages.recovery != null ? `Recovery averaged ${Math.round(r.averages.recovery)}%` : null,
-    r.averages.strain != null ? `Day Strain ${pct(r.averages.strain)}` : null,
+    r.averages.recovery != null ? tr("background.smart.recoveryAveraged", { v0: Math.round(r.averages.recovery) }) : null,
+    r.averages.strain != null ? tr("background.smart.dayStrain", { v0: pct(r.averages.strain) }) : null,
   ].filter((p): p is string => p !== null);
-  return parts.length ? `${range}: ${parts.join(", ")}.` : `Your week of ${range} is in.`;
+  return parts.length ? `${range}: ${parts.join(", ")}.` : tr("background.smart.yourWeekOfIsIn", { v0: range });
 }
 
 /** StrainTargetPolicy: once a day, when the day's strain reaches the low end of today's target; never without a target. */
 function strainTargetAlert(i: SmartInput, day: string): Alert | null {
   const { strain, target } = i;
   if (!i.settings.strainTarget || strain == null || !target || strain < target.low || sentFor(i.markers.strainTargetDay, day)) return null;
-  return { kind: "strain_target", title: "Strain target reached", body: strainBody(strain, target), url: DEEP_LINK.strain, day, mark: { strainTargetDay: day } };
+  return { kind: "strain_target", title: tr("settings.NotificationsSection.strainTargetReached"), body: strainBody(strain, target), url: DEEP_LINK.strain, day, mark: { strainTargetDay: day } };
 }
 
 /**
@@ -150,7 +151,7 @@ function weeklyReportAlert(i: SmartInput, day: string): Alert | null {
   if (sentFor(i.markers.reportPeriod, period)) return null;
   const r = i.reports.find((x) => x.period === period);
   if (!r || r.partial || r.days === 0 || !Object.values(r.averages).some((v) => v != null)) return null;
-  return { kind: "weekly_report", title: "Weekly report ready", body: reportBody(r), url: reportLink(period), day, mark: { reportPeriod: period } };
+  return { kind: "weekly_report", title: tr("background.smart.weeklyReportReady"), body: reportBody(r), url: reportLink(period), day, mark: { reportPeriod: period } };
 }
 
 /** The smart alerts due now. The person's own data only, like decide (demo data never notifies). */
@@ -218,7 +219,7 @@ export function planBedtime(i: BedtimeInput): BedtimeAction {
       const bedtime = Math.round((localMidnight(planner.wakeDay, i.timeZone) + full.bedtimeMin * 60) / 60) * 60;
       const at = bedtime - lead;
       if (at <= i.now) return [];
-      return [{ title: "Wind down", body: `Bed by ${hhmm(bedtime, i.timeZone)} to meet tonight’s sleep need.`, url: DEEP_LINK.planner, day, at, bedtime }];
+      return [{ title: tr("settings.NotificationsSection.windDown"), body: tr("background.smart.bedByToMeetTonightSSleep", { v0: hhmm(bedtime, i.timeZone) }), url: DEEP_LINK.planner, day, at, bedtime }];
     })
     .sort((a, b) => a.at - b.at);
   const next = ahead[0];

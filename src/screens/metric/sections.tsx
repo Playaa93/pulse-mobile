@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // A metric screen's own sections (web: metric/[key]/sections.tsx): what the metric is made of, by kind.
 import type { ReactNode } from "react";
 import { View } from "react-native";
@@ -20,6 +22,7 @@ type Ctx = { vm: MetricDetailVM; timeZone?: string };
 
 /** The inset strip under a card's rows (the web's LEGEND: the class has text styles a View cannot pass down). */
 function Legend({ children }: { children: ReactNode }) {
+  useLanguage();
   return (
     <View className={cn(INSET_ROW, "mb-3 mt-1 py-2")}>
       <Text className="text-xs font-medium leading-4 text-foreground-secondary">{children}</Text>
@@ -30,31 +33,32 @@ function Legend({ children }: { children: ReactNode }) {
 const ok = (v: number): Metric<number> => ({ value: v, reason: null, provisional: false });
 
 export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
+  useLanguage();
   switch (s.kind) {
     case "hourly":
       return <Hourly s={s} {...c} />;
     case "goal":
       return (
-        <SectionShell variant="card" title={`${formatValue("grouped", s.target)}-step days`} info={{ title: "Days reaching the step reference", body: "Recorded days that reached the displayed step reference. Missing data does not count as a completed day." }}>
+        <SectionShell variant="card" title={tr("metric.sections.stepDays", { v0: formatValue("grouped", s.target) })} info={{ title: tr("metric.sections.daysReachingTheStepReference"), body: tr("metric.sections.recordedDaysThatReachedTheDisplayedStep") }}>
           <Divided>
-            <KeyStatRow variant="row" label="Current streak" metric={ok(s.streak)} unit={s.streak === 1 ? "day" : "days"} format="int" direction="none" />
-            <KeyStatRow variant="row" label="Longest streak" caption="In the past year" metric={ok(s.longest)} unit={s.longest === 1 ? "day" : "days"} format="int" direction="none" />
-            <KeyStatRow variant="row" label="Days reached" caption={`In the last ${s.days} days`} metric={ok(s.met)} unit={`of ${s.days}`} format="int" direction="none" />
+            <KeyStatRow variant="row" label={tr("metric.sections.currentStreak")} metric={ok(s.streak)} unit={s.streak === 1 ? "day" : "days"} format="int" direction="none" />
+            <KeyStatRow variant="row" label={tr("metric.sections.longestStreak")} caption={tr("metric.sections.inThePastYear")} metric={ok(s.longest)} unit={s.longest === 1 ? "day" : "days"} format="int" direction="none" />
+            <KeyStatRow variant="row" label={tr("metric.sections.daysReached")} caption={tr("metric.sections.inTheLastDays", { v0: s.days })} metric={ok(s.met)} unit={tr("goals.Goals.of", { v0: s.days })} format="int" direction="none" />
           </Divided>
-          <Legend>About 7,000 steps a day goes with markedly lower health risks in a 2025 review of 57 studies. It is a reference, not a goal you set.</Legend>
+          <Legend>{tr("metric.sections.about7000StepsADayGoes")}</Legend>
         </SectionShell>
       );
     case "weekday": {
       const best = Math.max(...s.days.map((d) => d.value ?? -Infinity));
       return (
-        <SectionShell variant="card" title="By weekday">
+        <SectionShell variant="card" title={tr("cardInfo.title.by.weekday")}>
           <ColumnChart
-            summary={`Average ${c.vm.label} by weekday over the last ${s.weeks} weeks: ${s.days.map((d) => `${d.label} ${formatValue(c.vm.format, d.value)}`).join(", ")}.`}
+            summary={tr("metric.sections.averageByWeekdayOverTheLastWeeks", { v0: c.vm.label, v1: s.weeks, v2: s.days.map((d) => `${d.label} ${formatValue(c.vm.format, d.value)}`).join(", ") })}
             data={s.days.map((d) => ({ label: d.label, value: d.value, highlight: d.value === best }))}
             format={c.vm.format}
             unit={c.vm.unit}
           />
-          <Text className={cn(CAPTION, "mt-2")}>Daily average for each weekday over the last {s.weeks} weeks.</Text>
+          <Text className={cn(CAPTION, "mt-2")}>{tr("metric.weekdayCaption", { count: s.weeks })}</Text>
         </SectionShell>
       );
     }
@@ -62,15 +66,15 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
       return <Weekly s={s} {...c} />;
     case "intensity":
       return (
-        <SectionShell variant="card" title="Minutes by intensity">
+        <SectionShell variant="card" title={tr("cardInfo.title.minutes.by.intensity")}>
           <Divided>{s.rows.map((k) => <KeyStatRow key={k.key} variant="row" {...statProps(k)} />)}</Divided>
-          <Legend>This day vs. its prior 30 days</Legend>
+          <Legend>{tr("metric.sections.thisDayVsItsPrior30Days")}</Legend>
         </SectionShell>
       );
     case "workouts": {
       const burned = s.items.reduce((a, w) => a + (w.calories ?? 0), 0);
       return (
-        <SectionShell variant="card" title="Workouts">
+        <SectionShell variant="card" title={tr("activity.ActivitiesScreen.workouts")}>
           {s.items.length ? (
             <>
               <Divided>
@@ -90,19 +94,19 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
               </Divided>
               {s.active !== null && burned > 0 && (
                 <Legend>
-                  Workouts burned {formatValue("grouped", burned)} of the day’s {formatValue("grouped", s.active)} active kcal.
+                  {tr("metric.workoutCalories", { burned: formatValue("grouped", burned), active: formatValue("grouped", s.active) })}
                 </Legend>
               )}
             </>
           ) : (
-            <EmptyState body="No workouts recorded on this day." className="py-4" />
+            <EmptyState body={tr("metric.sections.noWorkoutsRecordedOnThisDay")} className="py-4" />
           )}
         </SectionShell>
       );
     }
     case "entries":
       return (
-        <SectionShell variant="card" title="Logged entries">
+        <SectionShell variant="card" title={tr("metric.sections.loggedEntries")}>
           {s.items.length ? (
             <Divided>
               {s.items.map((e) => (
@@ -116,25 +120,25 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
               ))}
             </Divided>
           ) : (
-            <EmptyState body="Nothing logged in Pulse on this day. Entries made in other apps count in the total once they sync." className="py-4" />
+            <EmptyState body={tr("metric.sections.nothingLoggedInPulseOnThisDay")} className="py-4" />
           )}
         </SectionShell>
       );
     case "balance":
       return (
-        <SectionShell variant="card" title="Eaten vs. burned">
+        <SectionShell variant="card" title={tr("metric.sections.eatenVsBurned")}>
           <Divided>{s.rows.map((k) => <KeyStatRow key={k.key} variant="row" {...statProps(k, undefined, false)} />)}</Divided>
         </SectionShell>
       );
     case "macros":
       return (
-        <SectionShell variant="card" title="Macros">
+        <SectionShell variant="card" title={tr("cardInfo.title.macros")}>
           <Divided>{s.rows.map((k) => <KeyStatRow key={k.key} variant="row" {...statProps(k, undefined, false)} />)}</Divided>
         </SectionShell>
       );
     case "readings":
       return (
-        <SectionShell variant="card" title="Readings">
+        <SectionShell variant="card" title={tr("cardInfo.title.readings")}>
           <Divided>
             {s.changes.map((k) => (
               <KeyStatRow key={k.key} variant="row" {...statProps(k, undefined, false)} />
@@ -148,8 +152,8 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
     case "outliers": {
       const range = `${formatValue(c.vm.format, s.mean - s.sd)} - ${formatValue(c.vm.format, s.mean + s.sd)}${c.vm.unit ? ` ${c.vm.unit}` : ""}`;
       return (
-        <SectionShell variant="card" title="Unusual days">
-          <Text className={cn(CAPTION, "mb-2")}>Your usual range over the last 90 days is {range}. Days far outside it are listed here.</Text>
+        <SectionShell variant="card" title={tr("cardInfo.title.unusual.days")}>
+          <Text className={cn(CAPTION, "mb-2")}>{tr("metric.outlierCaption", { range })}</Text>
           {s.items.length ? (
             <Divided>
               {s.items.map((o) => (
@@ -157,7 +161,7 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
                   key={o.day}
                   variant="row"
                   label={formatDay(o.day, DAY.short)}
-                  caption={o.dir === "high" ? "Above your usual range" : "Below your usual range"}
+                  caption={o.dir === "high" ? tr("metric.sections.aboveYourUsualRange") : tr("metric.sections.belowYourUsualRange")}
                   metric={ok(o.value)}
                   unit={c.vm.unit}
                   format={c.vm.format}
@@ -166,7 +170,7 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
               ))}
             </Divided>
           ) : (
-            <EmptyState body="No unusual days in the last 90 days." className="py-4" />
+            <EmptyState body={tr("metric.sections.noUnusualDaysInTheLast90")} className="py-4" />
           )}
         </SectionShell>
       );
@@ -175,17 +179,18 @@ export function MetricSection({ s, ...c }: Ctx & { s: Section }) {
 }
 
 function Hourly({ s, vm, timeZone }: Ctx & { s: Extract<Section, { kind: "hourly" }> }) {
+  useLanguage();
   const sedentary = vm.key === "sedentary_minutes";
   return (
-    <SectionShell variant="card" title={sedentary ? "Movement by hour" : "Steps by hour"}>
-      <MetricState metric={s.hours} skeleton={<ColumnChart.Skeleton />} renderReason={() => <EmptyState body="No per-minute steps for this day." className="py-10" />}>
+    <SectionShell variant="card" title={sedentary ? tr("metric.sections.movementByHour") : tr("cardInfo.title.steps.by.hour")}>
+      <MetricState metric={s.hours} skeleton={<ColumnChart.Skeleton />} renderReason={() => <EmptyState body={tr("metric.sections.noPerMinuteStepsForThisDay")} className="py-10" />}>
         {(hours) => {
           const done = hours.filter((h) => h.value !== null);
           const peak = done.reduce((a, h) => ((h.value ?? 0) > (a?.value ?? 0) ? h : a), done[0]);
           return (
             <>
               <ColumnChart
-                summary={`Steps by hour${peak?.value ? `, most at ${peak.label} with ${formatValue("grouped", peak.value)}` : ""}.`}
+                summary={tr("metric.sections.stepsByHour", { v0: peak?.value ? tr("metric.sections.mostAtWith", { v0: peak.label, v1: formatValue("grouped", peak.value) }) : "" })}
                 data={hours.map((h, i) => ({ label: h.label, title: `${h.label} - ${hours[i + 1]?.label ?? "24:00"}`, value: h.value }))}
                 format="grouped"
                 unit="steps"
@@ -193,7 +198,7 @@ function Hourly({ s, vm, timeZone }: Ctx & { s: Extract<Section, { kind: "hourly
               />
               {sedentary && s.still && (
                 <Legend>
-                  Longest daytime stretch without steps: {durationWords(s.still.minutes)}, {clock(s.still.from, timeZone)} - {clock(s.still.to, timeZone)}
+                  {tr("metric.sections.longestDaytimeStretchWithoutSteps")}{durationWords(s.still.minutes)}, {clock(s.still.from, timeZone)} - {clock(s.still.to, timeZone)}
                 </Legend>
               )}
             </>
@@ -205,33 +210,34 @@ function Hourly({ s, vm, timeZone }: Ctx & { s: Extract<Section, { kind: "hourly
 }
 
 function Weekly({ s, vm }: Ctx & { s: Extract<Section, { kind: "weekly" }> }) {
+  useLanguage();
   const pct = Math.min(100, (s.week.total / s.target) * 100);
   return (
-    <SectionShell variant="card" title="This week">
+    <SectionShell variant="card" title={tr("cardInfo.title.this.week")}>
       <Text className="font-numeric text-[28px] font-bold leading-8 tabular-nums">
         {hmm(s.week.total)}
-        <Text className="text-sm font-medium leading-5 text-foreground-secondary"> of {hmm(s.target)}</Text>
+        <Text className="text-sm font-medium leading-5 text-foreground-secondary"> {tr("metric.sections.of")}{hmm(s.target)}</Text>
       </Text>
       <View
         accessibilityRole="progressbar"
-        accessibilityLabel={`${vm.label} this week`}
+        accessibilityLabel={tr("metric.sections.thisWeek", { v0: vm.label })}
         accessibilityValue={{ min: 0, max: s.target, now: Math.round(s.week.total) }}
         className="mb-1 mt-2 h-2 overflow-hidden rounded-full bg-dial-track"
       >
         <View className="h-full rounded-full bg-optimal" style={{ width: `${pct}%` }} />
       </View>
       <Text className={cn(CAPTION, "mb-4")}>
-        {formatDay(s.week.from, DAY.monthDay)} - {formatDay(s.week.to, DAY.monthDay)}, toward the {s.target} minutes a week the WHO recommends
+        {tr("metric.weeklyCaption", { from: formatDay(s.week.from, DAY.monthDay), to: formatDay(s.week.to, DAY.monthDay), target: s.target })}
       </Text>
       <ColumnChart
-        summary={`${vm.label} per week, last ${s.weeks.length} weeks. Target met in ${s.met}.`}
-        data={s.weeks.map((w) => ({ label: formatDay(w.from, DAY.monthDay), title: `Week of ${formatDay(w.from, DAY.monthDay)}`, value: w.value, highlight: (w.value ?? 0) >= s.target }))}
+        summary={tr("metric.sections.perWeekLastWeeksTargetMetIn", { v0: vm.label, v1: s.weeks.length, v2: s.met })}
+        data={s.weeks.map((w) => ({ label: formatDay(w.from, DAY.monthDay), title: tr("goals.WeeklyPlan.weekOf", { v0: formatDay(w.from, DAY.monthDay) }), value: w.value, highlight: (w.value ?? 0) >= s.target }))}
         format="duration"
         tickEvery={3}
         reference={{ y: s.target, label: hmm(s.target) }}
       />
       <Text className={cn(CAPTION, "mt-2")}>
-        Target met in {s.met} of the last {s.weeks.length} weeks
+        {tr("metric.weeksMet", { met: s.met, count: s.weeks.length })}
       </Text>
     </SectionShell>
   );

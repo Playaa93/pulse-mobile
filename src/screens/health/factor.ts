@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The line under each Healthspan factor (spec §11 R43), worked out on screen from the years halo's query gives: where the factor stands for long-term health, from the years it
 // adds to or takes off Pulse Age. See docs/algorithms/healthspan.md, "Factor copy".
 
@@ -18,8 +19,8 @@ export function factorCopy(label: string, years: number): { state: FactorState; 
   const name = /^[A-Z][a-z]/.test(label) ? label.charAt(0).toLowerCase() + label.slice(1) : label;
   const state = factorState(years);
   if (state === "outperforming")
-    return { state, title: "Outperforming", body: `You're boosting your long-term health with your ${name}. Keep it up to hold on to the benefit.` };
+    return { state, title: tr("health.factor.outperforming"), body: tr("health.factor.youReBoostingYourLongTermHealth", { v0: name }) };
   if (state === "underperforming")
-    return { state, title: "Room to improve", body: `Your ${name} is adding years to your Pulse Age. Moving it toward the target for your age would take them off.` };
-  return { state, title: "On track", body: `Your ${name} is close to the target for your age. Small gains here add up over the years.` };
+    return { state, title: tr("health.factor.roomToImprove"), body: tr("health.factor.yourIsAddingYearsToYourPulse", { v0: name }) };
+  return { state, title: tr("health.factor.onTrack"), body: tr("health.factor.yourIsCloseToTheTargetFor", { v0: name }) };
 }

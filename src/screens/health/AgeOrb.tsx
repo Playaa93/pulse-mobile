@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Pulse Age hero (pulse docs/design/orb.md), ported from pulse src/components/metrics/AgeOrb.tsx by way of halo's
 // src/screens/health/AgeOrb.tsx. The web redraws a 2D canvas every frame; here each part of the orb is a static SVG
 // drawn once per size, delta and theme, and only the views around them move (transform and opacity, Reanimated styles
@@ -85,6 +87,7 @@ const appActive = () => AppState.currentState !== "background" && AppState.curre
  * the settled frame alone.
  */
 function OrbLayers({ delta, size, compact }: { delta: number | null; size: number; compact: boolean }) {
+  useLanguage();
   const { c, scheme } = useTheme();
   const reduced = useReducedMotion();
   const settled = compact || reduced;
@@ -507,6 +510,7 @@ const enter = (delay: number) => new Keyframe({ 0: { opacity: 0, transform: [{ t
  * Pulse Age is. The inner particles spiral in on mount and drift at idle, and spin and gather while pressed.
  */
 export function AgeOrb({ age, deltaYears, provisional = false, size: sizeProp, reason, compact = false }: AgeOrbProps) {
+  useLanguage();
   // Never wider than the page column: the 300 px orb would cross the 16 px gutters on a 320 px phone.
   const size = Math.min(sizeProp ?? (compact ? 108 : 300), useNarrow().width - 32);
   const { c } = useTheme();
@@ -520,8 +524,8 @@ export function AgeOrb({ age, deltaYears, provisional = false, size: sizeProp, r
   const r = reasonCopy(reason);
 
   const label = has
-    ? `${AGE_LABEL} ${formatValue("decimal1", age)}, ${same ? "same as your age" : `${d!.text} than your age`}${provisional ? ", provisional" : ""}`
-    : `${AGE_LABEL} unavailable. ${r.long}`;
+    ? `${AGE_LABEL} ${formatValue("decimal1", age)}, ${same ? tr("health.AgeOrb.sameAsYourAge") : tr("health.AgeOrb.thanYourAge", { v0: d!.text })}${provisional ? tr("health.AgeOrb.provisional") : ""}`
+    : tr("health.AgeOrb.unavailable", { v0: AGE_LABEL, v1: r.long });
 
   // The web's `motion-safe:` entry: with reduced motion the text just appears.
   const entering = (delay: number) => (compact || reduced ? undefined : enter(delay));

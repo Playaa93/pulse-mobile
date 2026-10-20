@@ -1,3 +1,4 @@
+import { tr, formatLocale } from "@/i18n";
 // Daily goals (Fitbit-style), kept on the phone (AsyncStorage "pulse.goals"): the targets, which goals are on, their
 // limits, and the hook Home, Trends and Settings read them with. One module-level store, like My Dashboard's keys
 // (src/screens/home/dashboard.ts), so every screen sees a save at once. The query that scores a day against them
@@ -35,26 +36,26 @@ export type TargetLimit = {
 };
 
 export const TARGET_LIMITS: Record<TargetKey, TargetLimit> = {
-  steps: { min: 1000, max: 50_000, decimals: 0, unit: "steps a day" },
-  distance: { min: 1, max: 100, decimals: 1, unit: "km a day" },
-  floors: { min: 1, max: 200, decimals: 0, unit: "floors a day" },
-  azm: { min: 1, max: 600, decimals: 0, unit: "min a day" },
-  azmWeek: { min: 10, max: 3000, decimals: 0, unit: "min a week" },
-  active_minutes: { min: 5, max: 600, decimals: 0, unit: "min a day" },
-  active_calories: { min: 50, max: 5000, decimals: 0, unit: "kcal a day" },
-  water: { min: 250, max: 10_000, decimals: 0, unit: "ml a day" },
-  sleep: { min: 4, max: 12, decimals: 1, unit: "hours a night", optional: true },
+  steps: { min: 1000, max: 50_000, decimals: 0, get unit() { return tr("state.goals.stepsADay"); } },
+  distance: { min: 1, max: 100, decimals: 1, get unit() { return tr("state.goals.kmADay"); } },
+  floors: { min: 1, max: 200, decimals: 0, get unit() { return tr("state.goals.floorsADay"); } },
+  azm: { min: 1, max: 600, decimals: 0, get unit() { return tr("state.goals.minADay"); } },
+  azmWeek: { min: 10, max: 3000, decimals: 0, get unit() { return tr("state.goals.minAWeek"); } },
+  active_minutes: { min: 5, max: 600, decimals: 0, get unit() { return tr("state.goals.minADay"); } },
+  active_calories: { min: 50, max: 5000, decimals: 0, get unit() { return tr("state.goals.kcalADay"); } },
+  water: { min: 250, max: 10_000, decimals: 0, get unit() { return tr("state.goals.mlADay"); } },
+  sleep: { min: 4, max: 12, decimals: 1, get unit() { return tr("state.goals.hoursANight"); }, optional: true },
 };
 
-const fmt = (key: TargetKey, v: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: TARGET_LIMITS[key].decimals }).format(v);
+const fmt = (key: TargetKey, v: number) => new Intl.NumberFormat(formatLocale(), { maximumFractionDigits: TARGET_LIMITS[key].decimals }).format(v);
 
 /** Null when `value` is allowed for `key`, else why not ("Between 1,000 and 50,000"). */
 export function validateTarget(key: TargetKey, value: number | null): string | null {
   const l = TARGET_LIMITS[key];
-  if (value === null) return l.optional ? null : "Enter a number";
-  if (!Number.isFinite(value)) return "Enter a number";
-  if (l.decimals === 0 && !Number.isInteger(value)) return "Whole numbers only";
-  if (value < l.min || value > l.max) return `Between ${fmt(key, l.min)} and ${fmt(key, l.max)}`;
+  if (value === null) return l.optional ? null : tr("nutrition.targets.enterANumber");
+  if (!Number.isFinite(value)) return tr("nutrition.targets.enterANumber");
+  if (l.decimals === 0 && !Number.isInteger(value)) return tr("nutrition.targets.wholeNumbersOnly");
+  if (value < l.min || value > l.max) return tr("state.goals.betweenAnd", { v0: fmt(key, l.min), v1: fmt(key, l.max) });
   return null;
 }
 
@@ -62,7 +63,7 @@ export function validateTarget(key: TargetKey, value: number | null): string | n
 export function parseTarget(key: TargetKey, text: string): { value: number | null; error: string | null } {
   const t = text.trim().replace(",", ".");
   const value = t === "" ? null : Number(t);
-  const error = value !== null && Number.isNaN(value) ? "Enter a number" : validateTarget(key, value);
+  const error = value !== null && Number.isNaN(value) ? tr("nutrition.targets.enterANumber") : validateTarget(key, value);
   return { value: error ? null : value, error };
 }
 

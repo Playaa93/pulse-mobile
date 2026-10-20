@@ -1,24 +1,25 @@
+import { tr, language } from "@/i18n";
 // The journal's behaviour catalogue (journal-04..09): every behaviour a person can add to the daily journal, with the
 // sentence the journal asks, its Select Behaviors category and the journal section it sits in. Keys are stored in
 // journal_tags and journal_entries; never rename one. The nine defaults keep their original keys.
 
 export const BEHAVIOR_CATEGORIES = [
-  { key: "drugs", label: "Drugs & medication" },
-  { key: "health", label: "Health & symptoms" },
-  { key: "personal", label: "Personal health" },
-  { key: "lifestyle", label: "Lifestyle" },
-  { key: "mental", label: "Mental wellbeing" },
-  { key: "nutrition", label: "Nutrition" },
-  { key: "recovery", label: "Recovery" },
+  { key: "drugs", get label() { return tr("lib.behaviors.drugsMedication"); } },
+  { key: "health", get label() { return tr("lib.behaviors.healthSymptoms"); } },
+  { key: "personal", get label() { return tr("lib.behaviors.personalHealth"); } },
+  { key: "lifestyle", get label() { return tr("lib.behaviors.lifestyle"); } },
+  { key: "mental", get label() { return tr("lib.behaviors.mentalWellbeing"); } },
+  { key: "nutrition", get label() { return tr("lib.behaviors.nutrition"); } },
+  { key: "recovery", get label() { return tr("ui.shells.HomeHeader.recovery"); } },
 ] as const
 export type BehaviorCategory = (typeof BEHAVIOR_CATEGORIES)[number]["key"]
 
 /** The journal's sections (journal-01): when in the day the question is about. Custom behaviours sit under "custom". */
 export const JOURNAL_SECTIONS = [
-  { key: "daytime", title: "Daytime" },
-  { key: "nighttime", title: "Nighttime" },
-  { key: "status", title: "Status" },
-  { key: "custom", title: "Your behaviours" },
+  { key: "daytime", get title() { return tr("lib.behaviors.daytime"); } },
+  { key: "nighttime", get title() { return tr("lib.behaviors.nighttime"); } },
+  { key: "status", get title() { return tr("settings.LiveHeartRate.status"); } },
+  { key: "custom", get title() { return tr("lib.behaviors.yourBehaviours"); } },
 ] as const
 export type JournalSection = (typeof JOURNAL_SECTIONS)[number]["key"]
 
@@ -28,61 +29,61 @@ export type JournalSection = (typeof JOURNAL_SECTIONS)[number]["key"]
  */
 export type FollowUp = { question: string; kind: "clock" | "count"; min: number; max: number; step: number }
 
-export type Behavior = { key: string; label: string; question: string; category: BehaviorCategory; section: Exclude<JournalSection, "custom">; followUp?: FollowUp }
+export type Behavior = { key: string; sourceLabel: string; label: string; question: string; category: BehaviorCategory; section: Exclude<JournalSection, "custom">; followUp?: FollowUp }
 
-const LAST: FollowUp = { question: "When did you last consume it?", kind: "clock", min: 6 * 60, max: 24 * 60 - 30, step: 30 }
+const LAST: FollowUp = { get question() { return tr("lib.behaviors.whenDidYouLastConsumeIt"); }, kind: "clock", min: 6 * 60, max: 24 * 60 - 30, step: 30 }
 
 export const BEHAVIORS: readonly Behavior[] = [
-  { key: "accutane", label: "Accutane", question: "Took Accutane?", category: "drugs", section: "daytime" },
-  { key: "acne", label: "Acne", question: "Experienced acne?", category: "health", section: "status" },
-  { key: "acupuncture", label: "Acupuncture", question: "Received acupuncture therapy?", category: "recovery", section: "daytime" },
-  { key: "adhd_medication", label: "AD(H)D medication", question: "Took AD(H)D medication?", category: "drugs", section: "daytime" },
-  { key: "adaptogens", label: "Adaptogen mushrooms", question: "Took adaptogen mushrooms?", category: "nutrition", section: "daytime" },
-  { key: "added_sugar", label: "Added sugar", question: "Consumed added sugar?", category: "nutrition", section: "daytime" },
-  { key: "afternoon_snack", label: "Afternoon snack", question: "Ate an afternoon snack?", category: "nutrition", section: "daytime" },
-  { key: "air_travel", label: "Air travel", question: "Travelled by plane?", category: "lifestyle", section: "daytime" },
-  { key: "alcohol", label: "Alcohol", question: "Had any alcohol?", category: "nutrition", section: "nighttime", followUp: { question: "How many drinks?", kind: "count", min: 1, max: 10, step: 1 } },
-  { key: "allergy_medication", label: "Allergy medication", question: "Took allergy medication?", category: "drugs", section: "daytime" },
-  { key: "anti_anxiety_medication", label: "Anti-anxiety medication", question: "Took anti-anxiety medication?", category: "drugs", section: "daytime" },
-  { key: "anxiety", label: "Anxiety", question: "Felt anxious?", category: "mental", section: "status" },
-  { key: "blood_donation", label: "Blood donation", question: "Donated blood?", category: "personal", section: "daytime" },
-  { key: "caffeine", label: "Caffeine", question: "Had any caffeine?", category: "nutrition", section: "daytime", followUp: LAST },
-  { key: "camping", label: "Camping", question: "Went camping?", category: "lifestyle", section: "nighttime" },
-  { key: "car_train_travel", label: "Car or train travel", question: "Travelled by car or train?", category: "lifestyle", section: "daytime" },
-  { key: "caregiving", label: "Caregiving", question: "Cared for someone?", category: "lifestyle", section: "daytime" },
-  { key: "cold_exposure", label: "Cold exposure", question: "Took a cold plunge or shower?", category: "recovery", section: "daytime" },
-  { key: "electrolytes", label: "Electrolytes", question: "Took electrolyte supplements?", category: "nutrition", section: "daytime", followUp: LAST },
-  { key: "family_friends", label: "Family and friends", question: "Spent time with family or friends?", category: "mental", section: "daytime" },
-  { key: "feeding_baby", label: "Feeding baby at night", question: "Fed a baby at night?", category: "lifestyle", section: "nighttime" },
-  { key: "fever", label: "Fever", question: "Experiencing a fever?", category: "health", section: "daytime" },
-  { key: "headache", label: "Headache", question: "Had a headache?", category: "health", section: "status" },
-  { key: "illness", label: "Illness", question: "Feeling sick or ill?", category: "health", section: "status" },
-  { key: "injury", label: "Injury", question: "Dealing with an injury?", category: "health", section: "status" },
-  { key: "intermittent_fasting", label: "Intermittent fasting", question: "Fasted for 14 hours or more?", category: "nutrition", section: "daytime" },
-  { key: "journaling", label: "Journaling", question: "Wrote in a journal?", category: "mental", section: "nighttime" },
-  { key: "late_caffeine", label: "Late caffeine", question: "Had caffeine after 2 PM?", category: "nutrition", section: "daytime" },
-  { key: "late_meal", label: "Late meal", question: "Ate within two hours of bed?", category: "nutrition", section: "nighttime" },
-  { key: "magnesium", label: "Magnesium", question: "Took magnesium?", category: "nutrition", section: "nighttime" },
-  { key: "meditation", label: "Meditation", question: "Meditated?", category: "mental", section: "daytime" },
-  { key: "melatonin", label: "Melatonin", question: "Took melatonin?", category: "drugs", section: "nighttime" },
-  { key: "menstruating", label: "Menstruating", question: "Menstruating?", category: "personal", section: "status" },
-  { key: "mouth_tape", label: "Mouth tape", question: "Wore mouth tape while sleeping?", category: "recovery", section: "nighttime" },
-  { key: "nap", label: "Nap", question: "Took a nap?", category: "recovery", section: "daytime" },
-  { key: "night_shift", label: "Night shift", question: "Worked the night shift?", category: "lifestyle", section: "nighttime" },
-  { key: "on_call", label: "On-call shift", question: "Worked an on-call shift?", category: "lifestyle", section: "nighttime" },
-  { key: "outdoor_time", label: "Outdoor time", question: "Spent time outdoors?", category: "lifestyle", section: "daytime" },
-  { key: "parenting", label: "Parenting", question: "Spent the day parenting?", category: "lifestyle", section: "daytime" },
-  { key: "remote_work", label: "Remote work", question: "Worked from home?", category: "lifestyle", section: "daytime" },
-  { key: "sauna", label: "Sauna", question: "Used a sauna?", category: "recovery", section: "daytime" },
-  { key: "screen_in_bed", label: "Screen in bed", question: "Used a screen in bed?", category: "lifestyle", section: "nighttime" },
-  { key: "sexual_activity", label: "Sexual activity", question: "Had sexual activity?", category: "personal", section: "nighttime" },
-  { key: "shared_bed_child", label: "Shared bedroom with child", question: "Shared a bedroom with a child?", category: "lifestyle", section: "nighttime" },
-  { key: "sleep_aid", label: "Sleep aid", question: "Took a sleep aid?", category: "drugs", section: "nighttime" },
-  { key: "sore_throat", label: "Sore throat", question: "Have a sore throat?", category: "health", section: "status" },
-  { key: "stress", label: "Stress", question: "Felt stressed?", category: "mental", section: "status" },
-  { key: "stretching", label: "Stretching", question: "Stretched?", category: "recovery", section: "daytime" },
-  { key: "therapy", label: "Therapy", question: "Went to a therapy session?", category: "mental", section: "daytime" },
-  { key: "travel", label: "Travel", question: "Travelled today?", category: "lifestyle", section: "status" },
+  { get sourceLabel() { return "Accutane"; }, key: "accutane", label: "Accutane", get question() { return tr("lib.behaviors.tookAccutane"); }, category: "drugs", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.acne", { lng: "en" }); }, key: "acne", get label() { return tr("lib.behaviors.acne"); }, get question() { return tr("lib.behaviors.experiencedAcne"); }, category: "health", section: "status" },
+  { get sourceLabel() { return "Acupuncture"; }, key: "acupuncture", label: "Acupuncture", get question() { return tr("lib.behaviors.receivedAcupunctureTherapy"); }, category: "recovery", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.adHDMedication", { lng: "en" }); }, key: "adhd_medication", get label() { return tr("lib.behaviors.adHDMedication"); }, get question() { return tr("lib.behaviors.tookAdHDMedication"); }, category: "drugs", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.adaptogenMushrooms", { lng: "en" }); }, key: "adaptogens", get label() { return tr("lib.behaviors.adaptogenMushrooms"); }, get question() { return tr("lib.behaviors.tookAdaptogenMushrooms"); }, category: "nutrition", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.addedSugar", { lng: "en" }); }, key: "added_sugar", get label() { return tr("lib.behaviors.addedSugar"); }, get question() { return tr("lib.behaviors.consumedAddedSugar"); }, category: "nutrition", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.afternoonSnack", { lng: "en" }); }, key: "afternoon_snack", get label() { return tr("lib.behaviors.afternoonSnack"); }, get question() { return tr("lib.behaviors.ateAnAfternoonSnack"); }, category: "nutrition", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.airTravel", { lng: "en" }); }, key: "air_travel", get label() { return tr("lib.behaviors.airTravel"); }, get question() { return tr("lib.behaviors.travelledByPlane"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.alcohol", { lng: "en" }); }, key: "alcohol", get label() { return tr("lib.behaviors.alcohol"); }, get question() { return tr("lib.behaviors.hadAnyAlcohol"); }, category: "nutrition", section: "nighttime", followUp: { get question() { return tr("lib.behaviors.howManyDrinks"); }, kind: "count", min: 1, max: 10, step: 1 } },
+  { get sourceLabel() { return tr("lib.behaviors.allergyMedication", { lng: "en" }); }, key: "allergy_medication", get label() { return tr("lib.behaviors.allergyMedication"); }, get question() { return tr("lib.behaviors.tookAllergyMedication"); }, category: "drugs", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.antiAnxietyMedication", { lng: "en" }); }, key: "anti_anxiety_medication", get label() { return tr("lib.behaviors.antiAnxietyMedication"); }, get question() { return tr("lib.behaviors.tookAntiAnxietyMedication"); }, category: "drugs", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.anxiety", { lng: "en" }); }, key: "anxiety", get label() { return tr("lib.behaviors.anxiety"); }, get question() { return tr("lib.behaviors.feltAnxious"); }, category: "mental", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.bloodDonation", { lng: "en" }); }, key: "blood_donation", get label() { return tr("lib.behaviors.bloodDonation"); }, get question() { return tr("lib.behaviors.donatedBlood"); }, category: "personal", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.caffeine", { lng: "en" }); }, key: "caffeine", get label() { return tr("lib.behaviors.caffeine"); }, get question() { return tr("lib.behaviors.hadAnyCaffeine"); }, category: "nutrition", section: "daytime", followUp: LAST },
+  { get sourceLabel() { return "Camping"; }, key: "camping", label: "Camping", get question() { return tr("lib.behaviors.wentCamping"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.carOrTrainTravel", { lng: "en" }); }, key: "car_train_travel", get label() { return tr("lib.behaviors.carOrTrainTravel"); }, get question() { return tr("lib.behaviors.travelledByCarOrTrain"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.caregiving", { lng: "en" }); }, key: "caregiving", get label() { return tr("lib.behaviors.caregiving"); }, get question() { return tr("lib.behaviors.caredForSomeone"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.coldExposure", { lng: "en" }); }, key: "cold_exposure", get label() { return tr("lib.behaviors.coldExposure"); }, get question() { return tr("lib.behaviors.tookAColdPlungeOrShower"); }, category: "recovery", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.electrolytes", { lng: "en" }); }, key: "electrolytes", get label() { return tr("lib.behaviors.electrolytes"); }, get question() { return tr("lib.behaviors.tookElectrolyteSupplements"); }, category: "nutrition", section: "daytime", followUp: LAST },
+  { get sourceLabel() { return tr("lib.behaviors.familyAndFriends", { lng: "en" }); }, key: "family_friends", get label() { return tr("lib.behaviors.familyAndFriends"); }, get question() { return tr("lib.behaviors.spentTimeWithFamilyOrFriends"); }, category: "mental", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.feedingBabyAtNight", { lng: "en" }); }, key: "feeding_baby", get label() { return tr("lib.behaviors.feedingBabyAtNight"); }, get question() { return tr("lib.behaviors.fedABabyAtNight"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.fever", { lng: "en" }); }, key: "fever", get label() { return tr("lib.behaviors.fever"); }, get question() { return tr("lib.behaviors.experiencingAFever"); }, category: "health", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.headache", { lng: "en" }); }, key: "headache", get label() { return tr("lib.behaviors.headache"); }, get question() { return tr("lib.behaviors.hadAHeadache"); }, category: "health", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.illness", { lng: "en" }); }, key: "illness", get label() { return tr("lib.behaviors.illness"); }, get question() { return tr("lib.behaviors.feelingSickOrIll"); }, category: "health", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.injury", { lng: "en" }); }, key: "injury", get label() { return tr("lib.behaviors.injury"); }, get question() { return tr("lib.behaviors.dealingWithAnInjury"); }, category: "health", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.intermittentFasting", { lng: "en" }); }, key: "intermittent_fasting", get label() { return tr("lib.behaviors.intermittentFasting"); }, get question() { return tr("lib.behaviors.fastedFor14HoursOrMore"); }, category: "nutrition", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.journaling", { lng: "en" }); }, key: "journaling", get label() { return tr("lib.behaviors.journaling"); }, get question() { return tr("lib.behaviors.wroteInAJournal"); }, category: "mental", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.lateCaffeine", { lng: "en" }); }, key: "late_caffeine", get label() { return tr("lib.behaviors.lateCaffeine"); }, get question() { return tr("lib.behaviors.hadCaffeineAfter2Pm"); }, category: "nutrition", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.lateMeal", { lng: "en" }); }, key: "late_meal", get label() { return tr("lib.behaviors.lateMeal"); }, get question() { return tr("lib.behaviors.ateWithinTwoHoursOfBed"); }, category: "nutrition", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.magnesium", { lng: "en" }); }, key: "magnesium", get label() { return tr("lib.behaviors.magnesium"); }, get question() { return tr("lib.behaviors.tookMagnesium"); }, category: "nutrition", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.meditation", { lng: "en" }); }, key: "meditation", get label() { return tr("lib.behaviors.meditation"); }, get question() { return tr("lib.behaviors.meditated"); }, category: "mental", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.melatonin", { lng: "en" }); }, key: "melatonin", get label() { return tr("lib.behaviors.melatonin"); }, get question() { return tr("lib.behaviors.tookMelatonin"); }, category: "drugs", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.menstruating", { lng: "en" }); }, key: "menstruating", get label() { return tr("lib.behaviors.menstruating"); }, get question() { return tr("lib.behaviors.menstruating_dc0e6c"); }, category: "personal", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.mouthTape", { lng: "en" }); }, key: "mouth_tape", get label() { return tr("lib.behaviors.mouthTape"); }, get question() { return tr("lib.behaviors.woreMouthTapeWhileSleeping"); }, category: "recovery", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.nap", { lng: "en" }); }, key: "nap", get label() { return tr("lib.behaviors.nap"); }, get question() { return tr("lib.behaviors.tookANap"); }, category: "recovery", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.nightShift", { lng: "en" }); }, key: "night_shift", get label() { return tr("lib.behaviors.nightShift"); }, get question() { return tr("lib.behaviors.workedTheNightShift"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.onCallShift", { lng: "en" }); }, key: "on_call", get label() { return tr("lib.behaviors.onCallShift"); }, get question() { return tr("lib.behaviors.workedAnOnCallShift"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.outdoorTime", { lng: "en" }); }, key: "outdoor_time", get label() { return tr("lib.behaviors.outdoorTime"); }, get question() { return tr("lib.behaviors.spentTimeOutdoors"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.parenting", { lng: "en" }); }, key: "parenting", get label() { return tr("lib.behaviors.parenting"); }, get question() { return tr("lib.behaviors.spentTheDayParenting"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.remoteWork", { lng: "en" }); }, key: "remote_work", get label() { return tr("lib.behaviors.remoteWork"); }, get question() { return tr("lib.behaviors.workedFromHome"); }, category: "lifestyle", section: "daytime" },
+  { get sourceLabel() { return "Sauna"; }, key: "sauna", label: "Sauna", get question() { return tr("lib.behaviors.usedASauna"); }, category: "recovery", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.screenInBed", { lng: "en" }); }, key: "screen_in_bed", get label() { return tr("lib.behaviors.screenInBed"); }, get question() { return tr("lib.behaviors.usedAScreenInBed"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.sexualActivity", { lng: "en" }); }, key: "sexual_activity", get label() { return tr("lib.behaviors.sexualActivity"); }, get question() { return tr("lib.behaviors.hadSexualActivity"); }, category: "personal", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.sharedBedroomWithChild", { lng: "en" }); }, key: "shared_bed_child", get label() { return tr("lib.behaviors.sharedBedroomWithChild"); }, get question() { return tr("lib.behaviors.sharedABedroomWithAChild"); }, category: "lifestyle", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.sleepAid", { lng: "en" }); }, key: "sleep_aid", get label() { return tr("lib.behaviors.sleepAid"); }, get question() { return tr("lib.behaviors.tookASleepAid"); }, category: "drugs", section: "nighttime" },
+  { get sourceLabel() { return tr("lib.behaviors.soreThroat", { lng: "en" }); }, key: "sore_throat", get label() { return tr("lib.behaviors.soreThroat"); }, get question() { return tr("lib.behaviors.haveASoreThroat"); }, category: "health", section: "status" },
+  { get sourceLabel() { return "Stress"; }, key: "stress", label: "Stress", get question() { return tr("lib.behaviors.feltStressed"); }, category: "mental", section: "status" },
+  { get sourceLabel() { return tr("lib.behaviors.stretching", { lng: "en" }); }, key: "stretching", get label() { return tr("lib.behaviors.stretching"); }, get question() { return tr("lib.behaviors.stretched"); }, category: "recovery", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.therapy", { lng: "en" }); }, key: "therapy", get label() { return tr("lib.behaviors.therapy"); }, get question() { return tr("lib.behaviors.wentToATherapySession"); }, category: "mental", section: "daytime" },
+  { get sourceLabel() { return tr("lib.behaviors.travel", { lng: "en" }); }, key: "travel", get label() { return tr("lib.behaviors.travel"); }, get question() { return tr("lib.behaviors.travelledToday"); }, category: "lifestyle", section: "status" },
 ]
 
 const BY_KEY = new Map(BEHAVIORS.map((b) => [b.key, b]))
@@ -95,5 +96,12 @@ export const questionOf = (tag: string, label: string) => behavior(tag)?.questio
 export function followUpText(f: FollowUp, v: number) {
   if (f.kind === "count") return String(v)
   const h = Math.floor(v / 60) % 24
+  if (language() === "fr") return `${String(h).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`
   return `${h % 12 || 12}:${String(v % 60).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`
+}
+
+/** Built-in labels follow the app language; owner-renamed labels remain verbatim. */
+export function behaviorLabel(key: string, savedLabel: string): string {
+  const item = behavior(key);
+  return item && savedLabel === item.sourceLabel ? item.label : savedLabel;
 }

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { formatLocale, tr } from "@/i18n";
 // Select Behaviors (journal-04..09). Ported from pulse (app)/more/behaviours/SelectBehaviors.tsx (`BehaviorPicker`,
 // `shownOf`, `saveSelection`): search, category tabs, then the chosen behaviours above a "Not selected" rule, each a name,
 // its daily question and a checkbox. The two groups are split as the picker opened, so ticking a row doesn't move it.
@@ -32,16 +34,17 @@ const itemsOf = (tags: BehavioursVM["tags"]): Item[] => [
 export const shownOf = (tags: BehavioursVM["tags"]) => new Set(tags.filter((t) => !t.hidden).map((t) => t.tag));
 
 export function BehaviorPicker({ tags, initial, selected, onChange }: { tags: BehavioursVM["tags"]; initial: Set<string>; selected: Set<string>; onChange: (next: Set<string>) => void }) {
+  useLanguage();
   const { c } = useTheme();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("all");
-  const items = itemsOf(tags);
-  const tabs: { key: Tab; label: string }[] = [{ key: "all", label: "All" }, ...BEHAVIOR_CATEGORIES, ...(items.some((i) => i.category === "custom") ? [{ key: "custom" as const, label: "Yours" }] : [])];
+  const items = itemsOf(tags).sort((a, b) => Number(a.category === "custom") - Number(b.category === "custom") || a.label.localeCompare(b.label, formatLocale()));
+  const tabs: { key: Tab; label: string }[] = [{ key: "all", label: tr("activity.ActivitiesScreen.all") }, ...BEHAVIOR_CATEGORIES, ...(items.some((i) => i.category === "custom") ? [{ key: "custom" as const, label: tr("more.BehaviorPicker.yours") }] : [])];
   const q = query.trim().toLowerCase();
   const shown = items.filter((i) => (tab === "all" || i.category === tab) && (!q || i.label.toLowerCase().includes(q) || i.question.toLowerCase().includes(q)));
   const groups = [
-    { key: "selected", title: "Selected", rows: shown.filter((i) => initial.has(i.key)) },
-    { key: "not-selected", title: "Not selected", rows: shown.filter((i) => !initial.has(i.key)) },
+    { key: "selected", title: tr("more.BehaviorPicker.selected"), rows: shown.filter((i) => initial.has(i.key)) },
+    { key: "not-selected", title: tr("more.BehaviorPicker.notSelected"), rows: shown.filter((i) => !initial.has(i.key)) },
   ];
   const toggle = (key: string, on: boolean) => {
     const next = new Set(selected);
@@ -54,8 +57,8 @@ export function BehaviorPicker({ tags, initial, selected, onChange }: { tags: Be
     <View>
       <TextField
         variant="search"
-        accessibilityLabel="Search for behaviours"
-        placeholder="Search for behaviours"
+        accessibilityLabel={tr("more.BehaviorPicker.searchForBehaviours")}
+        placeholder={tr("more.BehaviorPicker.searchForBehaviours")}
         returnKeyType="search"
         autoCapitalize="none"
         value={query}
@@ -94,7 +97,7 @@ export function BehaviorPicker({ tags, initial, selected, onChange }: { tags: Be
         <Gradient from={alpha(c["background-mid"], 0)} to={c["background-mid"]} />
       </View>
       </View>
-      {shown.length === 0 && <Text className="py-8 text-center text-[15px] leading-[22px] text-foreground-secondary">No behaviours match “{query.trim()}”.</Text>}
+      {shown.length === 0 && <Text className="py-8 text-center text-[15px] leading-[22px] text-foreground-secondary">{tr("behavior.noMatch", { query: query.trim() })}</Text>}
       {groups.map(
         (g) =>
           g.rows.length > 0 && (
@@ -137,5 +140,5 @@ export function BehaviorPicker({ tags, initial, selected, onChange }: { tags: Be
 export async function saveSelection(selected: Set<string>): Promise<string | null> {
   const r = await saveBehaviors(actionCtx(), { tags: [...selected] }).catch(() => ({ ok: false as const, error: "network" }));
   if (r.ok) dataChanged();
-  return r.ok ? null : r.error.startsWith("Too many") ? "That’s more behaviours than Pulse can track. Choose fewer." : "Couldn’t save. Check your connection and try again.";
+  return r.ok ? null : r.error.startsWith(tr("journal.CheckInPage.tooMany")) ? tr("more.BehaviorPicker.thatSMoreBehavioursThanPulseCan") : tr("journal.CheckInPage.couldnTSaveCheckYourConnectionAnd");
 }

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The chart explorer `/chart?metric=&r=&d=&compare=` (mobile only): any daily metric the Trends and metric screens
 // know, plus the trend cards that live outside that catalogue (sleep efficiency and debt, restorative sleep, workout
 // duration, SpO2, skin temperature, VO2 max, Pulse Age, Energy Bank), over the whole stored history; and the intraday
@@ -65,7 +66,7 @@ export const CHART_METRICS: readonly ChartDef[] = [
   ...TREND_METRICS.filter((m) => !OWN.has(m.key)).map(
     (m): ChartDef => ({
       key: m.key,
-      label: m.label,
+      get label() { return m.label; },
       group: m.group,
       ...(m.unit && { unit: m.unit }),
       format: m.format,
@@ -82,11 +83,11 @@ export const CHART_METRICS: readonly ChartDef[] = [
       ...(DAY_OF[m.key] && { day: DAY_OF[m.key] }),
     }),
   ),
-  { key: "calories", label: "Calories", group: "Activity", unit: "kcal", format: "grouped", colorBy: "single", direction: "neutral", pick: (r) => r.metrics?.calories, partialToday: true, mark: "bar" },
-  { key: "workouts", label: "Workout duration", group: "Activity", format: "duration", colorBy: "strain", direction: "up", source: "workouts", partialToday: true, mark: "bar", day: "hr" },
+  { key: "calories", get label() { return tr("health.dataCheckSummary.calories"); }, group: "Activity", unit: "kcal", format: "grouped", colorBy: "single", direction: "neutral", pick: (r) => r.metrics?.calories, partialToday: true, mark: "bar" },
+  { key: "workouts", get label() { return tr("queries.chart.workoutDuration"); }, group: "Activity", format: "duration", colorBy: "strain", direction: "up", source: "workouts", partialToday: true, mark: "bar", day: "hr" },
   {
     key: "efficiency",
-    label: "Sleep efficiency",
+    get label() { return tr("queries.chart.sleepEfficiency"); },
     group: "Recovery & sleep",
     unit: "%",
     format: "int",
@@ -98,7 +99,7 @@ export const CHART_METRICS: readonly ChartDef[] = [
   },
   {
     key: "restorative",
-    label: "Restorative sleep",
+    get label() { return tr("queries.chart.restorativeSleep"); },
     group: "Recovery & sleep",
     format: "duration",
     colorBy: "sleep",
@@ -107,11 +108,11 @@ export const CHART_METRICS: readonly ChartDef[] = [
     mark: "bar",
     day: "sleep",
   },
-  { key: "debt", label: "Sleep debt", group: "Recovery & sleep", unit: "h", format: "decimal1", colorBy: "sleep", direction: "down", pick: (r) => (r.sleep?.main ? r.sleep.debtMin / 60 : null), mark: "bar", day: "sleep" },
-  { key: "energy", label: "Energy Bank", group: "Recovery & sleep", unit: "%", format: "int", colorBy: "band", direction: "up", pick: (r) => r.energyBank?.value, mark: "bar", domain: [0, 100], day: "energy" },
-  { key: "spo2", label: "Blood oxygen", group: "Vitals", unit: "%", format: "decimal1", colorBy: "single", direction: "up", pick: (r) => r.metrics?.spo2Pct, mark: "line", baseline: true },
-  { key: "skin_temp", label: "Skin temp (from baseline)", group: "Vitals", unit: "°C", format: "signed1", colorBy: "single", direction: "neutral", pick: (r) => r.recovery?.inputs.skinTempDev, mark: "line", baseline: true },
-  { key: "vo2max", label: "VO2 max", group: "Vitals", unit: "ml/kg/min", format: "decimal1", colorBy: "single", direction: "up", pick: (r) => r.metrics?.vo2maxRun ?? r.metrics?.vo2maxDaily, mark: "line", sparse: true },
+  { key: "debt", get label() { return tr("lib.dashboard.sleepDebt"); }, group: "Recovery & sleep", unit: "h", format: "decimal1", colorBy: "sleep", direction: "down", pick: (r) => (r.sleep?.main ? r.sleep.debtMin / 60 : null), mark: "bar", day: "sleep" },
+  { key: "energy", get label() { return tr("queries.chart.energyBank"); }, group: "Recovery & sleep", unit: "%", format: "int", colorBy: "band", direction: "up", pick: (r) => r.energyBank?.value, mark: "bar", domain: [0, 100], day: "energy" },
+  { key: "spo2", get label() { return tr("lib.dashboard.bloodOxygen"); }, group: "Vitals", unit: "%", format: "decimal1", colorBy: "single", direction: "up", pick: (r) => r.metrics?.spo2Pct, mark: "line", baseline: true },
+  { key: "skin_temp", get label() { return tr("queries.chart.skinTempFromBaseline"); }, group: "Vitals", unit: "°C", format: "signed1", colorBy: "single", direction: "neutral", pick: (r) => r.recovery?.inputs.skinTempDev, mark: "line", baseline: true },
+  { key: "vo2max", get label() { return tr("health.dataCheckSummary.vo2Max"); }, group: "Vitals", unit: "ml/kg/min", format: "decimal1", colorBy: "single", direction: "up", pick: (r) => r.metrics?.vo2maxRun ?? r.metrics?.vo2maxDaily, mark: "line", sparse: true },
   {
     key: "pulse_age",
     label: "Pulse Age",
@@ -133,11 +134,11 @@ export const chartDef = (key: string | undefined): ChartDef | null => CHART_METR
 
 /** The day views' series names (the legend's and the readout's), units and formats. */
 export const DAY_VIEW: Record<DayView, { label: string; unit?: string; format: FormatKey }> = {
-  hr: { label: "Heart rate", unit: "bpm", format: "int" },
-  strain: { label: "Day strain", unit: "%", format: "int" },
-  stress: { label: "Stress", format: "int" },
-  sleep: { label: "Night heart rate", unit: "bpm", format: "int" },
-  energy: { label: "Energy Bank", unit: "%", format: "int" },
+  hr: { get label() { return tr("queries.chart.heartRate"); }, unit: "bpm", format: "int" },
+  strain: { get label() { return tr("lib.dashboard.dayStrain"); }, unit: "%", format: "int" },
+  stress: { get label() { return tr("cardInfo.title.stress"); }, format: "int" },
+  sleep: { get label() { return tr("queries.chart.nightHeartRate"); }, unit: "bpm", format: "int" },
+  energy: { get label() { return tr("queries.chart.energyBank"); }, unit: "%", format: "int" },
 };
 
 // ── Daily series ────────────────────────────────────────────────────────────
@@ -192,7 +193,7 @@ export async function getChartSeries(key: string, ctx: QueryCtx): Promise<ChartS
     const { mean, sd } = meanSd(recent);
     if (mean !== null && sd !== undefined && recent.length >= 7) baseline = { mean, sd };
   }
-  const reference = def.reference ?? (def.key === "pulse_age" ? { y: fractionalYears(ctx.profile.birthDate, today), label: "Your age" } : null);
+  const reference = def.reference ?? (def.key === "pulse_age" ? { y: fractionalYears(ctx.profile.birthDate, today), label: tr("health.HealthspanScreen.yourAge_9b974c") } : null);
   return { key: def.key, today, days, values, provisional, partial, baseline, reference };
 }
 
@@ -318,7 +319,7 @@ export async function getChartDay(view: DayView, day: string, ctx: QueryCtx): Pr
       to: Math.max(from + 60, xs[xs.length - 1] ?? 1440),
       xs,
       ys: eb.curve.map((p) => p.v),
-      spans: eb.naps.map((n) => ({ kind: "sleep" as const, label: "Nap", from: m(n.start), to: m(n.end) })),
+      spans: eb.naps.map((n) => ({ kind: "sleep" as const, label: tr("lib.behaviors.nap"), from: m(n.start), to: m(n.end) })),
       now: day === today ? m(eb.until) : null,
     };
   }

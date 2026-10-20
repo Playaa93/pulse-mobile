@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // More › Behaviours (U21, journal-04..09): choose what the journal asks from the catalogue and your own behaviours, then
 // save; add your own. A behaviour left out keeps its past answers, which still count in insights. Ported from pulse
 // (app)/more/behaviours/Behaviours.tsx and page.tsx.
@@ -22,9 +24,10 @@ import { useScreen } from "../useScreen";
 import { BehaviorPicker, saveSelection, shownOf } from "./BehaviorPicker";
 import { DURATION } from "@/ui/motion";
 
-const INTRO = "Choose what your journal asks. A behaviour you leave out keeps its past answers, and they still count in your insights.";
+const behaviorDescription = () => tr("more.Behaviours.chooseWhatYourJournalAsksABehaviour");
 
 function Behaviours({ vm }: { vm: BehavioursVM }) {
+  useLanguage();
   const insets = useSafeAreaInsets();
   const [initial, setInitial] = useState(() => shownOf(vm.tags));
   const [selected, setSelected] = useState(initial);
@@ -53,44 +56,44 @@ function Behaviours({ vm }: { vm: BehavioursVM }) {
     const e = await saveSelection(selected);
     setSaving(false);
     if (e) return void toast.error(e);
-    toast.success("Behaviours saved");
+    toast.success(tr("more.Behaviours.behavioursSaved"));
   };
 
   const add = async () => {
     haptic.tap();
     const name = label.trim();
     if (!name) return;
-    if (name.length > 32) return invalid("Use 32 characters or fewer.");
-    if (vm.tags.some((t) => t.label.toLowerCase() === name.toLowerCase())) return invalid("That behaviour already exists.");
+    if (name.length > 32) return invalid(tr("journal.CheckInPage.use32CharactersOrFewer"));
+    if (vm.tags.some((t) => t.label.toLowerCase() === name.toLowerCase())) return invalid(tr("journal.CheckInPage.thatBehaviourAlreadyExists"));
     setAdding(true);
     const r = await addCustomTag(actionCtx(), { label: name }).catch(() => ({ ok: false as const, error: "network" }));
     setAdding(false);
-    if (!r.ok) return invalid(r.error.startsWith("Tag already exists") ? "That behaviour already exists." : r.error.startsWith("Too many") ? "You’ve reached the behaviour limit." : "Couldn’t add it. Try again.");
+    if (!r.ok) return invalid(r.error.startsWith(tr("journal.CheckInPage.tagAlreadyExists")) ? tr("journal.CheckInPage.thatBehaviourAlreadyExists") : r.error.startsWith(tr("journal.CheckInPage.tooMany")) ? tr("journal.CheckInPage.youVeReachedTheBehaviourLimit") : tr("journal.CheckInPage.couldnTAddItTryAgain"));
     setAddError(null);
     setLabel("");
     dataChanged();
-    toast.success(`${name} added`);
+    toast.success(tr("more.Behaviours.added", { v0: name }));
   };
 
   return (
     <View className="flex-1">
       <DetailShell
-        title="Behaviours"
-        bodySkeleton={LOADING_PRIMARY}
+        title={tr("more.Behaviours.behaviours")}
+        bodySkeleton={renderLoadingPrimary()}
         primary={
           <View className="w-full gap-6">
-            <Text className="text-[15px] leading-[22px] text-foreground-secondary">{INTRO}</Text>
+            <Text className="text-[15px] leading-[22px] text-foreground-secondary">{behaviorDescription()}</Text>
             <BehaviorPicker tags={vm.tags} initial={initial} selected={selected} onChange={setSelected} />
-            <SectionShell variant="card" title="Your own">
+            <SectionShell variant="card" title={tr("more.Behaviours.yourOwn")}>
               <View className="gap-2">
-                <Text className="text-[15px] font-medium leading-[22px]">Add a behaviour</Text>
+                <Text className="text-[15px] font-medium leading-[22px]">{tr("journal.CheckInPage.addABehaviour")}</Text>
                 <View className="flex-row gap-2">
                   <View className="min-w-0 flex-1">
                     <TextField
                       ref={input}
                       variant="input"
-                      accessibilityLabel="Add a behaviour"
-                      placeholder="e.g. Cold shower…"
+                      accessibilityLabel={tr("journal.CheckInPage.addABehaviour")}
+                      placeholder={tr("journal.CheckInPage.eGColdShower")}
                       returnKeyType="done"
                       autoCapitalize="sentences"
                       maxLength={32}
@@ -104,8 +107,8 @@ function Behaviours({ vm }: { vm: BehavioursVM }) {
                     />
                   </View>
                   {/* "Add" fits beside the field on a phone; the name says what it adds (label in name). */}
-                  <Button variant="secondary" disabled={adding || !label.trim()} accessibilityLabel={adding ? undefined : "Add behaviour"} onPress={add}>
-                    {adding ? "Adding…" : "Add"}
+                  <Button variant="secondary" disabled={adding || !label.trim()} accessibilityLabel={adding ? undefined : tr("journal.CheckInPage.addBehaviour")} onPress={add}>
+                    {adding ? tr("journal.CheckInPage.adding") : tr("journal.CheckInPage.add")}
                   </Button>
                 </View>
                 {addError && (
@@ -122,7 +125,7 @@ function Behaviours({ vm }: { vm: BehavioursVM }) {
       {(dirty || saving) && (
         <Animated.View entering={FadeInDown.duration(DURATION.base)} exiting={FadeOut.duration(DURATION.fast)} className="absolute inset-x-4" style={{ bottom: Math.max(insets.bottom + 84, 96) }}>
           <Button disabled={saving} onPress={save}>
-            {saving ? "Saving…" : "Save behaviours"}
+            {saving ? tr("onboarding.ProfileForm.saving") : tr("more.Behaviours.saveBehaviours")}
           </Button>
         </Animated.View>
       )}
@@ -130,9 +133,9 @@ function Behaviours({ vm }: { vm: BehavioursVM }) {
   );
 }
 
-const LOADING_PRIMARY = (
+const renderLoadingPrimary = () => (
   <View accessibilityElementsHidden className="w-full gap-6">
-    <Text className="text-[15px] leading-[22px] text-foreground-secondary">{INTRO}</Text>
+    <Text className="text-[15px] leading-[22px] text-foreground-secondary">{behaviorDescription()}</Text>
     <View>
       <Skeleton className="h-12 rounded-xl" />
       <View className="mt-3 h-11 flex-row items-center gap-6 overflow-hidden px-2.5">
@@ -141,7 +144,7 @@ const LOADING_PRIMARY = (
         ))}
       </View>
       <View className="mt-4">
-        <TaskSection>Selected</TaskSection>
+        <TaskSection>{tr("more.BehaviorPicker.selected")}</TaskSection>
       </View>
       <View className="mt-1">
         {Array.from({ length: 9 }, (_, i) => (
@@ -160,18 +163,20 @@ const LOADING_PRIMARY = (
 
 /** The web's loading.tsx: the intro, the search field, the tabs and the nine default rows under "Selected" (spec §5.19). */
 function BehavioursLoading() {
+  useLanguage();
   return (
     <DetailShell
-      title="Behaviours"
+      title={tr("more.Behaviours.behaviours")}
       loading
-      primary={LOADING_PRIMARY}
-      bodySkeleton={LOADING_PRIMARY}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderLoadingPrimary()}
     />
   );
 }
 
 /** Behaviours `/more/behaviours` (U21): manage the journal check-in list. */
 export function BehavioursScreen() {
+  useLanguage();
   const { data } = useScreen(getBehaviours, ["behaviours"]);
   return data ? <Behaviours vm={data} /> : <BehavioursLoading />;
 }

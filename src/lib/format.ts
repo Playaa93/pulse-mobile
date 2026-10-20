@@ -1,3 +1,4 @@
+import { formatLocale, language, tr, type TranslationKey } from "@/i18n";
 import type { DeltaDir, Tone } from "./bands";
 
 // Number, date and spoken-label formatting (spec §3.3, §6). Formatters are referenced by key so a
@@ -8,20 +9,24 @@ export const AGE_LABEL = "Pulse Age";
 export const MISSING = "--";
 const MINUS = "−";
 
-/**
- * The one locale every Intl formatter uses (spec §6). The copy is English only, so the locale is fixed rather than
- * read from Accept-Language: server and client then render the same strings (no hydration mismatch).
- */
-export const LOCALE = "en-US";
 /** Joins a number to its unit or word so the pair never wraps apart: `10${NBSP}MB`. */
 export const NBSP = " ";
 
-const grouped = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+const numbers = new Map<string, Intl.NumberFormat>();
+function number(v: number, digits: number, useGrouping = false) {
+  const locale = formatLocale();
+  const key = `${locale}:${digits}:${useGrouping}`;
+  let formatter = numbers.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping });
+    numbers.set(key, formatter);
+  }
+  return formatter.format(v === 0 ? 0 : v);
+}
 const minus = (s: string) => s.replace("-", MINUS);
 // "-0.0" collapses to "0.0"; the hyphen becomes a real minus sign.
 const fixed = (v: number, d: number) => {
-  const s = v.toFixed(d);
-  return minus(/^-0(\.0+)?$/.test(s) ? s.slice(1) : s);
+  return minus(number(Number(v.toFixed(d)), d));
 };
 const signed = (v: number, d: number) => (Number(v.toFixed(d)) > 0 ? `+${fixed(v, d)}` : fixed(v, d));
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -34,10 +39,10 @@ export function hmm(minutes: number) {
 
 export const FORMATS = {
   int: (v: number) => fixed(v, 0),
-  grouped: (v: number) => minus(grouped.format(Math.round(v))),
+  grouped: (v: number) => minus(number(Math.round(v), 0, true)),
   decimal1: (v: number) => fixed(v, 1),
   /** A whole percent with its sign tight: Strain "42%". */
-  pct: (v: number) => `${fixed(v, 0)}%`,
+  pct: (v: number) => `${fixed(v, 0)}${language() === "fr" ? NBSP : ""}%`,
   decimal2: (v: number) => fixed(v, 2),
   signed1: (v: number) => signed(v, 1),
   signedInt: (v: number) => signed(v, 0),
@@ -72,9 +77,9 @@ const dates = new Map<string, Intl.DateTimeFormat>();
  * → "Mon, Sep 28". Read and formatted in UTC, so the runtime's zone never shifts the day.
  */
 export function formatDay(day: string, opts: Intl.DateTimeFormatOptions) {
-  const key = JSON.stringify(opts);
+  const key = `${formatLocale()}:${JSON.stringify(opts)}`;
   let f = dates.get(key);
-  if (!f) dates.set(key, (f = new Intl.DateTimeFormat(LOCALE, { ...opts, timeZone: "UTC" })));
+  if (!f) dates.set(key, (f = new Intl.DateTimeFormat(formatLocale(), { ...opts, timeZone: "UTC" })));
   return f.format(new Date(`${day.length === 7 ? `${day}-01` : day}T00:00:00Z`));
 }
 
@@ -94,10 +99,10 @@ export const DAY = {
 
 /** "Today", "Yesterday", else "Mon, Sep 28". Dates are YYYY-MM-DD in the user's zone. */
 export function dayLabel(date: string, today: string) {
-  if (date === today) return "Today";
+  if (date === today) return tr("common.today");
   const y = new Date(`${today}T00:00:00Z`);
   y.setUTCDate(y.getUTCDate() - 1);
-  if (date === y.toISOString().slice(0, 10)) return "Yesterday";
+  if (date === y.toISOString().slice(0, 10)) return tr("common.yesterday");
   return formatDay(date, DAY.short);
 }
 
@@ -105,7 +110,7 @@ export function dayLabel(date: string, today: string) {
  * reference app prints them ("TUE., APR. 14", home-03); a month short enough to need none stays bare ("May 4"). */
 export function pillLabel(date: string, today: string) {
   const label = dayLabel(date, today);
-  if (label === "Today" || label === "Yesterday") return label;
+  if (date === today || label === tr("common.yesterday") || language() === "fr") return label;
   const month = formatDay(date, { month: "short" });
   const dot = month === formatDay(date, { month: "long" }) ? "" : ".";
   return `${formatDay(date, { weekday: "short" })}., ${month}${dot} ${formatDay(date, { day: "numeric" })}`;
@@ -117,10 +122,10 @@ export const rangeLabel = (from: string, to: string) => `${formatDay(from, DAY.m
 const clocks = new Map<string, Intl.DateTimeFormat>();
 /** Epoch ms → 24-hour "HH:mm" in `timeZone` (default: the runtime zone). */
 export function clock(ms: number, timeZone?: string) {
-  const key = timeZone ?? "";
+  const key = `${formatLocale()}:${timeZone ?? ""}`;
   let f = clocks.get(key);
   if (!f) {
-    f = new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone });
+    f = new Intl.DateTimeFormat(formatLocale(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone });
     clocks.set(key, f);
   }
   return f.format(ms);
@@ -131,7 +136,7 @@ export function durationWords(minutes: number) {
   const m = Math.max(0, Math.round(minutes));
   const h = Math.floor(m / 60);
   const r = m % 60;
-  const part = (n: number, w: string) => `${n}${NBSP}${w}${n === 1 ? "" : "s"}`;
+  const part = (count: number, word: "minute" | "hour") => tr(`format.duration.${word}`, { count });
   if (!h) return part(r, "minute");
   return r ? `${part(h, "hour")} ${part(r, "minute")}` : part(h, "hour");
 }
@@ -139,45 +144,44 @@ export function durationWords(minutes: number) {
 /** Relative age of a timestamp: "12 minutes ago", "3 hours ago". */
 export function ago(ms: number, now: number) {
   const min = Math.max(0, Math.round((now - ms) / 60000));
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}${NBSP}${min === 1 ? "minute" : "minutes"} ago`;
+  if (min < 1) return tr("format.ago.now");
+  if (min < 60) return tr("format.ago.minute", { count: min });
   const h = Math.round(min / 60);
-  if (h < 48) return `${h}${NBSP}${h === 1 ? "hour" : "hours"} ago`;
-  const d = Math.round(h / 24);
-  return `${d}${NBSP}days ago`;
+  if (h < 48) return tr("format.ago.hour", { count: h });
+  return tr("format.ago.day", { count: Math.round(h / 24) });
 }
 
 /** Header sync age, the reference app's battery slot (spec §4.3.2): "Now", "12m", "3h", "2d". */
 export function agoShort(ms: number, now: number) {
   const min = Math.max(0, Math.floor((now - ms) / 60000));
-  if (min < 1) return "Now";
+  if (min < 1) return tr("common.now");
   if (min < 60) return `${min}m`;
   const h = Math.floor(min / 60);
-  return h < 48 ? `${h}h` : `${Math.floor(h / 24)}d`;
+  return h < 48 ? `${h}h` : tr("format.ago.shortDays", { count: Math.floor(h / 24) });
 }
 
 // --- Spoken labels (aria) ---
 
-const UNIT_WORDS: Record<string, string> = {
-  "%": "percent",
-  ms: "milliseconds",
-  bpm: "beats per minute",
-  rpm: "breaths per minute",
-  "°C": "degrees",
-  kcal: "calories",
-  "ml/kg/min": "millilitres per kilo per minute",
-  x: "times",
-  min: "minutes",
-  h: "hours",
-  km: "kilometres",
-  "/km": "per kilometre",
+const UNIT_WORDS: Record<string, TranslationKey> = {
+  "%": "format.unit.percent",
+  "ms": "format.unit.milliseconds",
+  "bpm": "format.unit.bpm",
+  "rpm": "format.unit.rpm",
+  "°C": "format.unit.degrees",
+  "kcal": "format.unit.calories",
+  "ml/kg/min": "format.unit.vo2max",
+  "x": "format.unit.times",
+  "min": "format.unit.minutes",
+  "h": "format.unit.hours",
+  "km": "format.unit.kilometres",
+  "/km": "format.unit.perKilometre",
 };
 
 /** "124 milliseconds", "−0.4 degrees" → reads the minus sign as "minus". */
 export function spoken(value: string, unit?: string) {
-  const v = value.replace(MINUS, "minus ");
+  const v = value.replace(MINUS, tr("format.minus"));
   if (!unit) return v;
-  return `${v} ${UNIT_WORDS[unit] ?? unit}`;
+  return `${v} ${UNIT_WORDS[unit] ? tr(UNIT_WORDS[unit]) : displayUnit(unit)}`;
 }
 
 export type DialAria = {
@@ -197,20 +201,20 @@ export type DialAria = {
 /** "Recovery 72 percent, green", "Strain 42 percent so far, target 40 to 60 percent", "Recovery unavailable: calibrating, 4 nights left". */
 export function dialAriaLabel(a: DialAria) {
   if (a.value === null || a.value === undefined) {
-    const why = (a.reasonText ?? "no data").replace(/^(\w)/, (c) => c.toLowerCase()).replace(": ", ", ");
-    return `${a.label} unavailable: ${why}`;
+    const why = (a.reasonText ?? tr("format.noData")).replace(/^(\w)/, (c) => c.toLowerCase()).replace(": ", ", ");
+    return tr("format.unavailable", { label: a.label, reason: why });
   }
   const v = spoken(a.valueText ?? String(a.value), a.unit);
-  const prov = a.provisional ? " provisional," : "";
+  const prov = a.provisional ? tr("format.provisional") : "";
   if (a.variant === "strain") {
-    const t = a.target ? `, target ${a.target[0].toFixed(0)} to ${a.target[1].toFixed(0)} percent` : "";
-    return `${a.label}${prov} ${v}${a.soFar ? " so far" : ""}${t}`;
+    const t = a.target ? tr("format.target", { from: fixed(a.target[0], 0), to: fixed(a.target[1], 0) }) : "";
+    return `${a.label}${prov} ${v}${a.soFar ? tr("format.soFar") : ""}${t}`;
   }
   const word = a.bandWord ? `, ${a.bandWord.toLowerCase()}` : "";
   return `${a.label}${prov} ${v}${word}`;
 }
 
-const TONE_WORD: Record<Tone, string> = { good: ", good", bad: ", worse than usual", neutral: "" };
+const TONE_WORD: Record<Tone, TranslationKey | null> = { good: "format.tone.good", bad: "format.tone.bad", neutral: null };
 
 /** "Heart rate variability 124 milliseconds, above your 30-day average of 98, good". */
 export function statSentence(o: {
@@ -224,9 +228,50 @@ export function statSentence(o: {
 }) {
   let s = `${o.label} ${spoken(o.valueText, o.unit)}`;
   if (o.averageText && o.averageText !== MISSING) {
-    const rel = o.dir === "up" ? "above" : o.dir === "down" ? "below" : "in line with";
-    s += `, ${rel} your ${o.averageLabel ?? "30-day average"} of ${o.averageText}`;
-    if (o.tone) s += TONE_WORD[o.tone];
+    const rel = o.dir === "up" ? "up" : o.dir === "down" ? "down" : "flat";
+    s += tr(`format.comparison.${rel}`, { period: o.averageLabel ?? tr("format.average"), value: o.averageText });
+    const toneKey = o.tone ? TONE_WORD[o.tone] : null;
+    if (toneKey) s += tr(toneKey);
   }
   return s;
 }
+
+/** Translate visible units without changing their canonical keys used by formatters and data. */
+const DISPLAY_UNITS: Record<string, TranslationKey> = {
+  "day": "format.display.day",
+  "days": "format.display.days",
+  "week": "format.display.week",
+  "weeks": "format.display.weeks",
+  "month": "format.display.month",
+  "months": "format.display.months",
+  "year": "format.display.year",
+  "years": "format.display.years",
+  "steps": "format.display.steps",
+  "floors": "format.display.floors",
+  "sessions": "format.display.sessions",
+  "session": "format.display.session",
+  "night": "format.display.night",
+  "nights": "format.display.nights",
+  "step": "format.display.step",
+  "yr": "format.display.yr",
+  "hrs": "format.display.hrs",
+  "hr": "format.display.hr",
+  "hours": "format.display.hours",
+  "left": "format.display.left",
+  "bpm avg": "format.display.bpm_avg",
+  "of 100": "format.display.of_100",
+  "of 5": "format.display.of_5",
+  "a month": "format.display.a_month",
+  "sessions a week": "format.display.sessions_a_week",
+  "steps a day, on average": "format.display.steps_a_day_on_average",
+  "% sleep consistency": "format.display.sleep_consistency",
+  "nights a week": "format.display.nights_a_week",
+  "min a week": "format.display.min_a_week",
+  "percentage points": "format.display.percentage_points",
+  "baseline SD": "format.display.baseline_SD",
+  "SD": "format.display.SD",
+  "g protein": "format.display.g_protein",
+  "g carbs": "format.display.g_carbs",
+  "g fat": "format.display.g_fat",
+};
+export const displayUnit = (unit: string) => DISPLAY_UNITS[unit] ? tr(DISPLAY_UNITS[unit]) : unit;

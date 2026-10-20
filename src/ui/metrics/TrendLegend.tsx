@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { partColor } from "@/lib/bands";
@@ -11,9 +13,10 @@ import { LABEL } from "./primitives";
  * square swatches for a stack (top part first), rings for a pair of lines.
  */
 export function TrendLegend({ chart, series, typical, className }: { chart: string; series?: readonly { key: string; label: string }[]; typical?: boolean; className?: string }) {
+  useLanguage();
   const { css } = useTheme();
   const items: { key: string; label: string; swatch: ReactNode }[] = typical
-    ? [{ key: "typical", label: "Typical range", swatch: <View className="size-2.5 rounded-xs border border-foreground/15 bg-chart-band" /> }]
+    ? [{ key: "typical", label: tr("ui.charts.ZoneBars.typicalRange"), swatch: <View className="size-2.5 rounded-xs border border-foreground/15 bg-chart-band" /> }]
     : series && chart === "stack"
       ? [...series].reverse().map((s) => ({ key: s.key, label: s.label, swatch: <View className="size-2.5 rounded-xs" style={{ backgroundColor: css(partColor(s.key)) }} /> }))
       : series && chart === "pair"

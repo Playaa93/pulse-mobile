@@ -2,6 +2,7 @@
 // src/app/api/coach/workout/route.ts: the same gate as a chat turn (the per-minute limit, a usable model, the person's
 // data), the coach's instructions, then the workout_glance wording and the workout's numbers. Never logs the text, the
 // numbers or provider bodies.
+import { language } from "@/i18n";
 import { generateText } from "ai";
 import { getActivity } from "@/queries/activity";
 import { getActivityExtras } from "@/queries/mobileExtras";
@@ -30,6 +31,7 @@ export type GlanceDeps = { ctx: () => QueryCtx | null; model: () => Promise<Coac
 
 /** The one-line take. Throws `Error(problem)`: a CoachProblem, "not_found" for an unknown workout, or "provider". */
 export async function workoutGlance(deps: GlanceDeps, id: string, abortSignal?: AbortSignal): Promise<string> {
+  const locale = language();
   const m = await deps.model();
   if (!m) throw new Error("key" satisfies CoachProblem);
   if (!(deps.allow ?? allowRequest)()) throw new Error("limit" satisfies CoachProblem);
@@ -40,7 +42,7 @@ export async function workoutGlance(deps: GlanceDeps, id: string, abortSignal?: 
   try {
     const { text } = await generateText({
       model: m.model,
-      instructions: coachInstructions(ctx, defaultTexts, m.instructions),
+      instructions: coachInstructions(ctx, defaultTexts, m.instructions, locale),
       prompt: `${defaultTexts("workout_glance")}\n\n${workoutFacts({ ...vm, ...extras })}`,
       maxOutputTokens: 80,
       abortSignal,

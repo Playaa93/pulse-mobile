@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { ArrowUpRight, ChevronRight, type LucideIcon } from "lucide-react-native";
@@ -35,6 +37,7 @@ const ROW_LABEL = "text-xs font-bold uppercase leading-4 tracking-[0.1em]";
  * caps label and a chevron. (The web's two-column layout from 1280 px is a laptop concern and is not ported.)
  */
 export function LinkList({ title, rows, className }: { title: string; rows: LinkListRow[]; className?: string }) {
+  useLanguage();
   const shadow = useCardStyle();
   return (
     <View accessibilityLabel={title} className={cn("min-w-0 gap-2", className)}>
@@ -47,7 +50,7 @@ export function LinkList({ title, rows, className }: { title: string; rows: Link
             activeScale={0.96}
             key={r.href}
             accessibilityRole="link"
-            accessibilityHint={r.external ? "Opens outside the app" : undefined}
+            accessibilityHint={r.external ? tr("ui.shells.LinkList.opensOutsideTheApp") : undefined}
             onPress={() => (r.external ? Linking.openURL(r.href) : push(r.href))}
             className={cn(CARD_CLASS, ROW)}
             style={shadow}
@@ -69,6 +72,7 @@ export function LinkList({ title, rows, className }: { title: string; rows: Link
 
 /** Loading shape (spec §5.19): the real group label and row labels; only asides are bars. */
 export function LinkListSkeleton({ title, rows }: { title: string; rows: Omit<LinkListRow, "href" | "aside">[] }) {
+  useLanguage();
   const shadow = useCardStyle();
   return (
     <View accessibilityElementsHidden className="min-w-0 gap-2">

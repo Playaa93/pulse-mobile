@@ -1,8 +1,10 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { View } from "react-native";
 import { router, useLocalSearchParams, usePathname } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { dayLabel, rangeLabel } from "@/lib/format";
+import { displayUnit, dayLabel, rangeLabel } from "@/lib/format";
 import { parseDay, stepDay, weekOf } from "@/lib/url";
 import { cn } from "../cn";
 import { haptic } from "../haptics";
@@ -47,6 +49,7 @@ export function useSelectedDay() {
 
 /** The reference app's date pill (spec §4.3). Reads `?d=` (useSelectedDay); changes it by replacing the param. */
 export function DateSwitcher({ mode, calendar, placement = "body", narrow: narrowProp = false, steppers = true }: DateSwitcherProps) {
+  useLanguage();
   // The web's narrow sizes apply below a 400 px viewport only (max-[400px]: on NARROW_STEP and NARROW_LABEL).
   const { lt400 } = useNarrow();
   const narrow = narrowProp && lt400;
@@ -72,7 +75,7 @@ export function DateSwitcher({ mode, calendar, placement = "body", narrow: narro
     <Press
       activeScale={0.96}
       accessibilityRole="button"
-      accessibilityLabel={`${dir < 0 ? "Previous" : "Next"} ${unit}`}
+      accessibilityLabel={`${dir < 0 ? tr("ui.shells.DateSwitcher.previous") : tr("common.next")} ${displayUnit(unit)}`}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={() => by(dir * step)}
@@ -89,7 +92,7 @@ export function DateSwitcher({ mode, calendar, placement = "body", narrow: narro
       <Press
         activeScale={0.96}
         accessibilityRole="button"
-        accessibilityLabel={`${label}. Open calendar`}
+        accessibilityLabel={tr("ui.shells.DateSwitcher.openCalendar", { v0: label })}
         onPress={() => setOpen(true)}
         hitSlop={{ top: bare ? 4 : 8, bottom: bare ? 4 : 8 }}
         className={cn("items-center justify-center rounded-full", bare ? "h-9 min-w-28 px-2" : cn("h-7 bg-fill-hover px-4", narrow ? "min-w-0 px-2.5" : "min-w-24"))}

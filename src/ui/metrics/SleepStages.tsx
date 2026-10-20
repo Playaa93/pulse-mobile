@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { DATA_COLORS, deltaTone, GOOD_DIRECTION } from "@/lib/bands";
@@ -40,14 +42,15 @@ export type SleepStagesProps = {
 
 // The reference app's order, top to bottom.
 const ORDER: Stage[] = ["awake", "light", "deep", "rem"];
-const EMPTY = "No stage data for this sleep. Fitbit only stages sleeps longer than about 3 hours.";
+const emptyStages = () => tr("ui.charts.Hypnogram.noStageDataForThisSleepFitbit");
 const HERO = "font-numeric text-[32px] font-bold leading-9 tracking-[-0.01em]";
 
 /** The reference app's "Hours of sleep": time asleep, the arrow against the prior 30 nights and their mean under it. */
 function HoursHero({ h }: { h: SleepHours }) {
+  useLanguage();
   const t = h.average === null ? undefined : deltaTone(GOOD_DIRECTION.hours, h.asleepMin, h.average, h.sd);
   const sentence = statSentence({
-    label: "Hours of sleep",
+    label: tr("lib.dashboard.hoursOfSleep"),
     valueText: durationWords(h.asleepMin),
     averageText: h.average === null ? undefined : durationWords(h.average),
     dir: t?.dir,
@@ -55,7 +58,7 @@ function HoursHero({ h }: { h: SleepHours }) {
   });
   return (
     <View accessible accessibilityLabel={sentence}>
-      <Text className={cn(LABEL, "text-foreground-secondary")}>Hours of sleep</Text>
+      <Text className={cn(LABEL, "text-foreground-secondary")}>{tr("lib.dashboard.hoursOfSleep")}</Text>
       <View className="mt-1.5 flex-row gap-2 self-start">
         <View>
           <Text className={cn(HERO, "tabular-nums")}>{hmm(h.asleepMin)}</Text>
@@ -68,10 +71,10 @@ function HoursHero({ h }: { h: SleepHours }) {
 }
 
 /** WHOOP's stage names; Fitbit's "Deep" is slow-wave sleep. */
-const ROW_LABEL: Record<Stage, string> = { awake: "Awake", light: "Light", deep: "SWS (Deep)", rem: "REM" };
+const ROW_LABEL: Record<Stage, string> = { get awake() { return tr("queries.mobileExtras.awake"); }, get light() { return tr("ui.metrics.SleepStages.light"); }, get deep() { return tr("queries.trendView.swsDeep"); }, get rem() { return tr("sleep.rem"); } };
 const TABS = [
-  { value: "breakdown", label: "Breakdown" },
-  { value: "timeline", label: "Timeline" },
+  { value: "breakdown", get label() { return tr("ui.metrics.SleepStages.breakdown"); } },
+  { value: "timeline", get label() { return tr("ui.metrics.SleepStages.timeline"); } },
 ] as const;
 type Tab = (typeof TABS)[number]["value"];
 
@@ -80,14 +83,15 @@ const RANGE_BOX = "border-x-[1.5px] border-dashed border-foreground/75 bg-foregr
 
 /** The reference app's closing row: a deep-to-REM swatch, "Restorative sleep", the minutes with an arrow and the prior mean. */
 function RestorativeRow({ r }: { r: { minutes: number; average: number | null; sd?: number } }) {
+  useLanguage();
   const { c } = useTheme();
   const t = r.average === null ? undefined : deltaTone("up", r.minutes, r.average, r.sd);
   return (
-    <View accessible accessibilityLabel={statSentence({ label: "Restorative sleep", valueText: durationWords(r.minutes), averageText: r.average === null ? undefined : durationWords(r.average), dir: t?.dir, tone: t?.tone })} className="flex-row items-center gap-3 border-t border-border pt-4">
+    <View accessible accessibilityLabel={statSentence({ label: tr("queries.chart.restorativeSleep"), valueText: durationWords(r.minutes), averageText: r.average === null ? undefined : durationWords(r.average), dir: t?.dir, tone: t?.tone })} className="flex-row items-center gap-3 border-t border-border pt-4">
       <View className="size-4 shrink-0 overflow-hidden rounded-[3px]">
         <Gradient from={c["stage-deep"]} to={c["stage-rem"]} angle="xy" />
       </View>
-      <Text className={cn(LABEL, "min-w-0 flex-1 text-[13px]")}>Restorative sleep</Text>
+      <Text className={cn(LABEL, "min-w-0 flex-1 text-[13px]")}>{tr("queries.chart.restorativeSleep")}</Text>
       <View className="flex-row gap-2">
         <View className="items-end">
           <Text className="font-numeric text-[22px] font-bold leading-7 tabular-nums">{hmm(r.minutes)}</Text>
@@ -100,6 +104,7 @@ function RestorativeRow({ r }: { r: { minutes: number; average: number | null; s
 }
 
 function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNight; selected: Stage; onSelect: (s: Stage) => void; restorative?: SleepStagesProps["restorative"] }) {
+  useLanguage();
   const { css } = useTheme();
   const [tab, setTab] = useState<Tab>("breakdown");
   const span = Math.max(1, night.wake - night.bed);
@@ -108,7 +113,7 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
   return (
     <View className="gap-4">
       {/* One view at a time: the stage breakdown (WHOOP's rows) or the night's timeline (the hypnogram). */}
-      <Segmented label="Stages view" value={tab} options={TABS} onChange={setTab} fill textClassName="text-[13px] font-bold uppercase tracking-[0.1em]" />
+      <Segmented label={tr("ui.metrics.SleepStages.stagesView")} value={tab} options={TABS} onChange={setTab} fill textClassName="text-[13px] font-bold uppercase tracking-[0.1em]" />
       {/* One baseline for the label and "Duration 6:59" (the 17 px value sets it). */}
       <View className="flex-row items-baseline justify-between gap-2">
         {tab === "breakdown" ? (
@@ -117,15 +122,14 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
           // wraps) where "Duration 6:59" cannot: at 320 px the row is 9 px short.
           <View className="shrink flex-row items-baseline gap-2">
             <View className={cn("h-4 w-3.5 self-center", RANGE_BOX)} />
-            <Text className={cn(LABEL, "text-foreground-secondary")}>Typical range</Text>
+            <Text className={cn(LABEL, "text-foreground-secondary")}>{tr("ui.charts.ZoneBars.typicalRange")}</Text>
           </View>
         ) : (
           <Text accessibilityRole="header" className={cn(LABEL, "text-foreground-secondary")}>
-            Stages
-          </Text>
+            {tr("ui.metrics.SleepStages.stages")}</Text>
         )}
         <View className="flex-row items-baseline gap-2">
-          <Text className={cn(LABEL, "text-muted-foreground")}>Duration</Text>
+          <Text className={cn(LABEL, "text-muted-foreground")}>{tr("queries.activity.duration")}</Text>
           <Text className="font-numeric text-[17px] font-bold leading-5 tabular-nums text-foreground">{hmm(span / 60_000)}</Text>
         </View>
       </View>
@@ -133,7 +137,7 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
         <HypnogramChart night={night} />
       ) : (
         // Choosing a stage lights its stretches on the heart-rate line above.
-        <View accessibilityRole="radiogroup" accessibilityLabel="Highlight a sleep stage" className="gap-5 pt-1">
+        <View accessibilityRole="radiogroup" accessibilityLabel={tr("ui.metrics.SleepStages.highlightASleepStage")} className="gap-5 pt-1">
           {rows.map((r) => {
             const on = r.stage === selected;
             const color = DATA_COLORS[`stage-${r.stage}`];
@@ -142,7 +146,7 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
                 key={r.stage}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
-                accessibilityLabel={`${ROW_LABEL[r.stage]}, ${Math.round(r.pct)} percent, ${hmm(r.minutes)}. Typical ${r.typical[0]} to ${r.typical[1]} percent`}
+                accessibilityLabel={tr("ui.metrics.SleepStages.percentTypicalToPercent", { v0: ROW_LABEL[r.stage], v1: Math.round(r.pct), v2: hmm(r.minutes), v3: r.typical[0], v4: r.typical[1] })}
                 onPress={() => {
                   if (!on) haptic.select();
                   onSelect(r.stage);
@@ -178,6 +182,7 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
  * stages as a breakdown (rows) or a timeline (hypnogram). Choosing a stage row lights its stretches on the heart-rate line.
  */
 export function SleepStages({ hours, hr, data, restorative }: SleepStagesProps) {
+  useLanguage();
   const [selected, setSelected] = useState<Stage>("awake");
   const segments = data?.value?.segments;
   const highlight = useMemo(() => (segments?.length ? segments.filter((g) => g.stage === selected) : undefined), [segments, selected]);
@@ -196,8 +201,8 @@ export function SleepStages({ hours, hr, data, restorative }: SleepStagesProps) 
           <HoursHero h={h} />
           <SleepHrChart data={hr} highlight={highlight} />
           <View className="border-t border-border pt-4">
-            <MetricState metric={data} skeleton={<StageRowsSkeleton />} empty={<EmptyState body={EMPTY} />} renderReason={(r) => <ReasonPlaceholder reason={r} size="md" />}>
-              {(night) => (night.segments.length ? <Rows night={night} selected={selected} onSelect={setSelected} restorative={restorative} /> : <EmptyState body={EMPTY} />)}
+            <MetricState metric={data} skeleton={<StageRowsSkeleton />} empty={<EmptyState body={emptyStages()} />} renderReason={(r) => <ReasonPlaceholder reason={r} size="md" />}>
+              {(night) => (night.segments.length ? <Rows night={night} selected={selected} onSelect={setSelected} restorative={restorative} /> : <EmptyState body={emptyStages()} />)}
             </MetricState>
           </View>
         </View>
@@ -207,16 +212,17 @@ export function SleepStages({ hours, hr, data, restorative }: SleepStagesProps) 
 }
 
 function StageRowsSkeleton() {
+  useLanguage();
   return (
     <View accessibilityElementsHidden className="gap-4">
       <Skeleton className="h-11 rounded-lg" />
       <View className="flex-row items-baseline justify-between">
-        <Text className={cn(LABEL, "text-foreground-secondary")}>Typical range</Text>
+        <Text className={cn(LABEL, "text-foreground-secondary")}>{tr("ui.charts.ZoneBars.typicalRange")}</Text>
         <View className="w-24">
           <SkeletonText lh={20} fs={17} />
         </View>
       </View>
-      {["Awake", "Light", "SWS (Deep)", "REM"].map((l) => (
+      {[tr("queries.mobileExtras.awake"), tr("ui.metrics.SleepStages.light"), tr("queries.trendView.swsDeep"), tr("sleep.rem")].map((l) => (
         <View key={l} className="gap-2.5">
           <View className="flex-row items-center gap-3">
             <View className="size-5 rounded-full border-2 border-foreground/30" />
@@ -234,10 +240,11 @@ function StageRowsSkeleton() {
 
 /** Loading shape: the hero's label and number, the chart box, then the rows with real stage names and their tracks. */
 export function SleepStagesSkeleton() {
+  useLanguage();
   return (
     <View accessibilityElementsHidden className="gap-4">
       <View>
-        <Text className={cn(LABEL, "text-foreground-secondary")}>Hours of sleep</Text>
+        <Text className={cn(LABEL, "text-foreground-secondary")}>{tr("lib.dashboard.hoursOfSleep")}</Text>
         <View className="mt-1.5 w-16">
           <SkeletonText lh={36} fs={32} />
         </View>

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The chart explorer's plot: one or two series over a viewport that pinches, pans (with momentum) and animates between
 // ranges, a crosshair with a readout, all on the UI thread. The series are built once in data space and mapped to the
 // screen each frame by one affine transform of the path (so strokes keep their width at any zoom); the axes, grid,
@@ -58,6 +60,7 @@ const inkOf = (c: Palette) => ({
 
 /** The draw-in without redrawing: the canvas is revealed left to right by two counter-moving native views. */
 function NativeReveal({ progress, width, height, children }: { progress: SharedValue<number>; width: number; height: number; children: React.ReactNode }) {
+  useLanguage();
   const outer = useAnimatedStyle(() => ({ transform: [{ translateX: -width * (1 - progress.value) }] }));
   const inner = useAnimatedStyle(() => ({ transform: [{ translateX: width * (1 - progress.value) }] }));
   return (
@@ -190,6 +193,7 @@ function paint(color: string, stroke?: { width: number; dash?: number[]; round?:
 }
 
 export function ExplorerChart(p: ExplorerChartProps) {
+  const locale = useLanguage();
   const { c } = useTheme();
   const k = React.useMemo(() => inkOf(c), [c]);
   const reduce = useReducedMotion();
@@ -201,7 +205,9 @@ export function ExplorerChart(p: ExplorerChartProps) {
   const nameFont = fonts.sans(600, 11);
   const laneFont = fonts.sans(700, 11);
   const timeFont = fonts.num(600, 11);
-  const laneNames = React.useMemo(() => STAGE_ORDER.map((s) => STAGE_NAME[s].toUpperCase()), []);
+  // Catalog accessors depend on the external locale.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const laneNames = React.useMemo(() => STAGE_ORDER.map((s) => STAGE_NAME[s].toUpperCase()), [locale]);
   const laneW = React.useMemo(() => Math.max(...laneNames.map((t) => measure(laneFont, t))), [laneNames, laneFont]);
 
   // --- Layout: the night's lanes need room for their names; a day names its stretches in a lane over the plot ---
@@ -415,14 +421,18 @@ export function ExplorerChart(p: ExplorerChartProps) {
   const wake = p.wake;
   const night = React.useMemo(
     () => ({
+      bedLabel: tr("chart.ExplorerChart.bed_1a706e"),
+      wakeLabel: tr("chart.ExplorerChart.wake_d6a365"),
       bedTime: bed === null ? "" : minuteText(bed),
       wakeTime: wake === null ? "" : minuteText(wake),
-      bedW: measure(nameFont, "Bed "),
-      wakeW: measure(nameFont, "Wake "),
+      bedW: measure(nameFont, tr("chart.ExplorerChart.bed")),
+      wakeW: measure(nameFont, tr("chart.ExplorerChart.wake")),
       bedTimeW: bed === null ? 0 : measure(timeFont, minuteText(bed)),
       wakeTimeW: wake === null ? 0 : measure(timeFont, minuteText(wake)),
     }),
-    [bed, wake, nameFont, timeFont],
+    // Locale invalidates translations measured inside this memo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bed, wake, nameFont, timeFont, locale],
   );
   const latest = p.latest;
   const latestW = React.useMemo(() => (latest ? measure(pillFont, latest.text) : 0), [latest, pillFont]);
@@ -522,7 +532,7 @@ export function ExplorerChart(p: ExplorerChartProps) {
               canvas.drawLine(x, top, x, laneBottom, paints.goal);
               const w = night.bedW + night.bedTimeW;
               const tx = Math.min(plotRight - w, Math.max(LEFT, x - 2));
-              canvas.drawText("Bed", tx, TOP + 12, paints.pillText, nameFont);
+              canvas.drawText(night.bedLabel, tx, TOP + 12, paints.pillText, nameFont);
               canvas.drawText(night.bedTime, tx + night.bedW, TOP + 12, paints.ink, timeFont);
               bedRight = tx + w;
             }
@@ -534,7 +544,7 @@ export function ExplorerChart(p: ExplorerChartProps) {
               const w = night.wakeW + night.wakeTimeW;
               const tx = Math.max(LEFT, Math.min(plotRight - w, x - w + 2));
               if (tx > bedRight + 8) {
-                canvas.drawText("Wake", tx, TOP + 12, paints.pillText, nameFont);
+                canvas.drawText(night.wakeLabel, tx, TOP + 12, paints.pillText, nameFont);
                 canvas.drawText(night.wakeTime, tx + night.wakeW, TOP + 12, paints.ink, timeFont);
               }
             }
@@ -788,7 +798,7 @@ export function ExplorerChart(p: ExplorerChartProps) {
   return (
     <View style={{ width, height }}>
       <GestureDetector gesture={gesture}>
-        <View style={{ width, height }} accessible accessibilityRole="image" accessibilityLabel={`${p.primary.label}${p.compare ? ` with ${p.compare.label}` : ""}. Pinch to zoom, drag to pan, hold to inspect a point.`}>
+        <View style={{ width, height }} accessible accessibilityRole="image" accessibilityLabel={tr("chart.ExplorerChart.pinchToZoomDragToPanHold", { v0: p.primary.label, v1: p.compare ? tr("chart.ExplorerChart.with", { v0: p.compare.label }) : "" })}>
           {/* The chart draws in by a native wipe (the canvas is not redrawn for it); the crosshair is a canvas of its own,
               so inspecting a point never redraws the series. */}
           <NativeReveal progress={progress} width={width} height={height}>

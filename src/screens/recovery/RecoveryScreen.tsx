@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Recovery `/recovery?d=` (spec §7.2, §11 R34): the ring, today's inputs against the last 30 days, behaviours, trends.
 // Ported from pulse src/app/(app)/recovery/{page,loading}.tsx.
 import { useLocalSearchParams } from "expo-router"
@@ -32,6 +34,7 @@ export const recoveryQuery = (raw?: string) => async (ctx: QueryCtx) => {
 export const recoveryKey = (raw?: string) => ["recovery", raw || null] as const
 
 export function RecoveryScreen() {
+  useLanguage();
   const { d: raw } = useLocalSearchParams<{ d?: string }>()
   const { data, error, reload } = useScreen(recoveryQuery(raw), recoveryKey(raw))
 
@@ -41,8 +44,8 @@ export function RecoveryScreen() {
 
   return (
     <DetailShell
-      title="Recovery"
-      bodySkeleton={WEEKLY_SKELETON}
+      title={tr("ui.shells.HomeHeader.recovery")}
+      bodySkeleton={weeklySkeleton()}
       info={RECOVERY_INFO}
       dateSwitcher={{ mode: "day", placement: "header", steppers: false }}
       notch
@@ -54,10 +57,10 @@ export function RecoveryScreen() {
               <KeyStatRow key={k.key} variant="row" {...statProps(k, { d, today })} />
             ))}
           </Divided>
-          <TodayVsLegend period="last 30 days" />
+          <TodayVsLegend period={tr("recovery.RecoveryScreen.last30Days")} />
         </Card>
       }
-      insight={vm.insight ? <InsightCard body={vm.insight} action={{ label: "Explore your recovery insights", href: trendHref("recovery", { d, today }) }} /> : null}
+      insight={vm.insight ? <InsightCard body={vm.insight} action={{ label: tr("recovery.RecoveryScreen.exploreYourRecoveryInsights"), href: trendHref("recovery", { d, today }) }} /> : null}
       primary={<BehaviorInsights chips={extras.behaviors} href={dayHref("/journal/insights", d, today)} />}
       secondary={[<HrvStatusCard key="hrv" d={d} />]}
       footer={<WeeklyTrends cards={weekly} d={d} today={today} />}
@@ -65,18 +68,19 @@ export function RecoveryScreen() {
   )
 }
 
-const WEEKLY_SKELETON = <WeeklyTrendsSkeleton titles={["Recovery", "Heart Rate Variability", "Resting Heart Rate", "Respiratory Rate", "Sleep Performance"]} />
+const weeklySkeleton = () => <WeeklyTrendsSkeleton titles={[tr("ui.shells.HomeHeader.recovery"), tr("queries.trendView.heartRateVariability"), tr("queries.trendView.restingHeartRate"), tr("queries.trendView.respiratoryRate"), tr("queries.trendView.sleepPerformance")]} />
 
 /** The route's loading state: the shell with each section's own box (pulse's RecoverySkeleton). */
 function RecoverySkeleton() {
+  useLanguage();
   return (
     <DialDetailSkeleton
-      title="Recovery"
+      title={tr("ui.shells.HomeHeader.recovery")}
       dial="recovery"
-      labels={["Heart rate variability", "Resting heart rate", "Respiratory rate", "Sleep performance"]}
-      legend="Today vs. last 30 days"
-      footer={WEEKLY_SKELETON}
-      bodySkeleton={WEEKLY_SKELETON}
+      labels={[tr("lib.dashboard.heartRateVariability"), tr("lib.dashboard.restingHeartRate"), tr("lib.dashboard.respiratoryRate"), tr("lib.dashboard.sleepPerformance")]}
+      legend={tr("recovery.legend")}
+      footer={weeklySkeleton()}
+      bodySkeleton={weeklySkeleton()}
     />
   )
 }

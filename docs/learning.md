@@ -717,3 +717,41 @@ flowchart LR
   HRV --> S1[Stage 1: night mean in sleep, the day's samples]
   S1 --> S2[Stage 2: Recovery, Stress, Energy Bank]
 ```
+
+## Offline localization on Expo SDK 57
+
+`expo-localization` supplies Android's ordered locale preferences; `supportedLocales.android` declares `en` and `fr`
+for the system's per-app language picker. The module loads before background tasks and Expo Router and rechecks on
+foreground entry. Embedded i18next resources work without a server. React subscriptions preserve component identity;
+view-model caches include language and discard reads started before a language change. Planned reminders reuse their
+existing identifiers when their copy is refreshed. Android launcher shortcuts use generated `values` and `values-fr`
+string resources. This requires a new native build, not Expo Go or a JavaScript-only update. Details and the owner's
+phone checks are in [localization.md](localization.md).
+
+Sources: [SDK 57 localization](https://docs.expo.dev/versions/v57.0.0/sdk/localization/),
+[Expo localization guide](https://docs.expo.dev/guides/localization/).
+
+## Local Android preview APK
+
+Generate native files with `pnpm exec expo prebuild --platform android --no-install`, then run
+`:app:assembleRelease` with JDK 17, `ANDROID_HOME`, `NODE_ENV=production`,
+`-PreactNativeArchitectures=arm64-v8a` and `-Pexpo.useLegacyPackaging=true`.
+This embeds the JavaScript bundle and keeps the generated `android/` directory untouched by hand.
+The generated release variant uses the template's debug signing key: it is a phone preview, not an
+official release, and cannot replace an installed APK signed with another key. Preserve existing
+phone data before considering any installation conflict. Building locally does not need the upstream
+EAS project or its signing credentials.
+
+Sources: [Expo local compilation](https://docs.expo.dev/guides/local-app-development/),
+[Expo release builds](https://docs.expo.dev/guides/local-app-production/).
+
+## Localized action labels on narrow phones
+
+A French phone screenshot exposed mid-word wrapping in the sync button and crowded source choices.
+Use the shared 13/16 action typography with 0.06em tracking, a minimum touch height rather than a fixed
+height, and a centered label that can shrink within its row. Sync and re-import have wrap-aware bases,
+so the row becomes two rows when space runs out. Source choices use short visible labels and full
+accessibility names. Keep Android font scaling enabled; validate the result on the owner's phone.
+
+References: [React Native Text](https://reactnative.dev/docs/text),
+[React Native Flexbox](https://reactnative.dev/docs/flexbox).

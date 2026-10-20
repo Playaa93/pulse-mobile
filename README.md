@@ -27,6 +27,10 @@ Want it on a server instead, for the browser and several people? See [Pulse](htt
 
 </div>
 
+## Languages
+
+The local source supports French and English, following Android’s app or system language. A new native build is required for this addition. See [localization](docs/localization.md) for implementation and phone verification.
+
 ## What you get
 
 - **Sleep, Recovery and Strain** every morning, with a Strain Target for the day

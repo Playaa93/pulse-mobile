@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { View } from "react-native";
 import { Circle } from "@shopify/react-native-skia";
@@ -36,6 +38,7 @@ const BANDS: Band[] = (["low", "medium", "high"] as const).map((l, i) => ({ from
 const AXIS_H = 30;
 
 function Chart({ s, variant }: { s: StressSeries; variant: "full" | "spark" }) {
+  useLanguage();
   const { c, css } = useTheme();
   const tz = useOptionalShellCalendar()?.timeZone;
   const [x, setX] = useState<number | null>(null);
@@ -47,7 +50,7 @@ function Chart({ s, variant }: { s: StressSeries; variant: "full" | "spark" }) {
   const latest = [...s.points].reverse().find((p) => p.value !== null);
   const full = variant === "full";
   const summary =
-    latest?.value != null ? `Stress through the day, latest ${formatValue("int", latest.value)}, ${STRESS_WORD[stressLevel(latest.value)].toLowerCase()}, at ${clock(latest.t, tz)}.` : "Stress through the day.";
+    latest?.value != null ? tr("ui.charts.StressChart.stressThroughTheDayLatestAt", { v0: formatValue("int", latest.value), v1: STRESS_WORD[stressLevel(latest.value)].toLowerCase(), v2: clock(latest.t, tz) }) : tr("ui.charts.StressChart.stressThroughTheDay");
 
   return (
     <ChartFigure summary={summary} height={full ? 200 : 44}>
@@ -112,14 +115,15 @@ function Chart({ s, variant }: { s: StressSeries; variant: "full" | "spark" }) {
 
 /** Intraday stress 0-100 with level-coloured lines (spec §5.10). */
 export function StressChart({ data, variant }: StressChartProps) {
+  useLanguage();
   const empty =
     variant === "full" ? (
       <View className="items-center">
-        <EmptyState body="No stress scored yet today. Stress is measured outside workouts, every 6 minutes." />
+        <EmptyState body={tr("ui.charts.StressChart.noStressScoredYetTodayStressIs")} />
       </View>
     ) : (
       <View className="h-11 justify-center">
-        <Text className="text-xs font-medium leading-4 text-muted-foreground">No stress scored yet</Text>
+        <Text className="text-xs font-medium leading-4 text-muted-foreground">{tr("home.HomeScreen.noStressScoredYet")}</Text>
       </View>
     );
   return (
@@ -146,6 +150,7 @@ export function StressChart({ data, variant }: StressChartProps) {
 }
 
 export function StressChartSkeleton({ variant }: { variant: "full" | "spark" }) {
+  useLanguage();
   return <Skeleton className={`${variant === "full" ? "h-[200px]" : "h-11"} rounded-lg`} />;
 }
 StressChart.Skeleton = StressChartSkeleton;

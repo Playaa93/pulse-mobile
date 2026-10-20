@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // View-model → kit-prop mappers shared by the screens (Home, Recovery, Strain, Activity, Sleep, Health, Trends). Ported
 // from pulse src/app/(app)/_lib/view.tsx: the mappers are unchanged; icons come from lucide-react-native and are drawn as
 // the kit draws stat icons (20 px, muted); the legend strip is React Native text.
@@ -71,6 +73,7 @@ export const LEGEND = `${INSET_ROW} mt-1 mb-3 py-2 text-xs leading-4 font-medium
 
 /** The strip under a score's rows: the two arrows and "Today vs. prior 30 days" (Strain) or "last 30 days" (Recovery). */
 export function TodayVsLegend({ period }: { period: string }) {
+  useLanguage();
   return (
     <View className={cn(LEGEND, "flex-row items-center gap-2")}>
       <View accessibilityElementsHidden className="flex-row items-center gap-1">
@@ -78,7 +81,7 @@ export function TodayVsLegend({ period }: { period: string }) {
         <DeltaMark dir="down" tone="bad" />
       </View>
       <Text className="text-xs font-medium leading-4 text-foreground-secondary">
-        <Text className="text-xs font-semibold leading-4 text-foreground">Today</Text> vs. {period}
+        <Text className="text-xs font-semibold leading-4 text-foreground">{tr("common.today")}</Text> {tr("view.vs")}{period}
       </Text>
     </View>
   )

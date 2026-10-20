@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // What Pulse Mobile's screens show that halo's view models dropped, ported from Pulse Mobile's earlier queries
 // (pulse's src/server/queries) onto halo's common.ts and Store: Recovery's "today vs. the last 30 days" rows and its
 // Behavior Insights chips, the Sleep page's Restorative Sleep row and Sleep Efficiency card, and a nap's own page.
@@ -13,10 +14,10 @@ import type { KeyStat, Metric, SleepVM } from "./types";
 
 export type BehaviorKey = "sleep86" | "strain7" | "earlyWorkout" | "consistentWake";
 const BEHAVIOR_LABEL: Record<BehaviorKey, string> = {
-  sleep86: "86%+ Sleep Performance",
-  strain7: "33%+ Strain",
-  earlyWorkout: "Early Workout",
-  consistentWake: "Consistent Wake Time",
+  get sleep86() { return tr("queries.mobileExtras.86SleepPerformance"); },
+  get strain7() { return tr("queries.mobileExtras.33Strain"); },
+  get earlyWorkout() { return tr("queries.mobileExtras.earlyWorkout"); },
+  get consistentWake() { return tr("queries.mobileExtras.consistentWakeTime"); },
 };
 /** A behaviour of the day before, toned by its next-day Recovery effect over journal impact's window. */
 export type BehaviorChip = { key: BehaviorKey; label: string; effect: "up" | "down" | "neutral" };
@@ -145,10 +146,10 @@ export async function getSleepExtras(day: string, ctx: QueryCtx, stages: SleepVM
 
 type Stage = "awake" | "rem" | "light" | "deep";
 const STAGE_ROWS: { stage: Stage; label: string; typical: [number, number] }[] = [
-  { stage: "awake", label: "Awake", typical: [5, 10] },
-  { stage: "rem", label: "REM", typical: [20, 25] },
-  { stage: "light", label: "Light", typical: [45, 55] },
-  { stage: "deep", label: "Deep", typical: [13, 23] },
+  { stage: "awake", get label() { return tr("queries.mobileExtras.awake"); }, typical: [5, 10] },
+  { stage: "rem", get label() { return tr("queries.mobileExtras.rem"); }, typical: [20, 25] },
+  { stage: "light", get label() { return tr("ui.metrics.SleepStages.light"); }, typical: [45, 55] },
+  { stage: "deep", get label() { return tr("queries.mobileExtras.deep"); }, typical: [13, 23] },
 ];
 
 export type NapVM = { id: string; day: string; start: number; end: number; hours: SleepVM["hours"]; stages: SleepVM["stages"]; hr: SleepVM["nightHr"] };

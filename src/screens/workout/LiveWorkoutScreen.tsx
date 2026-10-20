@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Live workout `/workout-live` (spec §7.23), halo's src/screens/workout/LiveWorkoutScreen.tsx on Pulse's kit: Strain
 // Coach on the band's live Bluetooth heart rate, from Strain's Activities card and More. While it runs: Day Strain
 // building beat by beat on the app's Strain math (src/live/liveStrain.ts) on the dial against today's Strain Target,
@@ -55,8 +57,8 @@ const ROW_TITLE = "text-[15px] font-semibold leading-5";
 const NUM = "font-numeric font-bold";
 
 const INFO: InfoContent = {
-  title: "About Live Workout",
-  body: "Strain Coach on your band’s live heart rate. Day Strain builds as you train, on the same Strain math as the rest of Pulse, starting from what today already holds. The coach compares it with today’s Strain Target, and your heart rate with a band set by today’s Recovery: it says push when you’re easy for the day and ease off once you’re in range or climbing past what Recovery can pay for. Nothing here is saved to your scores: the workout counts when Fitbit syncs it.",
+  get title() { return tr("workout.LiveWorkoutScreen.aboutLiveWorkout"); },
+  get body() { return tr("workout.LiveWorkoutScreen.strainCoachOnYourBandSLive"); },
 };
 
 type Session = {
@@ -119,6 +121,7 @@ const setupQuery = async (ctx: QueryCtx) => ({
 });
 
 export function LiveWorkoutScreen() {
+  useLanguage();
   const ctl = useLiveBleControl();
   const isLive = ctl.status === "live";
   const q = useScreen(setupQuery, ["workout-live"]);
@@ -213,7 +216,7 @@ export function LiveWorkoutScreen() {
     <ScoreDial
       variant="strain"
       size="lg"
-      label="Day strain"
+      label={tr("lib.dashboard.dayStrain")}
       // Tenths, so the dial sweeps only when the shown number changes.
       value={result ? Math.round(result.dayEnd * 10) / 10 : dayValue === null ? null : Math.round(dayValue * 10) / 10}
       loading={!setup && !result}
@@ -233,8 +236,7 @@ export function LiveWorkoutScreen() {
       <View className="gap-3">
         <RunningStats snap={snap} start={active.start} lost={ctl.status !== "live"} name={ctl.device?.name ?? null} />
         <Button variant="secondary" haptic onPress={() => finish()}>
-          End workout
-        </Button>
+          {tr("workout.LiveWorkoutScreen.endWorkout")}</Button>
       </View>
     );
   } else if (result) {
@@ -242,11 +244,9 @@ export function LiveWorkoutScreen() {
     primary = (
       <View className="gap-3">
         <Button onPress={start} disabled={!isLive || !setup}>
-          Start another
-        </Button>
+          {tr("workout.LiveWorkoutScreen.startAnother")}</Button>
         <Button variant="secondary" onPress={() => (router.canGoBack() ? router.back() : push("/strain"))}>
-          Done
-        </Button>
+          {tr("common.done")}</Button>
       </View>
     );
   } else {
@@ -254,21 +254,20 @@ export function LiveWorkoutScreen() {
     primary = (
       <View className="gap-3">
         <BandCard setup={setup} />
-        <SectionShell variant="card" title="Haptic cues" info={false}>
+        <SectionShell variant="card" title={tr("breathe.BreatheScreen.hapticCues")} info={false}>
           <View className="min-h-11 flex-row items-center gap-3">
-            <Text className={cn(CAPTION, "min-w-0 flex-1")}>A tap to push, two to ease off, a buzz at your target</Text>
-            <Switch value={haptics} onValueChange={setHaptics} label="Haptic cues" />
+            <Text className={cn(CAPTION, "min-w-0 flex-1")}>{tr("workout.LiveWorkoutScreen.aTapToPushTwoToEase")}</Text>
+            <Switch value={haptics} onValueChange={setHaptics} label={tr("breathe.BreatheScreen.hapticCues")} />
           </View>
         </SectionShell>
         <Button onPress={start} disabled={!isLive || !setup}>
-          Start workout
-        </Button>
+          {tr("workout.LiveWorkoutScreen.startWorkout")}</Button>
       </View>
     );
   }
 
   const secondary = [
-    <SectionShell key="recent" variant="card" title="Recent live workouts" info={false}>
+    <SectionShell key="recent" variant="card" title={tr("workout.LiveWorkoutScreen.recentLiveWorkouts")} info={false}>
       {log.length && q.data ? (
         <Divided>
           {log.slice(0, 5).map((r) => (
@@ -276,14 +275,14 @@ export function LiveWorkoutScreen() {
           ))}
         </Divided>
       ) : (
-        <Text className={BODY}>Workouts you coach here are summed up on this phone. Fitbit syncs the workout itself to your scores.</Text>
+        <Text className={BODY}>{tr("workout.LiveWorkoutScreen.workoutsYouCoachHereAreSummedUp")}</Text>
       )}
     </SectionShell>,
   ];
 
   return (
     <>
-      <DetailShell title="Live workout" info={INFO} backHref="/strain" hero={hero} summary={summary} primary={primary} secondary={running ? undefined : secondary} />
+      <DetailShell title={tr("more.MoreScreen.liveWorkout")} info={INFO} backHref="/strain" hero={hero} summary={summary} primary={primary} secondary={running ? undefined : secondary} />
       {running && <KeepAwake tag="workout" />}
     </>
   );
@@ -291,6 +290,7 @@ export function LiveWorkoutScreen() {
 
 /** The coach's line on its tone's tint: the ask in the tone's colour, the reason under it. */
 function GuidanceCard({ tone, title, body }: { tone: GuidanceTone; title: string; body: string }) {
+  useLanguage();
   const { c } = useTheme();
   const t = TONE[tone];
   return (
@@ -305,16 +305,17 @@ function GuidanceCard({ tone, title, body }: { tone: GuidanceTone; title: string
 
 /** Elapsed, heart rate and the workout's own Strain, then the zones with the current one lit. */
 function RunningStats({ snap, start, lost, name }: { snap: Snapshot; start: number; lost: boolean; name: string | null }) {
+  useLanguage();
   const { c } = useTheme();
   const zc = zoneColor(c, snap.zone);
   const cells = [
-    { label: "Elapsed", value: clockDuration(snap.now - start), color: undefined, spoken: clockDuration(snap.now - start) },
-    { label: "Heart rate", value: snap.bpm === null ? MISSING : String(snap.bpm), color: snap.bpm === null ? undefined : zc, spoken: snap.bpm === null ? "no reading" : `${snap.bpm} beats per minute` },
-    { label: "Workout", value: pct(snap.session), color: c["strain-text"], spoken: `workout strain ${Math.round(snap.session)} percent` },
+    { label: tr("workout.LiveWorkoutScreen.elapsed"), value: clockDuration(snap.now - start), color: undefined, spoken: clockDuration(snap.now - start) },
+    { label: tr("queries.chart.heartRate"), value: snap.bpm === null ? MISSING : String(snap.bpm), color: snap.bpm === null ? undefined : zc, spoken: snap.bpm === null ? tr("health.HealthScreen.noReading") : tr("breathe.BreatheScreen.beatsPerMinute", { v0: snap.bpm }) },
+    { label: tr("workout.LiveWorkoutScreen.workout"), value: pct(snap.session), color: c["strain-text"], spoken: tr("workout.LiveWorkoutScreen.workoutStrainPercent", { v0: Math.round(snap.session) }) },
   ];
   const band = snap.out?.band;
   return (
-    <SectionShell variant="card" title="Now" info={false}>
+    <SectionShell variant="card" title={tr("common.now")} info={false}>
       <View className="flex-row gap-3">
         {cells.map((x) => (
           <View key={x.label} accessible accessibilityLabel={`${x.label}: ${x.spoken}`} className="min-w-0 flex-1 items-center gap-0.5">
@@ -334,7 +335,7 @@ function RunningStats({ snap, start, lost, name }: { snap: Snapshot; start: numb
             <View
               key={z}
               accessible
-              accessibilityLabel={`Zone ${z}${on ? ", current" : ""}: ${clockDuration(secs * 1000)}`}
+              accessibilityLabel={tr("workout.LiveWorkoutScreen.zone", { v0: z, v1: on ? tr("workout.LiveWorkoutScreen.current") : "", v2: clockDuration(secs * 1000) })}
               className={cn("min-w-0 flex-1 items-center gap-1 rounded-lg py-2.5", !on && "bg-inset")}
               style={on ? { backgroundColor: alpha(col, 0.2) } : undefined}
             >
@@ -346,8 +347,8 @@ function RunningStats({ snap, start, lost, name }: { snap: Snapshot; start: numb
       </View>
       <View className="mt-3 flex-row items-center justify-between gap-3">
         <Text className={cn(CAPTION, "flex-1 tabular-nums")}>
-          {snap.zone === 0 ? "Below Zone 1" : snap.zone ? `Zone ${snap.zone}` : "Waiting for a beat"}
-          {band ? ` · today’s band ${Math.round(band.floorBpm)}–${Math.round(band.ceilingBpm)} bpm` : ""}
+          {snap.zone === 0 ? tr("workout.LiveWorkoutScreen.belowZone1") : snap.zone ? `Zone ${snap.zone}` : tr("workout.LiveWorkoutScreen.waitingForABeat")}
+          {band ? tr("workout.LiveWorkoutScreen.todaySBandBpm", { v0: Math.round(band.floorBpm), v1: Math.round(band.ceilingBpm) }) : ""}
         </Text>
         <LivePill name={name} lost={lost} />
       </View>
@@ -357,22 +358,23 @@ function RunningStats({ snap, start, lost, name }: { snap: Snapshot; start: numb
 
 /** Before starting: where today stands (Strain so far, target, Recovery). */
 function TodayCard({ setup, error }: { setup: WorkoutSetup | undefined; error: unknown }) {
+  useLanguage();
   if (!setup)
     return (
-      <SectionShell variant="card" title="Today" info={false}>
+      <SectionShell variant="card" title={tr("common.today")} info={false}>
         <Text accessibilityRole={error ? "alert" : undefined} className={cn(BODY, !!error && "text-recovery-red-text")}>
-          {error ? "Couldn’t read today’s scores." : "Reading today’s scores…"}
+          {error ? tr("workout.LiveWorkoutScreen.couldnTReadTodaySScores") : tr("workout.LiveWorkoutScreen.readingTodaySScores")}
         </Text>
       </SectionShell>
     );
   const t = setup.target;
   const lines = [
-    t ? `Today’s target is ${Math.round(t[0])} - ${pct(t[1])}.` : "No Strain Target yet today: it needs today’s Recovery. The coach uses your heart-rate band alone.",
-    setup.recovery !== null ? `Recovery ${Math.round(setup.recovery)}% sets how hard the coach lets you go.` : null,
-    setup.synced ? null : "Today’s heart rate hasn’t synced yet, so Day Strain starts from this workout.",
+    t ? tr("workout.LiveWorkoutScreen.todaySTargetIs", { v0: Math.round(t[0]), v1: pct(t[1]) }) : tr("workout.LiveWorkoutScreen.noStrainTargetYetTodayItNeeds"),
+    setup.recovery !== null ? tr("workout.LiveWorkoutScreen.recoverySetsHowHardTheCoachLets", { v0: Math.round(setup.recovery) }) : null,
+    setup.synced ? null : tr("workout.LiveWorkoutScreen.todaySHeartRateHasnTSynced"),
   ].filter(Boolean);
   return (
-    <SectionShell variant="card" title="Today" info={false}>
+    <SectionShell variant="card" title={tr("common.today")} info={false}>
       <Text className="text-[15px] leading-[22px]">{lines.join(" ")}</Text>
     </SectionShell>
   );
@@ -380,21 +382,22 @@ function TodayCard({ setup, error }: { setup: WorkoutSetup | undefined; error: u
 
 /** The band: its live bpm and zone, or how to connect it (Settings › Live heart rate, scanning on arrival). */
 function BandCard({ setup }: { setup: WorkoutSetup | undefined }) {
+  useLanguage();
   const { c } = useTheme();
   const live = useLiveBle();
   const set = useMemo(() => (setup ? zones(setup.restingHr, setup.maxHr) : null), [setup]);
   if (!showsLive(live))
     return (
-      <SectionShell variant="card" title="Connect your band" info={false} icon={<Icon icon={Activity} size={18} tone="strain-text" />}>
-        <Text className={cn(BODY, "mb-4")}>Live Workout needs your band’s heart rate over Bluetooth. Turn on Share heart rate in Google Health, then connect.</Text>
+      <SectionShell variant="card" title={tr("workout.LiveWorkoutScreen.connectYourBand")} info={false} icon={<Icon icon={Activity} size={18} tone="strain-text" />}>
+        <Text className={cn(BODY, "mb-4")}>{tr("workout.LiveWorkoutScreen.liveWorkoutNeedsYourBandSHeart")}</Text>
         <GoLiveButton status={live.status} onPress={() => push(GO_LIVE_HREF)} />
       </SectionShell>
     );
   const zone = live.bpm !== null && set ? zoneNumber(set, live.bpm) : null;
   return (
-    <SectionShell variant="card" title="Heart rate" info={false} icon={<Icon icon={HeartPulse} size={18} tone="recovery-red-text" />}>
+    <SectionShell variant="card" title={tr("queries.chart.heartRate")} info={false} icon={<Icon icon={HeartPulse} size={18} tone="recovery-red-text" />}>
       <View className="flex-row items-center justify-between gap-3">
-        <View accessible accessibilityLabel={live.bpm === null ? "No heart rate yet" : `${live.bpm} beats per minute`}>
+        <View accessible accessibilityLabel={live.bpm === null ? tr("breathe.BreatheScreen.noHeartRateYet") : tr("breathe.BreatheScreen.beatsPerMinute", { v0: live.bpm })}>
           <Text className={cn(NUM, "text-[40px] leading-[44px] tabular-nums")} style={zone ? { color: zoneColor(c, zone) } : undefined}>
             {live.bpm === null ? MISSING : String(live.bpm)}
             <Text className="font-sans text-[13px] font-semibold text-foreground-secondary"> bpm</Text>
@@ -402,25 +405,26 @@ function BandCard({ setup }: { setup: WorkoutSetup | undefined }) {
         </View>
         <LivePill name={live.device?.name ?? null} lost={live.status !== "live"} />
       </View>
-      {zone !== null && <Text className={cn(CAPTION, "mt-2")}>{zone === 0 ? "Below Zone 1" : `Zone ${zone}`}</Text>}
+      {zone !== null && <Text className={cn(CAPTION, "mt-2")}>{zone === 0 ? tr("workout.LiveWorkoutScreen.belowZone1") : `Zone ${zone}`}</Text>}
     </SectionShell>
   );
 }
 
 /** The end of a workout: its Strain, time, heart rate, zones and where the day ended up. */
 function WorkoutSummary({ rec }: { rec: WorkoutRecord }) {
+  useLanguage();
   const { c } = useTheme();
   const total = rec.zoneSeconds.reduce((a, b) => a + b, 0);
   const rows: { label: string; value: string; unit?: string; strain?: boolean }[] = [
-    { label: "Workout strain", value: pct(rec.strain), strain: true },
-    { label: "Time", value: clockDuration(rec.ms) },
-    { label: "Heart rate", value: rec.avgHr === null ? MISSING : `${rec.avgHr} avg · ${rec.maxHr ?? MISSING} max`, unit: rec.avgHr === null ? undefined : "bpm" },
-    { label: "Day strain", value: `${pct(rec.dayStart)} → ${pct(rec.dayEnd)}`, strain: true },
+    { label: tr("workout.LiveWorkoutScreen.workoutStrain"), value: pct(rec.strain), strain: true },
+    { label: tr("common.time"), value: clockDuration(rec.ms) },
+    { label: tr("queries.chart.heartRate"), value: rec.avgHr === null ? MISSING : tr("workout.LiveWorkoutScreen.avgMax", { v0: rec.avgHr, v1: rec.maxHr ?? MISSING }), unit: rec.avgHr === null ? undefined : "bpm" },
+    { label: tr("lib.dashboard.dayStrain"), value: `${pct(rec.dayStart)} → ${pct(rec.dayEnd)}`, strain: true },
   ];
   const t = rec.target;
-  const verdict = !t ? null : rec.dayEnd >= t[1] ? "Past today’s target: prioritise sleep tonight." : rec.dayEnd >= t[0] ? "Inside today’s target." : `${pct(t[0] - rec.dayEnd)} below today’s target.`;
+  const verdict = !t ? null : rec.dayEnd >= t[1] ? tr("workout.LiveWorkoutScreen.pastTodaySTargetPrioritiseSleepTonight") : rec.dayEnd >= t[0] ? tr("workout.LiveWorkoutScreen.insideTodaySTarget") : tr("workout.LiveWorkoutScreen.belowTodaySTarget", { v0: pct(t[0] - rec.dayEnd) });
   return (
-    <SectionShell variant="card" title="Workout summary" info={false}>
+    <SectionShell variant="card" title={tr("workout.LiveWorkoutScreen.workoutSummary")} info={false}>
       <Divided>
         {rows.map((r) => (
           <View key={r.label} accessible accessibilityLabel={`${r.label}: ${r.value.replace("→", "to")}`} className="flex-row items-center justify-between gap-3 py-2.5">
@@ -430,26 +434,27 @@ function WorkoutSummary({ rec }: { rec: WorkoutRecord }) {
         ))}
       </Divided>
       {total > 0 && (
-        <View accessible accessibilityLabel="Time in zones" className="mt-2 h-2 flex-row gap-0.5 overflow-hidden rounded">
+        <View accessible accessibilityLabel={tr("activity.ActivityScreen.timeInZones")} className="mt-2 h-2 flex-row gap-0.5 overflow-hidden rounded">
           {rec.zoneSeconds.map((sec, z) => (sec > 0 ? <View key={z} className={z ? undefined : "bg-muted"} style={{ flexGrow: sec, flexBasis: 0, backgroundColor: z ? zoneColor(c, z) : undefined }} /> : null))}
         </View>
       )}
-      <Text className={cn(CAPTION, "mt-3")}>{[verdict, "Kept on this phone; Fitbit syncs the workout itself to your scores."].filter(Boolean).join(" ")}</Text>
+      <Text className={cn(CAPTION, "mt-3")}>{[verdict, tr("workout.LiveWorkoutScreen.keptOnThisPhoneFitbitSyncsThe")].filter(Boolean).join(" ")}</Text>
     </SectionShell>
   );
 }
 
 function RecentRow({ rec, timeZone, today }: { rec: WorkoutRecord; timeZone: string; today: string }) {
+  useLanguage();
   const when = `${dayLabel(localDay(Math.floor(rec.at / 1000), timeZone), today)}, ${clock(rec.at, timeZone)}`;
   return (
-    <View accessible accessibilityLabel={`${when}: ${clockDuration(rec.ms)}, workout strain ${Math.round(rec.strain)} percent`} className="min-h-14 flex-row items-center gap-3 py-2.5">
+    <View accessible accessibilityLabel={tr("workout.LiveWorkoutScreen.workoutStrainPercent_4447fd", { v0: when, v1: clockDuration(rec.ms), v2: Math.round(rec.strain) })} className="min-h-14 flex-row items-center gap-3 py-2.5">
       <View className="min-w-0 flex-1 gap-0.5">
         <Text className={ROW_TITLE}>{when}</Text>
-        <Text className={cn(CAPTION, "tabular-nums")}>{`${clockDuration(rec.ms)}${rec.avgHr !== null ? ` · ${rec.avgHr} bpm avg` : ""}`}</Text>
+        <Text className={cn(CAPTION, "tabular-nums")}>{`${clockDuration(rec.ms)}${rec.avgHr !== null ? tr("workout.LiveWorkoutScreen.bpmAvg", { v0: rec.avgHr }) : ""}`}</Text>
       </View>
       <View className="items-end">
         <Text className={cn(NUM, "text-xl leading-6 tabular-nums text-strain-text")}>{pct(rec.strain)}</Text>
-        <Text className={CAPTION}>Strain</Text>
+        <Text className={CAPTION}>{tr("ui.shells.HomeHeader.strain")}</Text>
       </View>
     </View>
   );

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Data check, pure part: per local day, what Health Connect holds for each metric — split by the app and device that
 // wrote it — next to what Pulse stored. Lets a mismatch with the Fitbit app be traced to its cause (another source,
 // a day boundary, a missing record, or Pulse's own mapping). The Health Connect reads live in dataCheck.ts.
@@ -16,22 +17,22 @@ export type RawRecord = {
 
 /** The metrics the check covers, with how a record's value is read and how a day's values combine. */
 export const CHECK_METRICS: { key: string; label: string; type: ReadType; unit: string; combine: "sum" | "mean" | "latest" | "list"; value: (r: RawRecord) => number | null; pulse?: (m: Metrics) => number | null }[] = [
-  { key: "steps", label: "Steps", type: "Steps", unit: "", combine: "sum", value: (r) => num(r.count), pulse: (m) => m.steps },
+  { key: "steps", get label() { return tr("health.dataCheckSummary.steps"); }, type: "Steps", unit: "", combine: "sum", value: (r) => num(r.count), pulse: (m) => m.steps },
   { key: "spo2", label: "SpO2", type: "OxygenSaturation", unit: "%", combine: "list", value: (r) => num(r.percentage), pulse: (m) => m.spo2Pct },
-  { key: "hrv", label: "HRV", type: "HeartRateVariabilityRmssd", unit: "ms", combine: "list", value: (r) => num(r.heartRateVariabilityMillis), pulse: (m) => m.hrvMs },
-  { key: "rhr", label: "Resting HR", type: "RestingHeartRate", unit: "bpm", combine: "list", value: (r) => num(r.beatsPerMinute), pulse: (m) => m.rhrBpm },
-  { key: "resp", label: "Breathing", type: "RespiratoryRate", unit: "rpm", combine: "list", value: (r) => num(r.rate), pulse: (m) => m.respBpm },
-  { key: "distance", label: "Distance", type: "Distance", unit: "km", combine: "sum", value: (r) => { const d = r.distance as { inMeters?: number } | undefined; return d?.inMeters == null ? null : d.inMeters / 1000; } },
-  { key: "calories", label: "Calories", type: "TotalCaloriesBurned", unit: "kcal", combine: "sum", value: (r) => { const e = r.energy as { inKilocalories?: number } | undefined; return e?.inKilocalories ?? null; }, pulse: (m) => m.calories },
-  { key: "vo2", label: "VO2 max", type: "Vo2Max", unit: "", combine: "list", value: (r) => num(r.vo2MillilitersPerMinuteKilogram), pulse: (m) => m.vo2maxDaily ?? m.vo2maxRun },
+  { key: "hrv", get label() { return tr("breathe.BreatheScreen.hrv_49a6fe"); }, type: "HeartRateVariabilityRmssd", unit: "ms", combine: "list", value: (r) => num(r.heartRateVariabilityMillis), pulse: (m) => m.hrvMs },
+  { key: "rhr", get label() { return tr("chart.model.restingHr"); }, type: "RestingHeartRate", unit: "bpm", combine: "list", value: (r) => num(r.beatsPerMinute), pulse: (m) => m.rhrBpm },
+  { key: "resp", get label() { return tr("health.dataCheckSummary.breathing"); }, type: "RespiratoryRate", unit: "rpm", combine: "list", value: (r) => num(r.rate), pulse: (m) => m.respBpm },
+  { key: "distance", get label() { return tr("health.dataCheckSummary.distance"); }, type: "Distance", unit: "km", combine: "sum", value: (r) => { const d = r.distance as { inMeters?: number } | undefined; return d?.inMeters == null ? null : d.inMeters / 1000; } },
+  { key: "calories", get label() { return tr("health.dataCheckSummary.calories"); }, type: "TotalCaloriesBurned", unit: "kcal", combine: "sum", value: (r) => { const e = r.energy as { inKilocalories?: number } | undefined; return e?.inKilocalories ?? null; }, pulse: (m) => m.calories },
+  { key: "vo2", get label() { return tr("health.dataCheckSummary.vo2Max"); }, type: "Vo2Max", unit: "", combine: "list", value: (r) => num(r.vo2MillilitersPerMinuteKilogram), pulse: (m) => m.vo2maxDaily ?? m.vo2maxRun },
 ];
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 export const sourceOf = (r: RawRecord): string => {
   const t = r.metadata?.device?.type;
-  const app = (r.metadata?.dataOrigin || "unknown app").replace(/^com\.fitbit\.FitbitMobile$/, "Fitbit app").replace(/^com\.google\.android\.apps\.fitness$/, "Google Fit");
-  return `${app}/${t == null ? "no device" : (DEVICE_NAME[t] ?? `type ${t}`)}`;
+  const app = (r.metadata?.dataOrigin || "unknown app").replace(/^com\.fitbit\.FitbitMobile$/, tr("health.dataCheckSummary.fitbitApp")).replace(/^com\.google\.android\.apps\.fitness$/, "Google Fit");
+  return `${app}/${t == null ? tr("health.dataCheckSummary.noDevice") : (DEVICE_NAME[t] ?? `type ${t}`)}`;
 };
 
 const startOf = (r: RawRecord): number | null => {
@@ -90,11 +91,11 @@ export function summarize(raw: Partial<Record<ReadType, RawRecord[]>>, sleepRaw:
       if (end == null || start == null || localDay(end, tz) !== day) continue;
       const stages = (r.stages as { stage: number }[] | undefined) ?? [];
       const kinds = [...new Set(stages.map((s) => s.stage))].sort().join(",");
-      sleepSources.push({ source: sourceOf(r), fitbit: isFitbit("SleepSession", r), records: 1, value: round((end - start) / 3600), detail: `${hhmm(start, tz)}–${hhmm(end, tz)}, ${stages.length} stages [${kinds || "none"}]` });
+      sleepSources.push({ source: sourceOf(r), fitbit: isFitbit("SleepSession", r), records: 1, value: round((end - start) / 3600), detail: tr("diagnostic.stages", { start: hhmm(start, tz), end: hhmm(end, tz), count: stages.length, codes: kinds || tr("diagnostic.none") }) });
     }
     const pulseSleep = sessions
       .filter((s) => s.day === day)
-      .map((s) => `${s.isMain ? "main" : "nap"} ${hhmm(s.startTs, tz)}–${hhmm(s.endTs, tz)} asleep ${s.asleepMin ?? "?"} min${s.stagesStatus === "SUCCEEDED" ? " (staged)" : ""}`);
+      .map((s) => tr("diagnostic.session", { kind: tr(s.isMain ? "diagnostic.main" : "diagnostic.nap"), start: hhmm(s.startTs, tz), end: hhmm(s.endTs, tz), minutes: s.asleepMin ?? "?", staged: s.stagesStatus === "SUCCEEDED" ? tr("health.dataCheckSummary.staged") : "" }));
     return { day, metrics: lines, sleep: { pulse: pulseSleep, sources: sleepSources } };
   });
 }
@@ -107,18 +108,18 @@ const round = (v: number) => (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v 
  */
 export function formatReport(days: DayCheck[], policy: string, opts: { source?: string; legend?: string } = {}): string {
   const out: string[] = [
-    opts.source ? `Pulse data check — ${opts.source}` : `Pulse data check — source policy: ${policy}`,
-    opts.legend ?? "★ = kept by the policy (Fitbit, not phone-measured)",
+    opts.source ? tr("health.dataCheckSummary.pulseDataCheck", { v0: opts.source }) : tr("health.dataCheckSummary.pulseDataCheckSourcePolicy", { v0: policy }),
+    opts.legend ?? tr("diagnostic.legend"),
   ];
   for (const d of days) {
     out.push("", `■ ${d.day}`);
     for (const m of d.metrics) {
       if (!m.sources.length && m.pulse == null) continue;
       out.push(`  ${m.label}: Pulse ${m.pulse == null ? "—" : round(m.pulse)}${m.unit ? ` ${m.unit}` : ""}`);
-      for (const s of m.sources) out.push(`    ${s.fitbit ? "★" : " "} ${s.source}: ${s.value}${m.unit ? ` ${m.unit}` : ""} (${s.records} rec; ${s.detail})`);
+      for (const s of m.sources) out.push(`    ${s.fitbit ? "★" : " "} ${s.source}: ${s.value}${m.unit ? ` ${m.unit}` : ""} (${tr("diagnostic.records", { count: s.records, detail: s.detail })})`);
     }
     if (d.sleep.sources.length || d.sleep.pulse.length) {
-      out.push(`  Sleep: Pulse ${d.sleep.pulse.join(" | ") || "—"}`);
+      out.push(tr("health.dataCheckSummary.sleepPulse", { v0: d.sleep.pulse.join(" | ") || "—" }));
       for (const s of d.sleep.sources) out.push(`    ${s.fitbit ? "★" : " "} ${s.source}: ${s.value} h (${s.detail})`);
     }
   }

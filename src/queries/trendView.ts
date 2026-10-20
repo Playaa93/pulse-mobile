@@ -1,3 +1,4 @@
+import { language, tr } from "@/i18n";
 import { deltaTone, type GoodDirection, type Tone } from "@/lib/bands";
 import { FEATURES } from "@/lib/features";
 import { formatDay, formatValue, type FormatKey } from "@/lib/format";
@@ -67,9 +68,9 @@ type Def = {
 const SLEEP_BANDS = (title: string, optimal: number, sufficient: number) => ({
   title,
   list: [
-    { key: "optimal", label: "Optimal", min: optimal, detail: `${optimal}%+` },
-    { key: "sufficient", label: "Sufficient", min: sufficient, detail: `${sufficient}-${optimal - 1}%` },
-    { key: "poor", label: "Poor", min: -Infinity, detail: `<${sufficient}%` },
+    { key: "optimal", label: tr("queries.trendView.optimal"), min: optimal, detail: `${optimal}%+` },
+    { key: "sufficient", label: tr("queries.trendView.sufficient"), min: sufficient, detail: `${sufficient}-${optimal - 1}%` },
+    { key: "poor", label: tr("queries.training.poor"), min: -Infinity, detail: `<${sufficient}%` },
   ],
 });
 
@@ -82,7 +83,7 @@ export const zoneSum = (from: number, to: number) => (r: DayRow) => {
   const xs = Array.from({ length: to - from }, (_, k) => zoneMin(r, from + k));
   return xs.every(finite) ? xs.reduce((a, b) => a + b, 0) : null;
 };
-const zoneSeries = (from: number, to: number) => Array.from({ length: to - from }, (_, k) => ({ key: `z${from + k + 1}`, label: `Zone ${from + k + 1}` }));
+const zoneSeries = (from: number, to: number) => Array.from({ length: to - from }, (_, k) => ({ key: `z${from + k + 1}`, label: tr("queries.trendView.zone", { v0: from + k + 1 }) }));
 export const worn = (r: DayRow) => (r.s1?.hrCount ?? 0) > 0;
 /** The night's need: the plan made the evening before, else the baseline need (as the Sleep page reads it). */
 const needMin = (r: DayRow, x: Ctx) => {
@@ -93,106 +94,106 @@ const needMin = (r: DayRow, x: Ctx) => {
 
 export const TREND_VIEW = {
   recovery: {
-    group: "recovery", label: "Recovery", short: "Recovery", unit: "%", format: "int", direction: "up", colorBy: "band", chart: "bars", agg: "daily",
+    group: "recovery", get label() { return tr("ui.shells.HomeHeader.recovery"); }, get short() { return tr("ui.shells.HomeHeader.recovery"); }, unit: "%", format: "int", direction: "up", colorBy: "band", chart: "bars", agg: "daily",
     pick: (r) => r.recovery?.value, domain: [0, 100],
-    bands: { title: "Recovery breakdown (days)", list: [
-      { key: "green", label: "Green", min: 67, detail: "67%+" },
-      { key: "yellow", label: "Yellow", min: 34, detail: "34-66%" },
-      { key: "red", label: "Red", min: -Infinity, detail: "<34%" },
+    bands: { get title() { return tr("queries.trendView.recoveryBreakdownDays"); }, list: [
+      { key: "green", get label() { return tr("lib.bands.green"); }, min: 67, detail: "67%+" },
+      { key: "yellow", get label() { return tr("lib.bands.yellow"); }, min: 34, detail: "34-66%" },
+      { key: "red", get label() { return tr("lib.bands.red"); }, min: -Infinity, detail: "<34%" },
     ] },
-    about: { title: "What is Recovery?", body: [
-      "Recovery is how ready your body is to take on strain today, on a scale from 1 to 100%.",
-      "Pulse scores it each morning from your heart rate variability, resting heart rate, respiratory rate, sleep performance and skin temperature, each compared with your own recent baseline.",
-      "Green (67% and up) means you are primed for a hard day, yellow means maintain, and red means your body is asking for rest.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsRecovery"); }, get body() { return [
+      tr("queries.trendView.recoveryIsHowReadyYourBodyIs"),
+      tr("queries.trendView.pulseScoresItEachMorningFromYour"),
+      tr("queries.trendView.green67AndUpMeansYouAre"),
+    ]; } },
   },
   hrv: {
-    group: "recovery", label: "Heart Rate Variability", short: "HRV", unit: "ms", format: "int", direction: "up", colorBy: "single", chart: "line", agg: "daily",
+    group: "recovery", get label() { return tr("queries.trendView.heartRateVariability"); }, get short() { return tr("breathe.BreatheScreen.hrv_49a6fe"); }, unit: "ms", format: "int", direction: "up", colorBy: "single", chart: "line", agg: "daily",
     pick: (r) => r.metrics?.hrvMs, typical: true,
-    about: { title: "What is Heart Rate Variability?", body: [
-      "Heart rate variability (HRV) is the variation in time between your heartbeats, measured in milliseconds while you sleep.",
-      "A higher HRV usually means your nervous system is relaxed and ready for stress; a lower one often follows hard training, poor sleep, alcohol or illness.",
-      "HRV differs a lot from person to person, so compare it only with your own typical range, not with anyone else's.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsHeartRateVariability"); }, get body() { return [
+      tr("queries.trendView.heartRateVariabilityHrvIsTheVariation"),
+      tr("queries.trendView.aHigherHrvUsuallyMeansYourNervous"),
+      tr("queries.trendView.hrvDiffersALotFromPersonTo"),
+    ]; } },
   },
   rhr: {
-    group: "recovery", label: "Resting Heart Rate", short: "RHR", unit: "bpm", format: "int", direction: "down", colorBy: "single", chart: "line", agg: "daily",
+    group: "recovery", get label() { return tr("queries.trendView.restingHeartRate"); }, get short() { return tr("health.HealthScreen.rhr"); }, unit: "bpm", format: "int", direction: "down", colorBy: "single", chart: "line", agg: "daily",
     pick: (r) => r.metrics?.rhrBpm ?? r.sessionRhr, typical: true,
-    about: { title: "What is Resting Heart Rate?", body: [
-      "Resting heart rate (RHR) is how many times your heart beats per minute while you are fully at rest, measured during sleep.",
-      "A lower RHR generally reflects better fitness and recovery. A rise of a few beats above your typical range can point to fatigue, stress, heat, alcohol or the start of an illness.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsRestingHeartRate"); }, get body() { return [
+      tr("queries.trendView.restingHeartRateRhrIsHowMany"),
+      tr("queries.trendView.aLowerRhrGenerallyReflectsBetterFitness"),
+    ]; } },
   },
   resp: {
-    group: "recovery", label: "Respiratory Rate", short: "respiratory rate", unit: "rpm", format: "decimal1", direction: "down", colorBy: "single", chart: "line", agg: "daily",
+    group: "recovery", get label() { return tr("queries.trendView.respiratoryRate"); }, get short() { return tr("queries.trendView.respiratoryRate_3587e9"); }, unit: "rpm", format: "decimal1", direction: "down", colorBy: "single", chart: "line", agg: "daily",
     pick: (r) => r.metrics?.respBpm, typical: true,
-    about: { title: "What is Respiratory Rate?", body: [
-      "Respiratory rate is how many breaths you take per minute while you sleep.",
-      "It is one of the most stable vitals: night to night it rarely moves much. A clear rise above your typical range is worth noticing, since it often comes with illness or a heavy load on the body.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsRespiratoryRate"); }, get body() { return [
+      tr("queries.trendView.respiratoryRateIsHowManyBreathsYou"),
+      tr("queries.trendView.itIsOneOfTheMostStable"),
+    ]; } },
   },
   sleep: {
-    group: "sleep", label: "Sleep Performance", short: "Sleep Performance", unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
-    pick: (r) => r.sleep?.performance, domain: [0, 100], bands: SLEEP_BANDS("Sleep performance breakdown (days)", 85, 70),
-    about: { title: "What is Sleep Performance?", body: [
-      "Sleep Performance compares the sleep you got with the sleep your body needed, adjusted for how consistent and efficient that sleep was.",
-      "Your need rises with yesterday's strain and any sleep debt you carry, so the same hours can score differently on different nights.",
-    ] },
+    group: "sleep", get label() { return tr("queries.trendView.sleepPerformance"); }, get short() { return tr("queries.trendView.sleepPerformance"); }, unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
+    pick: (r) => r.sleep?.performance, domain: [0, 100], get bands() { return SLEEP_BANDS(tr("queries.trendView.sleepPerformanceBreakdownDays"), 85, 70); },
+    about: { get title() { return tr("queries.trendView.whatIsSleepPerformance"); }, get body() { return [
+      tr("queries.trendView.sleepPerformanceComparesTheSleepYouGot"),
+      tr("queries.trendView.yourNeedRisesWithYesterdaySStrain"),
+    ]; } },
   },
   hours: {
-    group: "sleep", label: "Hours of Sleep", card: "Hours vs. Needed (hours)", short: "hours of sleep", format: "duration", direction: "up", colorBy: "sleep", chart: "pair", agg: "daily",
+    group: "sleep", get label() { return tr("queries.trendView.hoursOfSleep"); }, get card() { return tr("queries.trendView.hoursVsNeededHours"); }, get short() { return tr("queries.trendView.hoursOfSleep_5a70be"); }, format: "duration", direction: "up", colorBy: "sleep", chart: "pair", agg: "daily",
     pick: (r) => r.sleep?.main?.asleepMin,
     parts: (r, x) => {
       const need = needMin(r, x);
       return r.sleep?.main && need !== null ? { asleep: r.sleep.main.asleepMin, need } : null;
     },
-    series: [{ key: "asleep", label: "Hours of sleep" }, { key: "need", label: "Sleep needed" }],
-    about: { title: "What is Hours of Sleep?", body: [
-      "Hours of sleep is the time you actually spent asleep in your main sleep, not counting time awake in bed.",
-      "Most adults need between seven and nine hours, and your own need changes with strain and sleep debt.",
-    ] },
+    series: [{ key: "asleep", get label() { return tr("lib.dashboard.hoursOfSleep"); } }, { key: "need", get label() { return tr("queries.trendView.sleepNeeded"); } }],
+    about: { get title() { return tr("queries.trendView.whatIsHoursOfSleep"); }, get body() { return [
+      tr("queries.trendView.hoursOfSleepIsTheTimeYou"),
+      tr("queries.trendView.mostAdultsNeedBetweenSevenAndNine"),
+    ]; } },
   },
   hours_need: {
-    group: "sleep", label: "Hours vs. Needed", card: "Hours vs. Needed (%)", short: "hours vs. needed", unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
+    group: "sleep", get label() { return tr("queries.trendView.hoursVsNeeded_2673f3"); }, get card() { return tr("queries.trendView.hoursVsNeeded"); }, get short() { return tr("queries.trendView.hoursVsNeeded_f047cc"); }, unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
     pick: (r, x) => {
       const need = needMin(r, x);
       return r.sleep?.main && need ? (r.sleep.main.asleepMin / need) * 100 : null;
     },
-    domain: [0, 100], bands: SLEEP_BANDS("Hours vs. needed breakdown (days)", 85, 70),
-    about: { title: "What is Hours vs. Needed?", body: [
-      "Hours vs. needed is the sleep you got as a share of the sleep your body needed that night.",
-      "Your need is a baseline plus extra for yesterday's strain and any sleep debt, so a hard day raises it.",
-    ] },
+    domain: [0, 100], get bands() { return SLEEP_BANDS(tr("queries.trendView.hoursVsNeededBreakdownDays"), 85, 70); },
+    about: { get title() { return tr("queries.trendView.whatIsHoursVsNeeded"); }, get body() { return [
+      tr("queries.trendView.hoursVsNeededIsTheSleepYou"),
+      tr("queries.trendView.yourNeedIsABaselinePlusExtra"),
+    ]; } },
   },
   restorative: {
-    group: "sleep", label: "Restorative Sleep", short: "restorative sleep", format: "duration", direction: "up", colorBy: "sleep", chart: "stack", agg: "daily",
+    group: "sleep", get label() { return tr("queries.trendView.restorativeSleep"); }, get short() { return tr("queries.trendView.restorativeSleep_dd323c"); }, format: "duration", direction: "up", colorBy: "sleep", chart: "stack", agg: "daily",
     pick: (r) => (r.sleep?.main?.deepMin != null && r.sleep.main.remMin != null ? r.sleep.main.deepMin + r.sleep.main.remMin : null),
     parts: (r) => (r.sleep?.main?.deepMin != null && r.sleep.main.remMin != null ? { deep: r.sleep.main.deepMin, rem: r.sleep.main.remMin } : null),
-    series: [{ key: "rem", label: "REM" }, { key: "deep", label: "SWS (Deep)" }],
-    about: { title: "What is Restorative Sleep?", body: [
-      "Restorative sleep is the time you spend in deep (slow-wave) sleep and REM sleep, the two stages where most physical and mental repair happens.",
-      "Deep sleep comes mostly early in the night and REM mostly late, so a short night cuts REM first.",
-    ] },
+    series: [{ key: "rem", get label() { return tr("queries.mobileExtras.rem"); } }, { key: "deep", get label() { return tr("queries.trendView.swsDeep"); } }],
+    about: { get title() { return tr("queries.trendView.whatIsRestorativeSleep"); }, get body() { return [
+      tr("queries.trendView.restorativeSleepIsTheTimeYouSpend"),
+      tr("queries.trendView.deepSleepComesMostlyEarlyInThe"),
+    ]; } },
   },
   consistency: {
-    group: "sleep", label: "Sleep Consistency", short: "Sleep Consistency", unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
-    pick: (r) => r.sleep?.consistency, domain: [0, 100], bands: SLEEP_BANDS("Sleep consistency breakdown (days)", 80, 70),
-    about: { title: "What is Sleep Consistency?", body: [
-      "Sleep consistency measures how closely your sleep and wake times match from one day to the next.",
-      "Going to bed and waking at similar times keeps your body clock steady, which makes the same hours of sleep more restful.",
-    ] },
+    group: "sleep", get label() { return tr("queries.trendView.sleepConsistency"); }, get short() { return tr("queries.trendView.sleepConsistency"); }, unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "bars", agg: "daily",
+    pick: (r) => r.sleep?.consistency, domain: [0, 100], get bands() { return SLEEP_BANDS(tr("queries.trendView.sleepConsistencyBreakdownDays"), 80, 70); },
+    about: { get title() { return tr("queries.trendView.whatIsSleepConsistency"); }, get body() { return [
+      tr("queries.trendView.sleepConsistencyMeasuresHowCloselyYourSleep"),
+      tr("queries.trendView.goingToBedAndWakingAtSimilar"),
+    ]; } },
   },
   efficiency: {
-    group: "sleep", label: "Sleep Efficiency", short: "Sleep Efficiency", unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "line", agg: "daily",
-    pick: (r) => (r.sleep?.main ? r.sleep.main.efficiency * 100 : null), bands: SLEEP_BANDS("Sleep efficiency breakdown (days)", 90, 80),
-    about: { title: "What is Sleep Efficiency?", body: [
-      "Sleep efficiency is the share of your time in bed that you actually spent asleep: hours of sleep divided by time in bed.",
-      "Above 85% is generally considered good. Long spells awake, many wake-ups or a lot of time in bed before falling asleep all lower it.",
-      "Better efficiency means more of the night goes to sleep stages that restore you, which also lifts your Sleep Performance.",
-    ] },
+    group: "sleep", get label() { return tr("queries.trendView.sleepEfficiency"); }, get short() { return tr("queries.trendView.sleepEfficiency"); }, unit: "%", format: "int", direction: "up", colorBy: "sleep", chart: "line", agg: "daily",
+    pick: (r) => (r.sleep?.main ? r.sleep.main.efficiency * 100 : null), get bands() { return SLEEP_BANDS(tr("queries.trendView.sleepEfficiencyBreakdownDays"), 90, 80); },
+    about: { get title() { return tr("queries.trendView.whatIsSleepEfficiency"); }, get body() { return [
+      tr("queries.trendView.sleepEfficiencyIsTheShareOfYour"),
+      tr("queries.trendView.above85IsGenerallyConsideredGoodLong"),
+      tr("queries.trendView.betterEfficiencyMeansMoreOfTheNight"),
+    ]; } },
   },
   time_in_bed: {
-    group: "sleep", label: "Time in Bed", short: "time in bed", format: "duration", direction: "neutral", colorBy: "sleep", chart: "range", agg: "daily",
+    group: "sleep", get label() { return tr("queries.trendView.timeInBed"); }, get short() { return tr("queries.trendView.timeInBed_089ad5"); }, format: "duration", direction: "neutral", colorBy: "sleep", chart: "range", agg: "daily",
     pick: (r) => r.sleep?.main?.inBedMin,
     parts: (r, x) => {
       const m = r.sleep?.main;
@@ -200,93 +201,93 @@ export const TREND_VIEW = {
       const bed = localMinutes(m.start, x.tz);
       return { bed: bed > 720 ? bed - 1440 : bed, wake: localMinutes(m.end, x.tz) };
     },
-    about: { title: "What is Time in Bed?", body: [
-      "Time in bed runs from when your main sleep started to when it ended, including any time awake.",
-      "Each bar spans your bedtime to your wake time, so a steady row of bars means a steady schedule.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsTimeInBed"); }, get body() { return [
+      tr("queries.trendView.timeInBedRunsFromWhenYour"),
+      tr("queries.trendView.eachBarSpansYourBedtimeToYour"),
+    ]; } },
   },
   sleep_stress: {
-    group: "sleep", label: "Sleep Stress", short: "time in high stress", format: "duration", direction: "down", colorBy: "stress", chart: "stack", agg: "daily",
+    group: "sleep", get label() { return tr("queries.trendView.sleepStress"); }, get short() { return tr("queries.trendView.timeInHighStress"); }, format: "duration", direction: "down", colorBy: "stress", chart: "stack", agg: "daily",
     pick: () => null, flag: "sleepStress",
-    series: [{ key: "low", label: "Low" }, { key: "medium", label: "Medium" }, { key: "high", label: "High" }],
-    about: { title: "What is Sleep Stress?", body: [
-      "Sleep stress is how much of the night your heart rate and heart rate variability showed a stress response instead of rest.",
-    ] },
+    series: [{ key: "low", get label() { return tr("health.StressScreen.low"); } }, { key: "medium", get label() { return tr("queries.trendView.medium"); } }, { key: "high", get label() { return tr("more.howItWorksContent.high"); } }],
+    about: { get title() { return tr("queries.trendView.whatIsSleepStress"); }, get body() { return [
+      tr("queries.trendView.sleepStressIsHowMuchOfThe"),
+    ]; } },
   },
   strain: {
-    group: "strain", label: "Day Strain", card: "Strain", short: "Day Strain", unit: "%", format: "int", direction: "neutral", colorBy: "strain", chart: "bars", agg: "daily",
+    group: "strain", get label() { return tr("queries.trendView.dayStrain"); }, get card() { return tr("ui.shells.HomeHeader.strain"); }, get short() { return tr("queries.trendView.dayStrain"); }, unit: "%", format: "int", direction: "neutral", colorBy: "strain", chart: "bars", agg: "daily",
     pick: (r) => dayStrainOf(r.s1), partialToday: true, domain: [0, 100],
-    bands: { title: "Strain breakdown (days)", round: 0, list: [
-      { key: "all_out", label: "All Out", min: 80, detail: ">79%" },
-      { key: "strenuous", label: "Strenuous", min: 61, detail: "61-79%" },
-      { key: "moderate", label: "Moderate", min: 41, detail: "41-60%" },
-      { key: "light", label: "Light", min: -Infinity, detail: "≤40%" },
+    bands: { get title() { return tr("queries.trendView.strainBreakdownDays"); }, round: 0, list: [
+      { key: "all_out", get label() { return tr("queries.trendView.allOut"); }, min: 80, detail: ">79%" },
+      { key: "strenuous", get label() { return tr("queries.trendView.strenuous"); }, min: 61, detail: "61-79%" },
+      { key: "moderate", get label() { return tr("queries.training.moderate"); }, min: 41, detail: "41-60%" },
+      { key: "light", get label() { return tr("ui.metrics.SleepStages.light"); }, min: -Infinity, detail: "≤40%" },
     ] },
-    about: { title: "What is Day Strain?", body: [
-      "Day Strain is the day's load on your heart and body as a percent: 0 to 100 on most days, above 100 on a very big day.",
-      "It builds from the time you spend in higher heart-rate zones and the steps you take while awake, so the climb gets steeper the harder you go.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsDayStrain"); }, get body() { return [
+      tr("queries.trendView.dayStrainIsTheDaySLoad"),
+      tr("queries.trendView.itBuildsFromTheTimeYouSpend"),
+    ]; } },
   },
   zones13: {
-    group: "strain", label: "Heart Rate Zones 1-3", card: "HR Zones 1-3", short: "time in HR zones 1-3", format: "duration", direction: "up", colorBy: "single", chart: "stack", agg: "weekly",
+    group: "strain", get label() { return tr("queries.trendView.heartRateZones13"); }, get card() { return tr("queries.trendView.hrZones13"); }, get short() { return tr("queries.trendView.timeInHrZones13"); }, format: "duration", direction: "up", colorBy: "single", chart: "stack", agg: "weekly",
     pick: zoneSum(0, 3), parts: zoneParts(0, 3), series: zoneSeries(0, 3), partBreakdown: "series", partialToday: true,
-    footnote: "Zone time is derived from your heart rate through the day.",
-    actions: { addActivity: true, goal: "Set a HR zones goal in Weekly Plan" },
-    about: { title: "What are Heart Rate Zones 1-3?", body: [
-      "Zones 1 to 3 cover light to moderate effort, 50 to 80% of your max heart rate: brisk walks, easy runs, steady rides.",
-      "Time here builds your aerobic base and helps recovery without adding much fatigue.",
-    ] },
+    get footnote() { return tr("queries.trendView.zoneTimeIsDerivedFromYourHeart"); },
+    actions: { addActivity: true, get goal() { return tr("queries.trendView.setAHrZonesGoalInWeekly"); } },
+    about: { get title() { return tr("queries.trendView.whatAreHeartRateZones13"); }, get body() { return [
+      tr("queries.trendView.zones1To3CoverLightTo"),
+      tr("queries.trendView.timeHereBuildsYourAerobicBaseAnd"),
+    ]; } },
   },
   zones45: {
-    group: "strain", label: "Heart Rate Zones 4-5", card: "HR Zones 4-5", short: "time in HR zones 4-5", format: "duration", direction: "up", colorBy: "single", chart: "stack", agg: "weekly",
+    group: "strain", get label() { return tr("queries.trendView.heartRateZones45"); }, get card() { return tr("queries.trendView.hrZones45"); }, get short() { return tr("queries.trendView.timeInHrZones45"); }, format: "duration", direction: "up", colorBy: "single", chart: "stack", agg: "weekly",
     pick: zoneSum(3, 5), parts: zoneParts(3, 5), series: zoneSeries(3, 5), partBreakdown: "series", partialToday: true,
-    footnote: "Zone time is derived from your heart rate through the day.",
-    actions: { addActivity: true, goal: "Update your HR zones 4-5 goal" },
-    about: { title: "What are Heart Rate Zones 4-5?", body: [
-      "Zones 4 and 5 are hard effort, from 80% of your max heart rate: intervals, races and the end of a hard climb.",
-      "A little time here each week raises your fitness ceiling; too much without rest adds strain faster than you recover.",
-    ] },
+    get footnote() { return tr("queries.trendView.zoneTimeIsDerivedFromYourHeart"); },
+    actions: { addActivity: true, get goal() { return tr("queries.trendView.updateYourHrZones45Goal"); } },
+    about: { get title() { return tr("queries.trendView.whatAreHeartRateZones45"); }, get body() { return [
+      tr("queries.trendView.zones4And5AreHardEffort"),
+      tr("queries.trendView.aLittleTimeHereEachWeekRaises"),
+    ]; } },
   },
   strength: {
-    group: "strain", label: "Strength Activity Time", short: "strength activity time", format: "duration", direction: "up", colorBy: "single", chart: "bars", agg: "weekly",
+    group: "strain", get label() { return tr("queries.trendView.strengthActivityTime"); }, get short() { return tr("queries.trendView.strengthActivityTime_5a94a7"); }, format: "duration", direction: "up", colorBy: "single", chart: "bars", agg: "weekly",
     pick: (r, x) => (worn(r) || x.strength.has(r.day) ? (x.strength.get(r.day)?.min ?? 0) : null), partBreakdown: "strength", partialToday: true,
-    footnote: "Strength activity time is derived from your logged strength workouts.",
-    actions: { addActivity: true, goal: "Set a goal in Weekly Plan" },
-    about: { title: "What is Strength Activity Time?", body: [
-      "Strength activity time is the time you spent in resistance training: weights, bodyweight work, CrossFit and similar sessions.",
-      "Regular strength work builds muscle and bone and supports healthy ageing. Most guidelines suggest at least two sessions a week.",
-    ] },
+    get footnote() { return tr("queries.trendView.strengthActivityTimeIsDerivedFromYour"); },
+    actions: { addActivity: true, get goal() { return tr("queries.trendView.setAGoalInWeeklyPlan"); } },
+    about: { get title() { return tr("queries.trendView.whatIsStrengthActivityTime"); }, get body() { return [
+      tr("queries.trendView.strengthActivityTimeIsTheTimeYou"),
+      tr("queries.trendView.regularStrengthWorkBuildsMuscleAndBone"),
+    ]; } },
   },
   steps: {
-    group: "strain", label: "Steps", short: "steps", format: "grouped", direction: "up", colorBy: "single", chart: "bars", agg: "daily",
+    group: "strain", get label() { return tr("health.dataCheckSummary.steps"); }, get short() { return tr("queries.trendView.steps"); }, format: "grouped", direction: "up", colorBy: "single", chart: "bars", agg: "daily",
     pick: (r) => r.metrics?.steps, partialToday: true,
-    actions: { goal: "Update your daily step goal" },
-    about: { title: "What are Steps?", body: [
-      "Steps are counted by your Fitbit through the day. They are a simple measure of how much you move outside workouts.",
-    ] },
+    actions: { get goal() { return tr("queries.trendView.updateYourDailyStepGoal"); } },
+    about: { get title() { return tr("queries.trendView.whatAreSteps"); }, get body() { return [
+      tr("queries.trendView.stepsAreCountedByYourFitbitThrough"),
+    ]; } },
   },
   calories: {
-    group: "strain", label: "Calories", short: "calories", unit: "kcal", format: "grouped", direction: "neutral", colorBy: "single", chart: "bars", agg: "daily",
+    group: "strain", get label() { return tr("health.dataCheckSummary.calories"); }, get short() { return tr("format.unit.calories"); }, unit: "kcal", format: "grouped", direction: "neutral", colorBy: "single", chart: "bars", agg: "daily",
     pick: (r) => r.metrics?.calories, partialToday: true,
-    about: { title: "What are Calories?", body: [
-      "Calories are everything you burned in the day: your resting burn plus movement and workouts.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatAreCalories"); }, get body() { return [
+      tr("queries.trendView.caloriesAreEverythingYouBurnedInThe"),
+    ]; } },
   },
   vo2max: {
-    group: "health", label: "VO2 Max", short: "VO2 max", unit: "ml/kg/min", format: "decimal1", direction: "up", colorBy: "single", chart: "line", agg: "daily",
+    group: "health", get label() { return tr("queries.trendView.vo2Max"); }, get short() { return tr("health.dataCheckSummary.vo2Max"); }, unit: "ml/kg/min", format: "decimal1", direction: "up", colorBy: "single", chart: "line", agg: "daily",
     pick: (r) => (r.fitness?.reason === null ? r.fitness.vo2max : null), typical: true,
-    about: { title: "What is VO2 Max?", body: [
-      "VO2 max is the most oxygen your body can use during hard exercise, in millilitres per kilogram of body weight per minute. Fitbit estimates it from your runs, or from your resting heart rate when you don't run.",
-      "It is one of the strongest signs of long-term health: higher fitness goes with a longer life. Steady aerobic training raises it over weeks and months.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsVo2Max"); }, get body() { return [
+      tr("queries.trendView.vo2MaxIsTheMostOxygenYour"),
+      tr("queries.trendView.itIsOneOfTheStrongestSigns"),
+    ]; } },
   },
   lean_mass: {
-    group: "health", label: "Lean Body Mass", short: "lean body mass", unit: "kg", format: "decimal1", direction: "up", colorBy: "single", chart: "line", agg: "daily",
+    group: "health", get label() { return tr("queries.trendView.leanBodyMass"); }, get short() { return tr("queries.trendView.leanBodyMass_aae434"); }, unit: "kg", format: "decimal1", direction: "up", colorBy: "single", chart: "line", agg: "daily",
     pick: (r) => (r.metrics?.weightKg != null && r.metrics.bodyFatPct != null ? r.metrics.weightKg * (1 - r.metrics.bodyFatPct / 100) : null),
-    about: { title: "What is Lean Body Mass?", body: [
-      "Lean body mass is your weight minus your body fat: muscle, bone, organs and water. Pulse works it out from the weight and body fat your scale or the Fitbit app records.",
-      "More lean mass for your height is linked to a longer life, whatever your body fat. Strength training and enough protein build it.",
-    ] },
+    about: { get title() { return tr("queries.trendView.whatIsLeanBodyMass"); }, get body() { return [
+      tr("queries.trendView.leanBodyMassIsYourWeightMinus"),
+      tr("queries.trendView.moreLeanMassForYourHeightIs"),
+    ]; } },
   },
 } as const satisfies Record<string, Def>;
 
@@ -343,10 +344,19 @@ const wholeMonths = (segs: MonthSegment[]) => {
   return out.map((s, i) => (i === 0 ? { ...s, change: null } : s));
 };
 
-const PRIOR_WORD: Record<TrendViewRange, string> = { w: "week", m: "month", "6m": "6 months" };
-export const priorLabel = (r: TrendViewRange) => `vs. prior ${PRIOR_WORD[r]}`;
+const PRIOR_WORD: Record<TrendViewRange, string> = { w: "week", m: "month", get "6m"() { return tr("queries.trendView.6Months"); } };
+export const priorLabel = (r: TrendViewRange) => tr("queries.trendView.vsPrior", { v0: PRIOR_WORD[r] });
 
-const typeName = (e: ExerciseRow) => e.name ?? e.type.toLowerCase().replace(/(^|_)(\w)/g, (_, s: string, c: string) => `${s ? " " : ""}${c.toUpperCase()}`);
+const typeName = (e: ExerciseRow) => {
+  if (e.name) return e.name;
+  if (language() === "fr") {
+    if (/HIGH_INTENSITY_INTERVAL/.test(e.type)) return tr("exercise.hiit");
+    if (/CALISTHENICS/.test(e.type)) return tr("exercise.calisthenics");
+    if (/WEIGHT/.test(e.type)) return tr("exercise.weightlifting");
+    if (/STRENGTH/.test(e.type)) return tr("exercise.strength");
+  }
+  return e.type.toLowerCase().replace(/(^|_)(\w)/g, (_, s: string, c: string) => `${s ? " " : ""}${c.toUpperCase()}`);
+};
 
 export async function getTrendView(key: TrendViewKey, end: string, range: TrendViewRange, offset: number, ctx: QueryCtx): Promise<TrendViewVM> {
   const m = def(key);
@@ -427,13 +437,13 @@ export async function getTrendView(key: TrendViewKey, end: string, range: TrendV
     ? { title: b.title, unit: "days", items: bandCounts(values, b.list).map((c) => ({ key: c.key, label: c.label, detail: c.detail, value: c.count })) }
     : m.partBreakdown === "series" && m.series
       ? {
-          title: `HR zones breakdown (${range === "w" ? "weekly total" : "avg. weekly total"})`,
+          title: tr("queries.trendView.hrZonesBreakdown", { v0: range === "w" ? tr("queries.trendView.weeklyTotal_d2b3c6") : tr("queries.trendView.avgWeeklyTotal_ea7c51") }),
           unit: "duration",
           items: [...m.series].reverse().map((s) => ({ key: s.key, label: s.label, value: perWeek(settled(cur).reduce((a, p) => a + (p.parts?.[s.key] ?? 0), 0)) })),
         }
       : m.partBreakdown === "strength"
         ? {
-            title: `Strength activity breakdown (${range === "w" ? "weekly total" : "avg. weekly total"})`,
+            title: tr("queries.trendView.strengthActivityBreakdown", { v0: range === "w" ? tr("queries.trendView.weeklyTotal_d2b3c6") : tr("queries.trendView.avgWeeklyTotal_ea7c51") }),
             unit: "duration",
             items: Object.entries(
               cur.reduce<Record<string, number>>((acc, p) => {
@@ -446,7 +456,7 @@ export async function getTrendView(key: TrendViewKey, end: string, range: TrendV
           }
         : null;
 
-  const todayNote = m.partialToday && m.agg === "daily" && win.to >= today && win.from <= today ? `Average does not include today (${formatDay(today, { month: "short", day: "numeric" })}).` : null;
+  const todayNote = m.partialToday && m.agg === "daily" && win.to >= today && win.from <= today ? tr("queries.trendView.averageDoesNotIncludeToday", { v0: formatDay(today, { month: "short", day: "numeric" }) }) : null;
 
   return {
     key,
@@ -467,7 +477,7 @@ export async function getTrendView(key: TrendViewKey, end: string, range: TrendV
     to: win.to,
     period: periodLabel(win.from, win.to),
     canPrev: first !== null && first < win.from,
-    caption: m.agg === "weekly" ? (range === "w" ? "Weekly total" : "Avg. weekly total") : "Average",
+    caption: m.agg === "weekly" ? (range === "w" ? tr("queries.trendView.weeklyTotal") : tr("queries.trendView.avgWeeklyTotal")) : tr("health.HeartRateScreen.average"),
     value,
     prior: priorValue,
     change,

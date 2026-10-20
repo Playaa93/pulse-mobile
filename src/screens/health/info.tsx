@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The Health screens' info-card copy, from pulse's pages, reworded for the Pulse engine. The web's <p> is a <Text> styled as
 // the info card's body (the same as src/screens/_lib/info.tsx's, which does not export it).
 import type { ReactNode } from "react";
@@ -7,31 +9,29 @@ import { Text } from "@/ui/Text";
 import type { InfoContent } from "@/ui/shells/InfoButton";
 
 function P({ children }: { children: ReactNode }) {
+  useLanguage();
   return <Text className="text-[15px] leading-[22px] text-foreground-body">{children}</Text>;
 }
 
 export const MONITOR_INFO: InfoContent = {
-  title: "About Health Monitor",
-  body: (
+  get title() { return tr("health.info.aboutHealthMonitor"); },
+  get body() { return (
     <P>
-      Health Monitor compares last night’s vitals with your personal normal range: the average of your last 30 nights plus or minus one standard
-      deviation. Blood oxygen also flags anything below 95%. A change in several vitals at once can be an early sign of illness. Pulse is not a medical device; if you
-      feel unwell, talk to a doctor.
-    </P>
-  ),
+      {tr("health.info.healthMonitorComparesLastNightSVitals")}</P>
+  ); },
 };
 
 const LEVELS = [
-  { swatch: "bg-stress-low", text: "Low, 0 - 29: you might be feeling calm, relaxed or sleepy." },
-  { swatch: "bg-stress-medium", text: "Medium, 30 - 59: neutral, alert or mildly activated." },
-  { swatch: "bg-stress-high", text: "High, 60 - 100: excited, stressed or highly activated." },
+  { swatch: "bg-stress-low", get text() { return tr("health.info.low029YouMightBeFeeling"); } },
+  { swatch: "bg-stress-medium", get text() { return tr("health.info.medium3059NeutralAlertOrMildly"); } },
+  { swatch: "bg-stress-high", get text() { return tr("health.info.high60100ExcitedStressedOrHighly"); } },
 ];
 
 export const STRESS_INFO: InfoContent = {
-  title: "About Stress Monitor",
-  body: (
+  get title() { return tr("health.info.aboutStressMonitor"); },
+  get body() { return (
     <>
-      <P>Stress Monitor scores how activated your body is, from 0 to 100, every 6 minutes: your heart rate against your awake heart rate over the last 30 days, and at night your HRV against its 30-day baseline.</P>
+      <P>{tr("health.info.stressMonitorScoresHowActivatedYourBody")}</P>
       <View className="gap-2">
         {LEVELS.map((l) => (
           <View key={l.swatch} className="flex-row items-start gap-3">
@@ -42,39 +42,34 @@ export const STRESS_INFO: InfoContent = {
           </View>
         ))}
       </View>
-      <P>Workouts and exercise are left out, so a run never counts as stress. Stress is provisional until your data spans 30 days.</P>
+      <P>{tr("health.info.workoutsAndExerciseAreLeftOutSo")}</P>
     </>
-  ),
+  ); },
 };
 
 export const FITNESS_INFO: InfoContent = {
-  title: "About Fitness",
-  body: (
+  get title() { return tr("health.info.aboutFitness"); },
+  get body() { return (
     <P>
-      VO2 max is the most oxygen your body can use during hard exercise. Pulse ranks it against people of your age and sex from the FRIEND registry.
-      Training load divides your fatigue (about a week of workout load) by your fitness (about three weeks); above 1.4 is a spike.
-    </P>
-  ),
+      {tr("health.info.vo2MaxIsTheMostOxygenYour")}</P>
+  ); },
 };
 
 export const HEALTHSPAN_INFO: InfoContent = {
-  title: "About Healthspan",
-  body: (
+  get title() { return tr("health.info.aboutHealthspan"); },
+  get body() { return (
     <P>
-      {AGE_LABEL} estimates how old your body behaves, from nine habits and vitals over the 28 days ending each Sunday. Pace of Aging is your
-      {AGE_LABEL} divided by your age: 1.0x means your body behaves its age, below 1.0x younger, above 1.0x older. Both are estimates for personal insight, not a
-      medical assessment.
-    </P>
-  ),
+      {AGE_LABEL} {tr("health.info.estimatesHowOldYourBodyBehavesFrom")}{AGE_LABEL} {tr("health.info.dividedByYourAge10xMeans")}</P>
+  ); },
 };
 
 export const HEART_RATE_INFO: InfoContent = {
-  title: "About heart rate",
-  body: (
+  get title() { return tr("health.info.aboutHeartRate"); },
+  get body() { return (
     <>
-      <P>Your band records heart rate through the day. The Google Health app shares it with Health Connect, and Pulse reads it from there.</P>
-      <P>While this screen is open on today, Pulse checks for new readings every minute. A reading usually arrives one to three minutes after your band takes it, so the newest one is never quite now.</P>
-      <P>The chart shows each minute’s average. Minutes without a reading, when the band was off or not syncing, stay blank.</P>
+      <P>{tr("health.info.yourBandRecordsHeartRateThroughThe")}</P>
+      <P>{tr("health.info.whileThisScreenIsOpenOnToday")}</P>
+      <P>{tr("health.info.theChartShowsEachMinuteSAverage")}</P>
     </>
-  ),
+  ); },
 };

@@ -1,3 +1,7 @@
+import { behaviorLabel } from "@/lib/behaviors";
+import { displayUnit } from "@/lib/format";
+import { reportCopy } from "./reportCopy";
+import { tr, language } from "@/i18n";
 // Reports (spec §7.13): one ISO week or calendar month, and the archive of every period with data. Ported from Pulse's
 // src/server/queries/reports.ts; the web's `reports` table reads are Store reads (`store.getReports()`, which the
 // pipeline's stage 2 rewrites on every run), and the VM shapes are the web's, verbatim. A phone addition rides along:
@@ -32,12 +36,12 @@ function neighbour(rows: ReportRow[], pattern: RegExp, period: string, dir: -1 |
 
 /** Training Load's status (the Pulse engine's) as the report's training balance. */
 const BALANCE = {
-  maintaining: { status: "balanced", word: "Balanced", line: "Your training held steady with what your body is used to." },
-  peaking: { status: "balanced", word: "Balanced", line: "Your fitness kept climbing at a pace your body is used to." },
-  productive: { status: "balanced", word: "Balanced", line: "Your fatigue ran a little above your fitness: the kind of load that builds it." },
-  fatigued: { status: "overreaching", word: "Overreaching", line: "Your fatigue ran above your fitness while Recovery was low. Watch your Recovery." },
-  overtraining: { status: "overreaching", word: "Overreaching", line: "Your fatigue jumped well above your fitness. Injury and illness risk rise." },
-  detraining: { status: "undertrained", word: "Undertrained", line: "Your fitness was falling. It slowly fades if this lasts." },
+  maintaining: { status: "balanced", get word() { return tr("queries.reports.balanced"); }, get line() { return tr("queries.reports.yourTrainingHeldSteadyWithWhatYour"); } },
+  peaking: { status: "balanced", get word() { return tr("queries.reports.balanced"); }, get line() { return tr("queries.reports.yourFitnessKeptClimbingAtAPace"); } },
+  productive: { status: "balanced", get word() { return tr("queries.reports.balanced"); }, get line() { return tr("queries.reports.yourFatigueRanALittleAboveYour"); } },
+  fatigued: { status: "overreaching", get word() { return tr("more.howItWorksContent.overreaching"); }, get line() { return tr("queries.reports.yourFatigueRanAboveYourFitnessWhile"); } },
+  overtraining: { status: "overreaching", get word() { return tr("more.howItWorksContent.overreaching"); }, get line() { return tr("queries.reports.yourFatigueJumpedWellAboveYourFitness"); } },
+  detraining: { status: "undertrained", get word() { return tr("queries.reports.undertrained"); }, get line() { return tr("queries.reports.yourFitnessWasFallingItSlowlyFades"); } },
 } as const;
 
 /** Reports `/reports/[period]` (spec §7.13); null for a period with no data. `targets`: the Weekly Plan's. */
@@ -61,7 +65,7 @@ export async function getReport(period: string, ctx: QueryCtx, targets: PlanTarg
   const prevReport = prev ? readReport(all, prev) : null;
 
   const avg = (v: number | null): Metric<number> => (finite(v) ? ok(v) : none("no_data"));
-  const word = kind === "week" ? "week" : "month";
+  const word = tr(kind === "week" ? "period.week" : "period.month");
   const stat = (key: string, label: string, v: number | null, prevV: number | null | undefined, unit: string | undefined, direction: KeyStat["direction"]): KeyStat => ({
     key,
     label,
@@ -74,9 +78,9 @@ export async function getReport(period: string, ctx: QueryCtx, targets: PlanTarg
   const pa = prevReport?.averages;
 
   const bands: StackedSegment[] = [
-    { key: "green", label: "Green (67-100%)", count: r.bands.green, color: "recovery-green" },
-    { key: "yellow", label: "Yellow (34-66%)", count: r.bands.yellow, color: "recovery-yellow" },
-    { key: "red", label: "Red (0-33%)", count: r.bands.red, color: "recovery-red" },
+    { key: "green", label: tr("queries.reports.green67100"), count: r.bands.green, color: "recovery-green" },
+    { key: "yellow", label: tr("queries.reports.yellow3466"), count: r.bands.yellow, color: "recovery-yellow" },
+    { key: "red", label: tr("queries.reports.red033"), count: r.bands.red, color: "recovery-red" },
   ];
   const scored = r.bands.green + r.bands.yellow + r.bands.red;
 
@@ -114,29 +118,29 @@ export async function getReport(period: string, ctx: QueryCtx, targets: PlanTarg
     latestWeek: latestWeek?.period ?? null,
     latestMonth: latestMonth?.period ?? null,
     dials: [
-      { key: "sleep", label: "Avg sleep", metric: avg(a.sleepPerf), delta: r.deltas.sleepPerf },
-      { key: "recovery", label: "Avg recovery", metric: avg(a.recovery), delta: r.deltas.recovery },
-      { key: "strain", label: "Avg strain", metric: avg(a.strain), delta: r.deltas.strain },
+      { key: "sleep", label: tr("reports.ReportScreen.avgSleep"), metric: avg(a.sleepPerf), delta: r.deltas.sleepPerf },
+      { key: "recovery", label: tr("reports.ReportScreen.avgRecovery"), metric: avg(a.recovery), delta: r.deltas.recovery },
+      { key: "strain", label: tr("activity.ActivitiesScreen.avgStrain"), metric: avg(a.strain), delta: r.deltas.strain },
     ],
     insight: insightOf(r, word, inTarget, withTarget),
     bands: scored ? ok(bands) : none("no_data"),
     averages: [
-      stat("recovery", "Recovery", a.recovery, pa?.recovery, "%", "up"),
-      stat("strain", "Day strain", a.strain, pa?.strain, "%", "neutral"),
-      stat("sleepPerf", "Sleep performance", a.sleepPerf, pa?.sleepPerf, "%", "up"),
-      stat("sleepHours", "Hours of sleep", a.sleepHours, pa?.sleepHours, "h", "up"),
-      stat("consistency", "Sleep consistency", r.sleepConsistency, prevReport?.sleepConsistency, "%", "up"),
-      stat("hrv", "Heart rate variability", a.hrv, pa?.hrv, "ms", "up"),
-      stat("rhr", "Resting heart rate", a.rhr, pa?.rhr, "bpm", "down"),
+      stat("recovery", tr("ui.shells.HomeHeader.recovery"), a.recovery, pa?.recovery, "%", "up"),
+      stat("strain", tr("lib.dashboard.dayStrain"), a.strain, pa?.strain, "%", "neutral"),
+      stat("sleepPerf", tr("lib.dashboard.sleepPerformance"), a.sleepPerf, pa?.sleepPerf, "%", "up"),
+      stat("sleepHours", tr("lib.dashboard.hoursOfSleep"), a.sleepHours, pa?.sleepHours, "h", "up"),
+      stat("consistency", tr("lib.dashboard.sleepConsistency"), r.sleepConsistency, prevReport?.sleepConsistency, "%", "up"),
+      stat("hrv", tr("lib.dashboard.heartRateVariability"), a.hrv, pa?.hrv, "ms", "up"),
+      stat("rhr", tr("lib.dashboard.restingHeartRate"), a.rhr, pa?.rhr, "bpm", "down"),
     ],
     trainingBalance: r.trainingBalance && tb ? ok({ status: tb.status, word: tb.word, acwr: r.trainingBalance.acwr, line: tb.line }) : none("no_data"),
     topImpacts: impacts,
-    performance: performanceOf(assessPeriod(...assessmentDays(both, exs, r.start, before.start), kind, targets), targets),
+    performance: performanceOf(assessPeriod(...assessmentDays(both, exs, r.start, before.start), kind, targets, language() === "fr" ? reportCopy : undefined), targets),
     bestWorst:
       r.best && r.worst && scored >= 2
         ? [
-            { label: "Best day", day: r.best.day, recovery: r.best.recovery, strain: strainOf(r.best.day) },
-            { label: "Worst day", day: r.worst.day, recovery: r.worst.recovery, strain: strainOf(r.worst.day) },
+            { label: tr("reports.ReportScreen.bestDay"), day: r.best.day, recovery: r.best.recovery, strain: strainOf(r.best.day) },
+            { label: tr("queries.reports.worstDay"), day: r.worst.day, recovery: r.worst.recovery, strain: strainOf(r.worst.day) },
           ]
         : null,
   };
@@ -165,17 +169,17 @@ const NBSP = "\u00a0";
 
 /** How each assessment metric is named and how its change prints. */
 const CHANGE: Record<AssessKey, { label: string; text: (d: number) => string }> = {
-  recovery: { label: "Recovery", text: (d) => `${FORMATS.signedInt(d)}%` },
-  strain: { label: "Day strain", text: (d) => `${FORMATS.signedInt(d)}%` },
-  sleepPerf: { label: "Sleep performance", text: (d) => `${FORMATS.signedInt(d)}%` },
-  hrv: { label: "Heart rate variability", text: (d) => `${FORMATS.signedInt(d)}${NBSP}ms` },
-  rhr: { label: "Resting heart rate", text: (d) => `${FORMATS.signedInt(d)}${NBSP}bpm` },
-  slept: { label: "Hours slept", text: (d) => `${d > 0 ? "+" : "−"}${hmm(Math.abs(d))}` },
-  consistency: { label: "Sleep consistency", text: (d) => `${FORMATS.signedInt(d)}%` },
-  zone13: { label: "Moderate activity", text: (d) => `${FORMATS.signedInt(d)}${NBSP}min a week` },
-  zone45: { label: "Vigorous activity", text: (d) => `${FORMATS.signedInt(d)}${NBSP}min a week` },
-  strength: { label: "Strength sessions", text: (d) => `${FORMATS.signed1(d)} a week` },
-  steps: { label: "Daily steps", text: (d) => `${d > 0 ? "+" : ""}${FORMATS.grouped(d)}` },
+  recovery: { get label() { return tr("ui.shells.HomeHeader.recovery"); }, text: (d) => `${FORMATS.signedInt(d)}%` },
+  strain: { get label() { return tr("lib.dashboard.dayStrain"); }, text: (d) => `${FORMATS.signedInt(d)}%` },
+  sleepPerf: { get label() { return tr("lib.dashboard.sleepPerformance"); }, text: (d) => `${FORMATS.signedInt(d)}%` },
+  hrv: { get label() { return tr("lib.dashboard.heartRateVariability"); }, text: (d) => `${FORMATS.signedInt(d)}${NBSP}ms` },
+  rhr: { get label() { return tr("lib.dashboard.restingHeartRate"); }, text: (d) => `${FORMATS.signedInt(d)}${NBSP}bpm` },
+  slept: { get label() { return tr("queries.reports.hoursSlept"); }, text: (d) => `${d > 0 ? "+" : "−"}${hmm(Math.abs(d))}` },
+  consistency: { get label() { return tr("lib.dashboard.sleepConsistency"); }, text: (d) => `${FORMATS.signedInt(d)}%` },
+  zone13: { get label() { return tr("queries.health.moderateActivity"); }, text: (d) => tr("queries.reports.minAWeek", { v0: FORMATS.signedInt(d), v1: NBSP }) },
+  zone45: { get label() { return tr("queries.reports.vigorousActivity"); }, text: (d) => tr("queries.reports.minAWeek", { v0: FORMATS.signedInt(d), v1: NBSP }) },
+  strength: { get label() { return tr("queries.reports.strengthSessions"); }, text: (d) => tr("queries.reports.aWeek", { v0: FORMATS.signed1(d) }) },
+  steps: { get label() { return tr("queries.health.dailySteps"); }, text: (d) => `${d > 0 ? "+" : ""}${FORMATS.grouped(d)}` },
 };
 
 /** The stored days as assessment days: the period's (from `start`) and the period before's (`prevStart` up to `start`). */
@@ -221,24 +225,24 @@ function performanceOf(a: Assessment, t: PlanTargets): PerformanceVM {
     improved: a.improved.map((x) => change(x, true)),
     declined: a.declined.map((x) => change(x, false)),
     sleep: [
-      vs("slept", "Hours slept", undefined, "duration", needMin === null ? undefined : `Need ${hmm(needMin)} a night`),
+      vs("slept", tr("queries.reports.hoursSlept"), undefined, "duration", needMin === null ? undefined : tr("queries.reports.needANight", { v0: hmm(needMin) })),
       {
         key: "nightsMet",
-        label: "Nights at sleep need",
+        label: tr("queries.reports.nightsAtSleepNeed"),
         metric: nights ? ok(nightsMet) : none("no_data"),
-        ...(nights > 0 && { unit: `of ${nights}` }),
+        ...(nights > 0 && { unit: tr("goals.Goals.of", { v0: nights }) }),
         average: null,
         direction: "none",
         format: "int",
-        ...(sleptMin !== null && needMin !== null && { caption: sleptMin >= needMin ? "You covered your need on average" : `${hmm(needMin - sleptMin)} short a night on average` }),
+        ...(sleptMin !== null && needMin !== null && { caption: sleptMin >= needMin ? tr("queries.reports.youCoveredYourNeedOnAverage") : tr("queries.reports.shortANightOnAverage", { v0: hmm(needMin - sleptMin) }) }),
       },
-      vs("consistency", "Sleep consistency", "%", "int", `Target ${t.consistency}%`),
+      vs("consistency", tr("lib.dashboard.sleepConsistency"), "%", "int", tr("queries.reports.target", { v0: t.consistency })),
     ],
     activity: [
-      vs("zone13", "Moderate activity", "min", "grouped", `Zones 1–3 a week · target ${t.zone13}`),
-      vs("zone45", "Vigorous activity", "min", "grouped", `Zones 4–5 a week · target ${t.zone45}`),
-      vs("strength", "Strength sessions", undefined, whole("strength") ? "int" : "decimal1", `A week · target ${t.strength}`),
-      vs("steps", "Daily steps", undefined, "grouped", `Target ${FORMATS.grouped(t.steps)} a day`),
+      vs("zone13", tr("queries.health.moderateActivity"), "min", "grouped", tr("queries.reports.zones13AWeekTarget", { v0: t.zone13 })),
+      vs("zone45", tr("queries.reports.vigorousActivity"), "min", "grouped", tr("queries.reports.zones45AWeekTarget", { v0: t.zone45 })),
+      vs("strength", tr("queries.reports.strengthSessions"), undefined, whole("strength") ? "int" : "decimal1", tr("queries.reports.aWeekTarget", { v0: t.strength })),
+      vs("steps", tr("queries.health.dailySteps"), undefined, "grouped", tr("queries.reports.targetADay", { v0: FORMATS.grouped(t.steps) })),
     ],
   };
 }
@@ -249,18 +253,18 @@ function performanceOf(a: Assessment, t: PlanTargets): PerformanceVM {
  */
 async function tagLabels(ctx: QueryCtx): Promise<Map<string, string>> {
   const rows = await ctx.store.journalTags();
-  return new Map<string, string>([...DEFAULT_JOURNAL_TAGS.map((t) => [t.tag, t.label] as const), ...rows.map((r) => [r.tag, r.label] as const)]);
+  return new Map<string, string>([...DEFAULT_JOURNAL_TAGS.map((t) => [t.tag, behaviorLabel(t.tag, t.label)] as const), ...rows.map((r) => [r.tag, behaviorLabel(r.tag, r.label)] as const)]);
 }
 
 function insightOf(r: Report, word: string, inTarget: number, withTarget: number): string | null {
   if (r.averages.recovery == null) return null;
   const scored = r.bands.green + r.bands.yellow + r.bands.red;
-  const mood = r.bands.red > r.bands.green ? "A demanding" : r.bands.green * 2 >= scored ? "A strong" : "A balanced";
-  const parts = [`${mood} ${word}: ${r.bands.green} green ${r.bands.green === 1 ? "day" : "days"}`];
-  if (withTarget) parts[0] += ` and strain inside your target on ${inTarget} of ${withTarget} days`;
+  const mood = r.bands.red > r.bands.green ? tr("queries.reports.aDemanding") : r.bands.green * 2 >= scored ? tr("queries.reports.aStrong") : tr("queries.reports.aBalanced");
+  const parts = [tr("queries.reports.green", { v0: mood, v1: word, v2: r.bands.green, v3: displayUnit(r.bands.green === 1 ? "day" : "days") })];
+  if (withTarget) parts[0] += tr("report.inTarget", { met: inTarget, count: withTarget });
   parts[0] += ".";
   if (r.deltas.sleepPerf != null && Math.abs(r.deltas.sleepPerf) >= 3) {
-    parts.push(`Sleep performance ${r.deltas.sleepPerf > 0 ? "rose" : "dipped"} ${Math.abs(Math.round(r.deltas.sleepPerf))} points from last ${word}.`);
+    parts.push(tr("queries.reports.sleepPerformancePointsFromLast", { v0: r.deltas.sleepPerf > 0 ? tr("report.rose") : tr("report.dipped"), v1: Math.abs(Math.round(r.deltas.sleepPerf)), v2: word }));
   }
   return parts.join(" ");
 }

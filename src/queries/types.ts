@@ -91,7 +91,7 @@ export type SleepPlanVM = {
   weekend: boolean;
   /** Minutes the bedtimes leave to fall asleep (the typical latency of recent nights); 0 without staged nights. */
   latencyMin: number;
-  plans: { key: "peak" | "perform" | "get_by"; label: "Peak" | "Perform" | "Get by"; share: number; sleepMin: number; bedtimeAt: number }[];
+  plans: { key: "peak" | "perform" | "get_by"; label: string; share: number; sleepMin: number; bedtimeAt: number }[];
 };
 
 export type EnergyBankVM = {
@@ -137,7 +137,7 @@ export type HomeVM = {
   monitor: Metric<{ inRange: number; total: number; flagged: number }>;
   stress: Metric<{ value: number; level: StressLevel; at: number | null; dayAverage: boolean }>;
   /** Mobile: `detected` are workouts stage 1 found from raised heart rate with none recorded; shown dashed, never scored. */
-  activities: { title: "Today’s activities" | "Activities"; items: TimelineItem[]; detected: DetectedItem[] };
+  activities: { title: string; items: TimelineItem[]; detected: DetectedItem[] };
   energyBank: Metric<EnergyBankVM>;
   tonight: Metric<SleepPlanVM>;
   keyStats: KeyStat[];
@@ -285,7 +285,7 @@ export type ActivityVM = {
   maxHr: number;
   /** How the zones are set: five on % of max heart rate (the Pulse engine's). */
   zoneNote: string;
-  hrr: Metric<{ value: number; tone: ChipTone; label: "Good" | "Typical" | "Low" }>;
+  hrr: Metric<{ value: number; tone: ChipTone; label: string }>;
   /** Mobile: this kind's Activity Cost and the Recovery the morning after this workout; null before the pipeline stored one. */
   cost: (Omit<ActivityCostVM, "items"> & { item: ActivityCostEntry; nextMorning: number | null }) | null;
 };
@@ -478,7 +478,7 @@ export type FitnessVM = {
 
 // ── Journal ──────────────────────────────────────────────────────────────────
 
-export type JournalTag = { tag: string; label: string; group: "evening" | "recovery" | "context" | "custom"; isDefault: boolean; hidden: boolean };
+export type JournalTag = { tag: string; label: string; sourceLabel?: string; group: "evening" | "recovery" | "context" | "custom"; isDefault: boolean; hidden: boolean };
 
 /** More › Behaviours: every tag in check-in order, hidden ones included, with its answered-day count. */
 export type BehavioursVM = { tags: (JournalTag & { answers: number })[] };
@@ -519,7 +519,7 @@ export type ReportVM = {
   averages: KeyStat[];
   trainingBalance: Metric<{ status: "balanced" | "overreaching" | "undertrained"; word: string; acwr: number; line: string }>;
   topImpacts: DriverItem[];
-  bestWorst: { label: "Best day" | "Worst day"; day: string; recovery: number; strain: number | null }[] | null;
+  bestWorst: { label: string; day: string; recovery: number; strain: number | null }[] | null;
 };
 
 // ── More and Settings ────────────────────────────────────────────────────────

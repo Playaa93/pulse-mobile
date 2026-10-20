@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Home `/` (spec §7.1). Ported from Pulse's src/server/queries/home.ts.
 import { addDays, localMinutes } from "@/lib/time";
 import { energyBand } from "@/core/engine/energyBank";
@@ -51,11 +52,11 @@ import {
 import type { CardStatKey, EnergyBankVM, HomeVM, KeyStat, Metric, VitalKey } from "./types";
 
 export const VITAL_LABEL: Record<VitalKey, string> = {
-  resp: "Respiratory rate",
-  spo2: "Blood oxygen",
-  restingHr: "Resting heart rate",
-  hrv: "Heart rate variability",
-  skinTempDev: "Skin temperature",
+  get resp() { return tr("lib.dashboard.respiratoryRate"); },
+  get spo2() { return tr("lib.dashboard.bloodOxygen"); },
+  get restingHr() { return tr("lib.dashboard.restingHeartRate"); },
+  get hrv() { return tr("lib.dashboard.heartRateVariability"); },
+  get skinTempDev() { return tr("lib.dashboard.skinTemperature"); },
 };
 
 /** The stats Home's own cards read, whatever My Dashboard shows (HomeVM.cardStats). */
@@ -110,7 +111,7 @@ export async function getHome(day: string, ctx: QueryCtx, opts: HomeOptions = {}
     monitorAlert: monitorAlert(row),
     monitor: monitorSummary(row, isToday),
     stress: stressNow(row, isToday),
-    activities: { title: isToday ? "Today’s activities" : "Activities", items: timelineOf(row, day, exs), detected: (row?.detected ?? []).map(detectedItem) },
+    activities: { title: isToday ? tr("queries.home.todaySActivities") : tr("queries.home.activities"), items: timelineOf(row, day, exs), detected: (row?.detected ?? []).map(detectedItem) },
     energyBank: energyBankVM(ctx, row, day, isToday, ebSeries),
     tonight: planVM(ctx, row, isToday),
     keyStats: keyStats(rows, day, isToday, keys),
@@ -147,24 +148,24 @@ export function outlookOf(ctx: QueryCtx, row: DayRow | undefined, s: DayScores, 
   const target = s.target ? `${Math.round(s.target[0])} - ${pct(s.target[1])}` : null;
   const parts: string[] = [];
   if (!review) {
-    if (rec != null) parts.push(`Your Recovery is ${Math.round(rec)}%, ${recoveryBand(rec)}.`);
-    if (target) parts.push(`Today’s Strain Target is ${target}.`);
+    if (rec != null) parts.push(tr("queries.home.yourRecoveryIs", { v0: Math.round(rec), v1: tr(`color.${recoveryBand(rec)}`) }));
+    if (target) parts.push(tr("queries.home.todaySStrainTargetIs", { v0: target }));
     const main = row?.sleep?.main;
     const need = nightNeedMin(row?.sleep);
-    if (main && need) parts.push(`You slept ${hmm(main.asleepMin)} of the ${hmm(need)} you needed.`);
+    if (main && need) parts.push(tr("queries.home.youSleptOfTheYouNeeded", { v0: hmm(main.asleepMin), v1: hmm(need) }));
   } else {
     const n = row?.activities.length ?? 0;
-    const acts = n ? `, with ${n} ${n === 1 ? "activity" : "activities"}` : "";
-    if (s.strain.value != null) parts.push(`Day Strain ${isToday ? "is" : "was"} ${pct(s.strain.value)}${target ? ` against a target of ${target}` : ""}${acts}.`);
-    if (rec != null) parts.push(`Recovery ${isToday ? "is" : "was"} ${Math.round(rec)}%.`);
+    const acts = n ? tr("queries.home.with", { v0: n, v1: n === 1 ? tr("home.activity") : tr("home.activities") }) : "";
+    if (s.strain.value != null) parts.push(tr("queries.home.dayStrain", { v0: isToday ? tr("home.is") : tr("home.was"), v1: pct(s.strain.value), v2: target ? tr("queries.home.againstATargetOf", { v0: target }) : "", v3: acts }));
+    if (rec != null) parts.push(tr("queries.home.recovery", { v0: isToday ? tr("home.is") : tr("home.was"), v1: Math.round(rec) }));
     const st = row?.stress;
-    if (st && st.average != null) parts.push(`You spent ${hmm(st.highMin)} in high stress.`);
+    if (st && st.average != null) parts.push(tr("queries.home.youSpentInHighStress", { v0: hmm(st.highMin) }));
   }
   if (!parts.length) return null;
-  return { kind: review ? "review" : "outlook", title: review ? "Your day in review" : "Your daily outlook", body: parts.join(" ") };
+  return { kind: review ? "review" : "outlook", title: review ? tr("queries.home.yourDayInReview") : tr("queries.home.yourDailyOutlook"), body: parts.join(" ") };
 }
 
-const RECOVERY_TITLE = { green: "Ready for strain", yellow: "A steady day", red: "Time to recover" } as const;
+const RECOVERY_TITLE = { get green() { return tr("queries.home.readyForStrain"); }, get yellow() { return tr("queries.home.aSteadyDay"); }, get red() { return tr("queries.home.timeToRecover"); } } as const;
 
 /** Today's coach cards from the same templates the detail screens use (Strain Coach, Recovery, Sleep). */
 function insightsOf(ctx: QueryCtx, rows: Map<string, DayRow>, row: DayRow | undefined, day: string, s: Pick<DayScores, "strain" | "target">): HomeVM["insights"] {
@@ -174,13 +175,13 @@ function insightsOf(ctx: QueryCtx, rows: Map<string, DayRow>, row: DayRow | unde
   if (c && target && s.strain.value != null) {
     const v = s.strain.value;
     const red = row?.recovery?.value != null && row.recovery.value < 34;
-    const title = red ? "Keep strain light" : v < target.low ? "Room for more strain" : v <= target.high ? "Reaching optimal strain" : "Past your target";
+    const title = red ? tr("queries.home.keepStrainLight") : v < target.low ? tr("queries.home.roomForMoreStrain") : v <= target.high ? tr("queries.home.reachingOptimalStrain") : tr("queries.home.pastYourTarget");
     out.push({ key: "strain", title, body: c, href: "/strain" });
   }
   const r = row?.recovery;
   if (r?.value != null) out.push({ key: "recovery", title: RECOVERY_TITLE[recoveryBand(r.value)], body: recoveryInsight(r.drivers), href: "/recovery" });
   const sl = sleepInsight(rows, day, ctx.timeZone);
-  if (sl) out.push({ key: "sleep", title: "Last night’s sleep", body: sl, href: "/sleep" });
+  if (sl) out.push({ key: "sleep", title: tr("queries.home.lastNightSSleep"), body: sl, href: "/sleep" });
   return out;
 }
 
@@ -233,7 +234,7 @@ export function energyBankVM(ctx: QueryCtx, row: DayRow | undefined, day: string
       charged: eb.charged,
       drained: eb.drained,
       curve,
-      drains: eb.topDrains.map((d) => ({ label: d.label, kind: d.kind, start: ms(d.start), amount: d.amount })),
+      drains: eb.topDrains.map((d) => ({ label: d.kind === "stress" ? tr("lib.dashboard.stressMonitor") : d.kind === "activity" ? tr("home.energy.activity") : d.label, kind: d.kind, start: ms(d.start), amount: d.amount })),
       naps: eb.naps.map((n) => ({ start: ms(n.start), end: ms(n.end) })),
     },
     eb.provisional,

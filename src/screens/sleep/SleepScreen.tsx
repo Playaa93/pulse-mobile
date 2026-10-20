@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Sleep `/sleep` (spec §7.4), ported from pulse src/app/(app)/sleep/page.tsx. Left out: the Sleep Stress card
 // (`FEATURES.sleepStress`, off).
 import { Fragment } from "react";
@@ -27,15 +29,15 @@ import { statProps } from "../_lib/view";
 import { useScreen } from "../useScreen";
 import { HoursVsNeed, SleepConsistency, SleepEfficiency } from "./SleepCards";
 import { WeeklyTrends } from "../trends/WeeklyTrends";
-import { SLEEP_BODY_SKELETON, SleepSkeleton } from "./SleepSkeleton";
+import { sleepBodySkeleton, SleepSkeleton } from "./SleepSkeleton";
 
 /** Weekly Trends, in the reference app's order (sleep-28..34). */
 const WEEKLY: readonly TrendViewKey[] = ["sleep", "hours", "hours_need", "restorative", "consistency", "time_in_bed", "efficiency"];
 
-const STATUS_LEGEND = [
-  ["bg-warning", "Poor"],
-  ["bg-foreground-secondary", "Sufficient"],
-  ["bg-optimal", "Optimal"],
+const statusLegend = () => [
+  ["bg-warning", tr("queries.training.poor")],
+  ["bg-foreground-secondary", tr("queries.trendView.sufficient")],
+  ["bg-optimal", tr("queries.trendView.optimal")],
 ] as const;
 
 /** The page's query and key; Home prefetches them, so Sleep opens with content. */
@@ -57,6 +59,7 @@ type SleepPageVM = Omit<SleepVM, "restorative"> & SleepExtras;
 export const sleepKey = (d: string) => ["sleep", d] as const;
 
 export function SleepScreen() {
+  useLanguage();
   const [d] = useSelectedDay();
   const { timeZone } = useShellCalendar();
   const { data } = useScreen(sleepQuery(d), sleepKey(d));
@@ -66,13 +69,14 @@ export function SleepScreen() {
 }
 
 function Sleep({ vm, weekly, timeZone }: { vm: SleepPageVM; weekly: TrendViewVM[]; timeZone: string }) {
+  useLanguage();
   const { today } = useShellCalendar();
   const d = vm.day;
   const p = vm.performance;
   return (
     <DetailShell
-      title="Sleep"
-      bodySkeleton={SLEEP_BODY_SKELETON}
+      title={tr("ui.shells.HomeHeader.sleep")}
+      bodySkeleton={sleepBodySkeleton()}
       info={SLEEP_INFO}
       dateSwitcher={{ mode: "day", placement: "header", steppers: false }}
       notch
@@ -97,7 +101,7 @@ function Sleep({ vm, weekly, timeZone }: { vm: SleepPageVM; weekly: TrendViewVM[
             </Fragment>
           ))}
           <View className={cn(INSET_ROW, "mb-3 mt-1 flex-row flex-wrap items-center gap-x-4 gap-y-1 py-2")}>
-            {STATUS_LEGEND.map(([swatch, word]) => (
+            {statusLegend().map(([swatch, word]) => (
               <View key={word} className="flex-row items-center gap-1.5">
                 <View accessibilityElementsHidden className={cn("h-1 w-4 rounded-sm", swatch)} />
                 <Text className="text-xs font-medium leading-4 text-foreground-secondary">{word}</Text>
@@ -106,23 +110,23 @@ function Sleep({ vm, weekly, timeZone }: { vm: SleepPageVM; weekly: TrendViewVM[
           </View>
         </Card>
       }
-      insight={vm.insight ? <InsightCard body={vm.insight} action={{ label: "Explore your sleep insights", href: trendHref("sleep", { d, today }) }} /> : undefined}
+      insight={vm.insight ? <InsightCard body={vm.insight} action={{ label: tr("sleep.SleepScreen.exploreYourSleepInsights"), href: trendHref("sleep", { d, today }) }} /> : undefined}
       primary={
-        <SectionShell variant="card" title="Last night’s sleep" aside="vs. prior 30 days">
+        <SectionShell variant="card" title={tr("queries.home.lastNightSSleep")} aside="vs. prior 30 days">
           <SleepStages hours={vm.hours} hr={vm.nightHr} data={vm.stages} restorative={vm.restorative} />
         </SectionShell>
       }
       secondary={[
-        <SectionShell key="need" variant="card" title="Hours vs. needed">
+        <SectionShell key="need" variant="card" title={tr("queries.sleep.hoursVsNeeded")}>
           <HoursVsNeed vm={vm} />
         </SectionShell>,
-        <SectionShell key="consistency" variant="card" title="Sleep consistency">
+        <SectionShell key="consistency" variant="card" title={tr("lib.dashboard.sleepConsistency")}>
           <SleepConsistency vm={vm} />
         </SectionShell>,
-        <SectionShell key="efficiency" variant="card" title="Sleep efficiency">
+        <SectionShell key="efficiency" variant="card" title={tr("queries.chart.sleepEfficiency")}>
           <SleepEfficiency vm={vm} />
         </SectionShell>,
-        <SectionShell key="planner" id="planner" variant="card" title="Tonight’s sleep" info={TONIGHT_INFO}>
+        <SectionShell key="planner" id="planner" variant="card" title={tr("info.tonightSSleep")} info={TONIGHT_INFO}>
           <Planner vm={vm} timeZone={timeZone} />
         </SectionShell>,
       ]}
@@ -132,9 +136,10 @@ function Sleep({ vm, weekly, timeZone }: { vm: SleepPageVM; weekly: TrendViewVM[
 }
 
 function Planner({ vm, timeZone }: { vm: Pick<SleepVM, "planner">; timeZone: string }) {
+  useLanguage();
   const m = vm.planner;
   if (m.value === null)
-    return <ReasonPlaceholder reason={m.reason} nightsLeft={m.nightsLeft} size="md" copy={m.reason === "calibrating" ? "Sleep Planner needs 7 nights to learn your wake time." : undefined} />;
+    return <ReasonPlaceholder reason={m.reason} nightsLeft={m.nightsLeft} size="md" copy={m.reason === "calibrating" ? tr("home.HomeScreen.sleepPlannerNeeds7NightsToLearn") : undefined} />;
   const plan = m.value;
   const row = (label: string, caption: string, time: string) => (
     <View key={label} className="min-h-[52px] flex-row items-center gap-3 py-2">
@@ -145,7 +150,7 @@ function Planner({ vm, timeZone }: { vm: Pick<SleepVM, "planner">; timeZone: str
       <Text className="font-numeric text-xl font-bold leading-6 tabular-nums">{time}</Text>
     </View>
   );
-  const rows = [...plan.plans.map((q) => row(q.label, `${Math.round(q.share * 100)}% of need`, clock(q.bedtimeAt, timeZone))), row("Typical wake", plan.weekdayWake ? "Weekday wake time" : "Weekend wake time", clock(plan.wakeAt, timeZone))];
+  const rows = [...plan.plans.map((q) => row(q.label, tr("sleep.SleepScreen.ofNeed", { v0: Math.round(q.share * 100) }), clock(q.bedtimeAt, timeZone))), row(tr("sleep.SleepScreen.typicalWake"), plan.weekdayWake ? tr("sleep.SleepScreen.weekdayWakeTime") : tr("sleep.SleepScreen.weekendWakeTime"), clock(plan.wakeAt, timeZone))];
   return (
     <View className="gap-2">
       <View>
@@ -157,7 +162,7 @@ function Planner({ vm, timeZone }: { vm: Pick<SleepVM, "planner">; timeZone: str
         ))}
       </View>
       <Text className={CAPTION}>
-        Need tonight: <Text className="font-numeric tabular-nums">{hmm(plan.needMin)}</Text>
+        {tr("home.TonightPlan.needTonight")}<Text className="font-numeric tabular-nums">{hmm(plan.needMin)}</Text>
       </Text>
     </View>
   );

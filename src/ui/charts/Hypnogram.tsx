@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { View } from "react-native";
 import { Path, RoundedRect } from "@shopify/react-native-skia";
@@ -21,8 +23,8 @@ export type HypnogramProps = {
   data: Metric<HypnogramNight> | null | undefined;
 };
 
-const STAGE_NAME: Record<Stage, string> = { awake: "Awake", rem: "REM", light: "Light", deep: "Deep" };
-const LANE_NAME = ["Deep", "Light", "REM", "Awake"];
+const STAGE_NAME: Record<Stage, string> = { get awake() { return tr("queries.mobileExtras.awake"); }, get rem() { return tr("sleep.rem"); }, get light() { return tr("ui.metrics.SleepStages.light"); }, get deep() { return tr("queries.mobileExtras.deep"); } };
+const laneNames = () => [tr("queries.mobileExtras.deep"), tr("ui.metrics.SleepStages.light"), tr("sleep.rem"), tr("queries.mobileExtras.awake")];
 const LANE_STAGE: Stage[] = ["deep", "light", "rem", "awake"];
 const HEIGHT = 176; // h-44
 const AXIS_H = 30;
@@ -32,6 +34,7 @@ const AXIS_H = 30;
  * to step through the stretches; the tooltip names the stage and its times.
  */
 export function HypnogramChart({ night }: { night: HypnogramNight }) {
+  useLanguage();
   const { c, css } = useTheme();
   const tz = useOptionalShellCalendar()?.timeZone;
   const [x, setX] = useState<number | null>(null);
@@ -42,9 +45,9 @@ export function HypnogramChart({ night }: { night: HypnogramNight }) {
   const { connector } = hypnogramSeries(night.segments);
   const total = night.segments.reduce((a, s) => a + (s.end - s.start), 0);
   const minutes = (st: Stage) => night.segments.filter((s) => s.stage === st).reduce((a, s) => a + s.end - s.start, 0) / 60_000;
-  const summary = `Sleep stages from ${clock(night.bed, tz)} to ${clock(night.wake, tz)}, ${night.segments.length} stretches: ${STAGES.map(
-    (s) => `${STAGE_NAME[s]} ${durationWords(minutes(s))}, ${Math.round(((minutes(s) * 60_000) / (total || 1)) * 100)} percent`,
-  ).join("; ")}.`;
+  const summary = tr("ui.charts.Hypnogram.sleepStagesFromToStretches", { v0: clock(night.bed, tz), v1: clock(night.wake, tz), v2: night.segments.length, v3: STAGES.map(
+    (s) => tr("ui.charts.Hypnogram.percent", { v0: STAGE_NAME[s], v1: durationWords(minutes(s)), v2: Math.round(((minutes(s) * 60_000) / (total || 1)) * 100) }),
+  ).join("; ") });
   // The connector's last point is the wake time, the end of the last stretch: it reads as that stretch.
   const segAt = (t: number) => night.segments.find((s) => s.start <= t && t < s.end) ?? night.segments.findLast((s) => s.end === t);
   const LANE = { awake: 3, rem: 2, light: 1, deep: 0 } as const;
@@ -76,7 +79,7 @@ export function HypnogramChart({ night }: { night: HypnogramNight }) {
               {seg && t !== null && <DashedLine x1={x!} x2={x!} y1={y0} y2={y1} color={c["chart-cursor"]} />}
             </PlotCanvas>
             {[0, 1, 2, 3].map((lane) => (
-              <ChartLabel key={lane} x={x0 - 8} y={y(lane)} anchor="end" w={x0 - 8} className="text-[11px] font-bold" color={css(DATA_COLORS[`stage-${LANE_STAGE[lane]}`].css)}>{LANE_NAME[lane]}</ChartLabel>
+              <ChartLabel key={lane} x={x0 - 8} y={y(lane)} anchor="end" w={x0 - 8} className="text-[11px] font-bold" color={css(DATA_COLORS[`stage-${LANE_STAGE[lane]}`].css)}>{laneNames()[lane]}</ChartLabel>
             ))}
             {/* Bed and wake times at the ends, bold (WHOOP), and the whole hours between that keep clear of them. */}
             <ChartLabel x={x0} y={y1 + 16} anchor="start" className="font-bold text-foreground">{clock(night.bed, tz)}</ChartLabel>
@@ -87,8 +90,8 @@ export function HypnogramChart({ night }: { night: HypnogramNight }) {
             <ScrubLayer width={width} height={height} onScrub={setX} />
             <ScrubTick index={seg ? seg.start : -1} />
             {seg && x !== null && (
-              <TooltipCard x={x} width={width} title={`${clock(seg.start, tz)} to ${clock(seg.end, tz)}`}>
-                <TooltipLine color={css(DATA_COLORS[`stage-${seg.stage}`].css)}>{`${STAGE_NAME[seg.stage]}, ${Math.round((seg.end - seg.start) / 60000)} min`}</TooltipLine>
+              <TooltipCard x={x} width={width} title={tr("health.HeartRateScreen.to", { v0: clock(seg.start, tz), v1: clock(seg.end, tz) })}>
+                <TooltipLine color={css(DATA_COLORS[`stage-${seg.stage}`].css)}>{tr("ui.charts.Hypnogram.min", { v0: STAGE_NAME[seg.stage], v1: Math.round((seg.end - seg.start) / 60000) })}</TooltipLine>
               </TooltipCard>
             )}
           </>
@@ -100,9 +103,10 @@ export function HypnogramChart({ night }: { night: HypnogramNight }) {
 
 /** Last night's stages as a step chart over four lanes (spec §5.6, derived design). */
 export function Hypnogram({ data }: HypnogramProps) {
+  useLanguage();
   const empty = (
     <View className="items-center">
-      <EmptyState body="No stage data for this sleep. Fitbit only stages sleeps longer than about 3 hours." />
+      <EmptyState body={tr("ui.charts.Hypnogram.noStageDataForThisSleepFitbit")} />
     </View>
   );
   return (
@@ -122,6 +126,7 @@ export function Hypnogram({ data }: HypnogramProps) {
 }
 
 export function HypnogramSkeleton() {
+  useLanguage();
   return <Skeleton className="h-44 rounded-lg bg-skeleton" />;
 }
 Hypnogram.Skeleton = HypnogramSkeleton;

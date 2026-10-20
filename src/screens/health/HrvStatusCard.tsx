@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // HRV Status (version 19), from halo src/screens/health/HrvStatusCard.tsx (its fields and copy) drawn with Pulse's kit:
 // the 7-day average of overnight HRV against your usual range, and the last 4 weeks' nights as bars against that range
 // in one Skia canvas. On Health and on Recovery; it loads its own query, so neither page's query changes.
@@ -17,29 +19,26 @@ import type { InfoContent } from "@/ui/shells/InfoButton";
 import { Skeleton } from "@/ui/Skeleton";
 import { Text } from "@/ui/Text";
 import { useTheme } from "@/ui/theme";
-import { Hero, LINE, SOURCE_NOTE, StatRow } from "../strain/TrainingCards";
+import { Hero, LINE, renderSourceNote, StatRow } from "../strain/TrainingCards";
 import { useScreen } from "../useScreen";
 
 function P({ children }: { children: ReactNode }) {
+  useLanguage();
   return <Text className="text-[15px] leading-[22px] text-foreground-body">{children}</Text>;
 }
 
 export const HRV_STATUS_INFO: InfoContent = {
-  title: "HRV Status",
-  body: (
+  get title() { return tr("health.HrvStatusCard.hrvStatus"); },
+  get body() { return (
     <>
       <P>
-        Your average overnight HRV over the last 7 nights, against your usual range, in the manner of Garmin’s HRV Status. Your usual range comes from the 60
-        nights before that, on a log scale, and needs 21 nights to form.
-      </P>
+        {tr("health.HrvStatusCard.yourAverageOvernightHrvOverTheLast")}</P>
       <P>
-        Balanced: the 7-day average sits in your usual range. Unbalanced: above it, or a little below. Low: well below it, often a sign of strain, illness or poor
-        sleep. A single night doesn’t move it much; a trend over days does.
-      </P>
-      <P>Garmin also shows Poor when your usual range is low for your age; Pulse leaves that out until it has a published age norm to compare with.</P>
-      {SOURCE_NOTE}
+        {tr("health.HrvStatusCard.balancedThe7DayAverageSitsIn")}</P>
+      <P>{tr("health.HrvStatusCard.garminAlsoShowsPoorWhenYourUsual")}</P>
+      {renderSourceNote()}
     </>
-  ),
+  ); },
 };
 
 const H = 72;
@@ -47,6 +46,7 @@ const TONE_COLOR = { optimal: "optimal", warning: "warning", alert: "recovery-re
 
 /** The last 28 nights as bars against the usual range (a soft band) and the Low line; the last 7 in the status colour. */
 function Nights({ vm }: { vm: HrvStatusVM }) {
+  useLanguage();
   const { c } = useTheme();
   const values = vm.nights.flatMap((p) => (p.v == null ? [] : [p.v]));
   const lo = Math.min(vm.lowLine, ...values) * 0.9;
@@ -54,7 +54,7 @@ function Nights({ vm }: { vm: HrvStatusVM }) {
   const y = (v: number) => H - ((v - lo) / Math.max(1e-6, hi - lo)) * H;
   const ink = c[TONE_COLOR[vm.tone]];
   return (
-    <ChartFigure summary={`Last 4 weeks of nightly HRV against your usual range of ${Math.round(vm.band.low)} to ${Math.round(vm.band.high)} milliseconds`} height={H}>
+    <ChartFigure summary={tr("health.HrvStatusCard.last4WeeksOfNightlyHrvAgainst", { v0: Math.round(vm.band.low), v1: Math.round(vm.band.high) })} height={H}>
       {({ width }) => {
         const n = vm.nights.length;
         const step = width / Math.max(1, n);
@@ -73,17 +73,18 @@ function Nights({ vm }: { vm: HrvStatusVM }) {
   );
 }
 
-const skeleton = <Skeleton className="h-48 w-full rounded-lg" />;
+const renderSkeleton = () => <Skeleton className="h-48 w-full rounded-lg" />;
 
 /** HRV Status for day `d` (none: today). */
 export function HrvStatusCard({ d }: { d?: string }) {
+  useLanguage();
   const m = useScreen((ctx) => getHrvStatus(d ?? todayOf(ctx), ctx), ["hrv-status", d ?? null]).data;
   return (
-    <SectionShell variant="card" title="HRV Status" info={HRV_STATUS_INFO}>
+    <SectionShell variant="card" title={tr("health.HrvStatusCard.hrvStatus")} info={HRV_STATUS_INFO}>
       <MetricState
         metric={m}
-        skeleton={skeleton}
-        renderReason={(r, meta) => <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? "HRV Status needs 21 nights of HRV to learn your usual range." : undefined} />}
+        skeleton={renderSkeleton()}
+        renderReason={(r, meta) => <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? tr("health.HrvStatusCard.hrvStatusNeeds21NightsOfHrv") : undefined} />}
       >
         {(v) => (
           <View className="gap-3">
@@ -92,18 +93,18 @@ export function HrvStatusCard({ d }: { d?: string }) {
                 value={formatValue("int", v.weekAverage)}
                 unit="ms"
                 band={v.status}
-                caption="7-day average"
-                spoken={`HRV Status ${v.status}, 7-day average ${Math.round(v.weekAverage)} milliseconds`}
+                caption={tr("health.HrvStatusCard.7DayAverage")}
+                spoken={tr("health.HrvStatusCard.hrvStatus7DayAverageMilliseconds", { v0: v.status, v1: Math.round(v.weekAverage) })}
               />
               <Text className={LINE}>{v.line}</Text>
             </View>
             <Divided>
-              <StatRow label="Last night" value={formatValue("int", v.lastNight)} unit="ms" spoken={v.lastNight == null ? "No HRV last night" : `Last night ${Math.round(v.lastNight)} milliseconds`} />
+              <StatRow label={tr("health.HrvStatusCard.lastNight")} value={formatValue("int", v.lastNight)} unit="ms" spoken={v.lastNight == null ? tr("lib.reasons.noHrvLastNight") : tr("health.HrvStatusCard.lastNightMilliseconds", { v0: Math.round(v.lastNight) })} />
               <StatRow
-                label="Usual range"
+                label={tr("health.HrvStatusCard.usualRange")}
                 value={`${formatValue("int", v.band.low)}–${formatValue("int", v.band.high)}`}
                 unit="ms"
-                spoken={`Usual range ${Math.round(v.band.low)} to ${Math.round(v.band.high)} milliseconds`}
+                spoken={tr("health.HrvStatusCard.usualRangeToMilliseconds", { v0: Math.round(v.band.low), v1: Math.round(v.band.high) })}
               />
             </Divided>
             <Nights vm={v} />

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Breathe `/breathe` (spec §7.22), halo's src/screens/breathe/BreatheScreen.tsx on Pulse's kit: paced breathing with a
 // circle, a label and haptic cues, from the Stress screen and More. Pick a pace (resonance 5.5, box, 4-7-8,
 // physiological sigh) and 1, 3 or 5 minutes; the circle fills and empties on the UI thread (BreathCircle) while the JS
@@ -52,8 +54,8 @@ const ROW_TITLE = "text-[15px] font-semibold leading-5";
 const NUM = "font-numeric font-bold";
 
 const INFO: InfoContent = {
-  title: "About Breathe",
-  body: "Paced breathing with a circle and haptic cues: one light pulse as you breathe in, two as you breathe out, none on a hold. With your band live, Pulse shows your heart rate; when the band also sends beat-to-beat intervals, it takes a one-minute HRV reading (RMSSD) before and after. Sessions stay on this phone and scores don’t use them.",
+  get title() { return tr("breathe.BreatheScreen.aboutBreathe"); },
+  get body() { return tr("breathe.BreatheScreen.pacedBreathingWithACircleAndHaptic"); },
 };
 
 // The last pace and length picked, for the next visit while the app stays open.
@@ -63,7 +65,7 @@ type Run = { protocol: BreathProtocol; start: number; plannedMs: number; preRr: 
 type Clock = { /** The run's start, so a finished run's count never shows for the next. */ run: number; stage: number; secs: number; leftMs: number };
 
 /** "HRV 42 ms · RMSSD, last minute", "HRV: measuring…", or null without RR (halo's rmssdLine). */
-const rmssdLine = (rmssd: number | null, rr: number): string | null => (rmssd !== null ? `HRV ${Math.round(rmssd)} ms · RMSSD, last minute` : rr ? "HRV: measuring…" : null);
+const rmssdLine = (rmssd: number | null, rr: number): string | null => (rmssd !== null ? tr("breathe.BreatheScreen.hrvMsRmssdLastMinute", { v0: Math.round(rmssd) }) : rr ? tr("breathe.BreatheScreen.hrvMeasuring") : null);
 
 /**
  * The session's clock on the JS side: wakes at each stage switch and each whole second (of the stage count and of
@@ -110,6 +112,7 @@ function useBreathClock(run: Run | null, haptics: boolean, onEnd: (end: number) 
 
 /** A number over its caps label, centred (the hero's length and breaths). */
 function HeroStat({ value, label }: { value: string; label: string }) {
+  useLanguage();
   return (
     <View accessible accessibilityLabel={`${label}: ${value}`} className="min-w-0 flex-1 items-center gap-1">
       <Text className={cn(NUM, "text-[26px] leading-[30px] tabular-nums")}>{value}</Text>
@@ -119,6 +122,7 @@ function HeroStat({ value, label }: { value: string; label: string }) {
 }
 
 export function BreatheScreen() {
+  useLanguage();
   const { c } = useTheme();
   const day = useScreen(dayQuery, ["breathe"]).data;
   const ctl = useLiveBleControl();
@@ -190,7 +194,7 @@ export function BreatheScreen() {
         )}
       </BreathCircle>
       {running && clockState ? (
-        <View accessible accessibilityLabel={`${clockDuration(clockState.leftMs)} left · ${protocol.title}`} className="items-center gap-0.5">
+        <View accessible accessibilityLabel={tr("breathe.BreatheScreen.left", { v0: clockDuration(clockState.leftMs), v1: protocol.title })} className="items-center gap-0.5">
           <ValueUnit value={clockDuration(clockState.leftMs)} unit="left" className={cn(NUM, "text-[28px] leading-8")} />
           <Text className={BODY}>{protocol.title}</Text>
         </View>
@@ -200,8 +204,8 @@ export function BreatheScreen() {
             {protocol.title}
           </Text>
           <View className="w-full flex-row gap-3">
-            <HeroStat value={clockDuration(plan.durationMs)} label="Length" />
-            <HeroStat value={String(plan.cycles)} label="Breaths" />
+            <HeroStat value={clockDuration(plan.durationMs)} label={tr("breathe.BreatheScreen.length")} />
+            <HeroStat value={String(plan.cycles)} label={tr("breathe.BreatheScreen.breaths")} />
           </View>
         </View>
       )}
@@ -216,8 +220,7 @@ export function BreatheScreen() {
       <View className="gap-3">
         {liveCard}
         <Button variant="secondary" haptic onPress={() => finish(Date.now())}>
-          End session
-        </Button>
+          {tr("breathe.BreatheScreen.endSession")}</Button>
       </View>
     );
   else if (result)
@@ -225,49 +228,46 @@ export function BreatheScreen() {
       <View className="gap-3">
         <Summary rec={result} />
         <Button onPress={start}>
-          Go again
-        </Button>
+          {tr("breathe.BreatheScreen.goAgain")}</Button>
         <Button variant="secondary" onPress={() => setResult(null)}>
-          Change pace
-        </Button>
+          {tr("breathe.BreatheScreen.changePace")}</Button>
       </View>
     );
   else
     primary = (
       <View className="gap-3">
-        <SectionShell variant="card" title="Pace" info={false}>
-          <View accessibilityRole="radiogroup" accessibilityLabel="Pace">
+        <SectionShell variant="card" title={tr("breathe.BreatheScreen.pace")} info={false}>
+          <View accessibilityRole="radiogroup" accessibilityLabel={tr("breathe.BreatheScreen.pace")}>
             <Divided>
               {PROTOCOLS.map((p) => (
                 <ProtocolRow key={p.id} p={p} selected={p.id === protocol.id} onPress={() => choose({ id: p.id })} />
               ))}
             </Divided>
           </View>
-          <Text className={cn(LABEL, "mb-2 mt-5")}>Length</Text>
+          <Text className={cn(LABEL, "mb-2 mt-5")}>{tr("breathe.BreatheScreen.length")}</Text>
           <Segmented
             fill
-            label="Session length"
+            label={tr("breathe.BreatheScreen.sessionLength")}
             value={String(pick.minutes)}
             onChange={(v) => choose({ minutes: Number(v) as BreathMinutes })}
-            options={DURATIONS.map((m) => ({ value: String(m), label: `${m} min`, accessibilityLabel: `${m} minute${m === 1 ? "" : "s"}` }))}
+            options={DURATIONS.map((m) => ({ value: String(m), label: `${m} min`, accessibilityLabel: tr("format.duration.minute", { count: m }) }))}
           />
           <View className="mt-4 min-h-14 flex-row items-center gap-3">
             <View className="min-w-0 flex-1 gap-0.5">
-              <Text className={ROW_TITLE}>Haptic cues</Text>
-              <Text className={CAPTION}>One pulse to breathe in, two to breathe out</Text>
+              <Text className={ROW_TITLE}>{tr("breathe.BreatheScreen.hapticCues")}</Text>
+              <Text className={CAPTION}>{tr("breathe.BreatheScreen.onePulseToBreatheInTwoTo")}</Text>
             </View>
-            <Switch value={haptics} onValueChange={setHaptics} label="Haptic cues" />
+            <Switch value={haptics} onValueChange={setHaptics} label={tr("breathe.BreatheScreen.hapticCues")} />
           </View>
         </SectionShell>
         {liveCard}
         <Button onPress={start}>
-          Start
-        </Button>
+          {tr("breathe.BreatheScreen.start")}</Button>
       </View>
     );
 
   const secondary = [
-    <SectionShell key="about" variant="card" title={`About ${protocol.title}`} info={false}>
+    <SectionShell key="about" variant="card" title={tr("breathe.BreatheScreen.about", { v0: protocol.title })} info={false}>
       <Text className={BODY}>{protocol.edu}</Text>
       {!!protocol.caution && (
         <View className="mt-3 flex-row items-center gap-3 rounded-lg bg-warning/10 px-3 py-2.5">
@@ -276,7 +276,7 @@ export function BreatheScreen() {
         </View>
       )}
     </SectionShell>,
-    <SectionShell key="recent" variant="card" title="Recent sessions" info={false}>
+    <SectionShell key="recent" variant="card" title={tr("breathe.BreatheScreen.recentSessions")} info={false}>
       {log.length && day ? (
         <Divided>
           {log.slice(0, 5).map((r) => (
@@ -284,14 +284,14 @@ export function BreatheScreen() {
           ))}
         </Divided>
       ) : (
-        <Text className={BODY}>Your sessions appear here, with heart rate and HRV when the band was live.</Text>
+        <Text className={BODY}>{tr("breathe.BreatheScreen.yourSessionsAppearHereWithHeartRate")}</Text>
       )}
     </SectionShell>,
   ];
 
   return (
     <>
-      <DetailShell title="Breathe" info={INFO} backHref="/health/stress" hero={hero} primary={primary} secondary={running ? undefined : secondary} />
+      <DetailShell title={tr("breathe.BreatheScreen.breathe")} info={INFO} backHref="/health/stress" hero={hero} primary={primary} secondary={running ? undefined : secondary} />
       {running && <KeepAwake tag="breathe" />}
       <RecentRr onChange={onRecentRr} live={ctl.status === "live"} />
     </>
@@ -307,6 +307,7 @@ function RecentRr({ onChange, live }: { onChange: (rr: number[]) => void; live: 
 
 /** One pace in the picker, a row of the card: its name in caps over its timing, a check on the chosen one. */
 function ProtocolRow({ p, selected, onPress }: { p: BreathProtocol; selected: boolean; onPress: () => void }) {
+  useLanguage();
   return (
     <Press
       activeBg="bg-accent"
@@ -327,20 +328,21 @@ function ProtocolRow({ p, selected, onPress }: { p: BreathProtocol; selected: bo
 
 /** The band's part: live bpm and the HRV line, or how to connect. Breathe works without it. */
 function LiveCard({ running }: { running: boolean }) {
+  useLanguage();
   const live = useLiveBle();
   const icon = <Icon icon={HeartPulse} size={18} tone="recovery-red-text" />;
   if (!showsLive(live))
     return (
-      <SectionShell variant="card" title="Heart rate" icon={icon} info={false}>
-        <Text className={cn(BODY, "mb-4")}>{running ? "No band connected: this session is pacing only." : "Connect your band over Bluetooth to see your heart rate, and HRV before and after when the band sends beat-to-beat intervals."}</Text>
+      <SectionShell variant="card" title={tr("queries.chart.heartRate")} icon={icon} info={false}>
+        <Text className={cn(BODY, "mb-4")}>{running ? tr("breathe.BreatheScreen.noBandConnectedThisSessionIsPacing") : tr("breathe.BreatheScreen.connectYourBandOverBluetoothToSee")}</Text>
         <GoLiveButton status={live.status} onPress={() => push(GO_LIVE_HREF)} />
       </SectionShell>
     );
-  const note = live.contact === false ? "No skin contact: wear the band snug." : (rmssdLine(live.rmssd, live.rrMs.length) ?? "Heart rate only: this band doesn’t send beat-to-beat intervals, so there’s no HRV reading.");
+  const note = live.contact === false ? tr("breathe.BreatheScreen.noSkinContactWearTheBandSnug") : (rmssdLine(live.rmssd, live.rrMs.length) ?? tr("copy.fallback.heart_rate_only_this_band_doesn_t_send_beat_to_beat_intervals_so_there_s_no_hrv_reading"));
   return (
-    <SectionShell variant="card" title="Heart rate" icon={icon} info={false}>
+    <SectionShell variant="card" title={tr("queries.chart.heartRate")} icon={icon} info={false}>
       <View className="flex-row items-center justify-between gap-3">
-        <View accessible accessibilityLabel={live.bpm === null ? "No heart rate yet" : `${live.bpm} beats per minute`}>
+        <View accessible accessibilityLabel={live.bpm === null ? tr("breathe.BreatheScreen.noHeartRateYet") : tr("breathe.BreatheScreen.beatsPerMinute", { v0: live.bpm })}>
           <ValueUnit value={live.bpm === null ? MISSING : String(live.bpm)} unit="bpm" className={cn(NUM, "text-[40px] leading-[44px] text-recovery-red-text")} />
         </View>
         <LivePill name={live.device?.name ?? null} lost={live.status !== "live"} />
@@ -355,29 +357,30 @@ const fromTo = (a: number | null, b: number | null) => `${a ?? MISSING} → ${b 
 
 /** The end of a session: how long, heart rate start → end, HRV before → after and the swing per breath. */
 function Summary({ rec }: { rec: BreathRecord }) {
+  useLanguage();
   const p = protocolById(rec.protocol);
   const hrDelta = rec.hrStart !== null && rec.hrEnd !== null ? rec.hrEnd - rec.hrStart : null;
   const hrv = pctChange(rec.hrvBefore, rec.hrvAfter);
   const hrNone = rec.hrStart === null && rec.hrEnd === null;
   const hrvNone = rec.hrvBefore === null && rec.hrvAfter === null;
   const rows: { label: string; value: string; unit?: string; note?: string }[] = [
-    { label: "Time", value: clockDuration(rec.ms), note: rec.completed ? `${p?.title ?? "Session"}, complete` : `${p?.title ?? "Session"}, ended early` },
+    { label: tr("common.time"), value: clockDuration(rec.ms), note: rec.completed ? tr("breathe.BreatheScreen.complete", { v0: p?.title ?? "Session" }) : tr("breathe.BreatheScreen.endedEarly", { v0: p?.title ?? "Session" }) },
     {
-      label: "Heart rate",
+      label: tr("queries.chart.heartRate"),
       value: hrNone ? MISSING : fromTo(rec.hrStart, rec.hrEnd),
       unit: hrNone ? undefined : "bpm",
-      note: hrDelta === null ? (rec.hrStart === null ? "No band connected" : undefined) : hrDelta === 0 ? "Unchanged" : `${hrDelta < 0 ? "Down" : "Up"} ${Math.abs(hrDelta)} bpm`,
+      note: hrDelta === null ? (rec.hrStart === null ? tr("breathe.BreatheScreen.noBandConnected") : undefined) : hrDelta === 0 ? tr("breathe.BreatheScreen.unchanged") : `${hrDelta < 0 ? tr("breathe.BreatheScreen.down") : tr("breathe.BreatheScreen.up")} ${Math.abs(hrDelta)} bpm`,
     },
     {
-      label: "HRV (RMSSD)",
+      label: tr("settings.LiveHeartRate.hrvRmssd"),
       value: hrvNone ? MISSING : fromTo(rec.hrvBefore === null ? null : Math.round(rec.hrvBefore), rec.hrvAfter === null ? null : Math.round(rec.hrvAfter)),
       unit: hrvNone ? undefined : "ms",
-      note: hrv !== null ? `${signedPct(hrv)} after` : rec.hrStart === null ? "Needs the band" : "Needs beat-to-beat intervals and a still minute",
+      note: hrv !== null ? tr("breathe.BreatheScreen.after", { v0: signedPct(hrv) }) : rec.hrStart === null ? tr("breathe.BreatheScreen.needsTheBand") : tr("breathe.BreatheScreen.needsBeatToBeatIntervalsAndA"),
     },
-    ...(rec.rsa !== null ? [{ label: "Swing per breath", value: rec.rsa.toFixed(1), unit: "bpm", note: "How far your heart rate rose and fell with each breath" }] : []),
+    ...(rec.rsa !== null ? [{ label: tr("breathe.BreatheScreen.swingPerBreath"), value: rec.rsa.toFixed(1), unit: "bpm", note: tr("breathe.BreatheScreen.howFarYourHeartRateRoseAnd") }] : []),
   ];
   return (
-    <SectionShell variant="card" title={rec.completed ? "Session complete" : "Session ended"} info={false}>
+    <SectionShell variant="card" title={rec.completed ? tr("breathe.BreatheScreen.sessionComplete") : tr("breathe.BreatheScreen.sessionEnded")} info={false}>
       <Divided>
         {rows.map((r) => (
           <View
@@ -400,11 +403,12 @@ function Summary({ rec }: { rec: BreathRecord }) {
 
 /** One kept session: when, which pace, how long, and what changed. */
 function RecentRow({ rec, timeZone, today }: { rec: BreathRecord; timeZone: string; today: string }) {
+  useLanguage();
   const p = protocolById(rec.protocol);
   const when = `${dayLabel(localDay(Math.floor(rec.at / 1000), timeZone), today)}, ${clock(rec.at, timeZone)}`;
   const hrv = pctChange(rec.hrvBefore, rec.hrvAfter);
   const hr = rec.hrStart !== null && rec.hrEnd !== null;
-  const aside = hrv !== null ? `HRV ${signedPct(hrv)}` : hr ? `${rec.hrStart} → ${rec.hrEnd} bpm` : rec.completed ? "Complete" : "Ended early";
+  const aside = hrv !== null ? tr("breathe.BreatheScreen.hrv", { v0: signedPct(hrv) }) : hr ? `${rec.hrStart} → ${rec.hrEnd} bpm` : rec.completed ? tr("breathe.BreatheScreen.complete_1f5a1a") : tr("breathe.BreatheScreen.endedEarly_ce9fec");
   return (
     <View accessible accessibilityLabel={`${when}: ${p?.title ?? "Breathing"}, ${clockDuration(rec.ms)}, ${aside.replace("→", "to")}`} className="min-h-14 flex-row items-center gap-3 py-2.5">
       <View className="min-w-0 flex-1 gap-0.5">
@@ -414,12 +418,12 @@ function RecentRow({ rec, timeZone, today }: { rec: BreathRecord; timeZone: stri
       {hrv !== null ? (
         <View className="items-end">
           <Text className={cn(NUM, "text-lg leading-[22px] tabular-nums")}>{signedPct(hrv)}</Text>
-          <Text className={CAPTION}>HRV</Text>
+          <Text className={CAPTION}>{tr("breathe.BreatheScreen.hrv_49a6fe")}</Text>
         </View>
       ) : hr ? (
         <ValueUnit value={`${rec.hrStart} → ${rec.hrEnd}`} unit="bpm" className={cn(NUM, "text-lg leading-[22px]")} />
       ) : (
-        <Text className={CAPTION}>{rec.completed ? "Complete" : "Ended early"}</Text>
+        <Text className={CAPTION}>{rec.completed ? tr("breathe.BreatheScreen.complete_1f5a1a") : tr("breathe.BreatheScreen.endedEarly_ce9fec")}</Text>
       )}
     </View>
   );
@@ -427,9 +431,10 @@ function RecentRow({ rec, timeZone, today }: { rec: BreathRecord; timeZone: stri
 
 /** The Stress screen's way to Breathe: a card that is one link (halo's BreatheCard). */
 export function BreatheCard() {
+  useLanguage();
   return (
-    <SectionShell variant="card" title="Breathe" href="/breathe" info={false} icon={<Icon icon={Wind} size={18} tone="stress-low" />}>
-      <Text className={BODY}>A few minutes of slow, paced breathing to settle. With your band live, see your heart rate fall and your HRV before and after.</Text>
+    <SectionShell variant="card" title={tr("breathe.BreatheScreen.breathe")} href="/breathe" info={false} icon={<Icon icon={Wind} size={18} tone="stress-low" />}>
+      <Text className={BODY}>{tr("breathe.BreatheScreen.aFewMinutesOfSlowPacedBreathing")}</Text>
     </SectionShell>
   );
 }

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The Journal (spec §7.11, journal-01..15), pulse's (app)/journal/CheckIn.tsx `CheckInPage`: the full-screen check-in
 // over whatever screen is showing, for that screen's day (`d`); the strip and arrows inside move between days. Closing it
 // (X, Back, swipe down, Save) leaves that screen as it was (spec §11 UX2). There is no offline queue (the phone
@@ -10,7 +12,7 @@ import { useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router
 import { Check, ChevronLeft, ChevronRight, LoaderCircle, Pencil, X } from "lucide-react-native";
 import { addCustomTag, loadCheckIn, saveCheckIn } from "@/actions/journal";
 import { actionCtx, dataChanged, queryCtx, refresh } from "@/state/app";
-import { behavior, followUpText, JOURNAL_SECTIONS, questionOf, type JournalSection } from "@/lib/behaviors";
+import { behavior, behaviorLabel, followUpText, JOURNAL_SECTIONS, questionOf, type JournalSection } from "@/lib/behaviors";
 import { DAY, dayLabel, formatDay, MISSING } from "@/lib/format";
 import { addDays, parseDay } from "@/lib/url";
 import type { JournalTag, JournalVM } from "@/queries/types";
@@ -32,7 +34,7 @@ import { Press } from "@/ui/Press";
 /** A behaviour with the question the check-in asks and its section, from the catalogue (src/lib/behaviors.ts). */
 type Tag = JournalTag & { question: string; section: JournalSection };
 type Loaded = { day: string; tags: Tag[] } & Pick<JournalVM, "checkIn" | "strip">;
-const withQuestion = (t: JournalTag): Tag => ({ ...t, question: questionOf(t.tag, t.label), section: behavior(t.tag)?.section ?? "custom" });
+const withQuestion = (t: JournalTag): Tag => ({ ...t, label: behaviorLabel(t.tag, t.sourceLabel ?? t.label), question: questionOf(t.tag, t.label), section: behavior(t.tag)?.section ?? "custom" });
 
 /**
  * The Store keeps a yes, a no or a count per behaviour (halo's journal_entries): no follow-up values and no notes. The
@@ -42,6 +44,7 @@ const DETAILS = false;
 type Confirm = { to: string | null };
 
 function Spinner() {
+  useLanguage();
   const { c } = useTheme();
   const turn = useSharedValue(0);
   useEffect(() => {
@@ -57,6 +60,7 @@ function Spinner() {
 
 /** journal-01's answer key: a grey square; "no" lights white, "yes" blue. 44 px for touch. */
 function Answer({ kind, on, label, onPress }: { kind: "no" | "yes"; on: boolean; label: string; onPress: () => void }) {
+  useLanguage();
   const { c } = useTheme();
   const bg = on ? (kind === "yes" ? c["answer-yes"] : c.foreground) : c["fill-pressed"];
   const fg = on ? (kind === "yes" ? c["on-color"] : c.background) : alpha(c.foreground, 0.8);
@@ -70,6 +74,7 @@ function Answer({ kind, on, label, onPress }: { kind: "no" | "yes"; on: boolean;
 
 /** /checkin?d=2026-10-02: the sheet the round check-in button opens. `d` is the screen's day (today when absent). */
 export function CheckInPage() {
+  useLanguage();
   const { today } = useShellCalendar();
   const { d: raw } = useLocalSearchParams<{ d?: string }>();
   const { d: urlDay } = parseDay(raw, today);
@@ -96,7 +101,7 @@ export function CheckInPage() {
   const { c } = useTheme();
 
   const loaded = data?.day === day ? data : null;
-  const tags = loaded?.tags ?? [];
+  const tags = (loaded?.tags ?? []).map(withQuestion);
   const saved = loaded?.checkIn.entries ?? {};
   const savedDetails: Record<string, number> = {};
   const dirty = !!loaded && (changedEntries(values, details, saved, savedDetails).length > 0 || note.trim() !== "");
@@ -205,13 +210,13 @@ export function CheckInPage() {
   const add = async () => {
     const name = label.trim();
     if (!name) return;
-    if (name.length > 32) return invalid("Use 32 characters or fewer.");
+    if (name.length > 32) return invalid(tr("journal.CheckInPage.use32CharactersOrFewer"));
     const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-    if (tags.some((t) => t.tag === key || t.label.toLowerCase() === name.toLowerCase())) return invalid("That behaviour already exists.");
+    if (tags.some((t) => t.tag === key || t.label.toLowerCase() === name.toLowerCase())) return invalid(tr("journal.CheckInPage.thatBehaviourAlreadyExists"));
     setAdding(true);
     const r = await addCustomTag(actionCtx(), { label: name }).catch(() => ({ ok: false as const, error: "network" }));
     setAdding(false);
-    if (!r.ok) return invalid(r.error.startsWith("Tag already exists") ? "That behaviour already exists." : r.error.startsWith("Too many") ? "You’ve reached the behaviour limit." : "Couldn’t add it. Try again.");
+    if (!r.ok) return invalid(r.error.startsWith(tr("journal.CheckInPage.tagAlreadyExists")) ? tr("journal.CheckInPage.thatBehaviourAlreadyExists") : r.error.startsWith(tr("journal.CheckInPage.tooMany")) ? tr("journal.CheckInPage.youVeReachedTheBehaviourLimit") : tr("journal.CheckInPage.couldnTAddItTryAgain"));
     setAddError(null);
     setLabel("");
     // A new behaviour starts as "Yes": you add one because you just did it. It joins the list until the next load.
@@ -229,14 +234,14 @@ export function CheckInPage() {
   return (
     <>
       <TaskPage
-        title="Journal"
+        title={tr("ui.shells.TabBar.journal")}
         glow
         onClose={close}
         action={
           <Press
             activeBg="bg-fill-hover"
             accessibilityRole="button"
-            accessibilityLabel="Select behaviours"
+            accessibilityLabel={tr("journal.CheckInPage.selectBehaviours")}
             onPress={() => {
               haptic.tap();
               picked.current = true;
@@ -247,25 +252,25 @@ export function CheckInPage() {
             <Pencil size={22} color={c.foreground} strokeWidth={1.75} />
           </Press>
         }
-        done={done ? { title: "Saved", body: "Have a great day!", onDone: finish } : null}
+        done={done ? { title: tr("journal.CheckInPage.saved"), body: tr("journal.CheckInPage.haveAGreatDay"), onDone: finish } : null}
         footer={
           <>
-            {saveError && <FormAlert>Couldn’t save. Check your connection and try again.</FormAlert>}
+            {saveError && <FormAlert>{tr("journal.CheckInPage.couldnTSaveCheckYourConnectionAnd")}</FormAlert>}
             {/* Nothing answered, nothing to save: the sheet can open by itself (Log yesterday) right where the Journal tab was
                 tapped, and a second tap must not file an empty check-in. */}
             <Button onPress={save} disabled={saving || !loaded || !dirty}>
-              {saving ? "Saving…" : "Save journal"}
+              {saving ? tr("onboarding.ProfileForm.saving") : tr("journal.CheckInPage.saveJournal")}
             </Button>
           </>
         }
       >
         {/* ‹ TODAY ›: a day back or forward; never past today (journal-01). */}
-        <View accessibilityRole="toolbar" accessibilityLabel="Journal day" className="flex-row items-center justify-center gap-2">
-          <Button variant="ghost" size="icon-touch" accessibilityLabel={`Previous day, ${formatDay(prev, DAY.long)}`} onPress={() => go(prev)}>
+        <View accessibilityRole="toolbar" accessibilityLabel={tr("journal.CheckInPage.journalDay")} className="flex-row items-center justify-center gap-2">
+          <Button variant="ghost" size="icon-touch" accessibilityLabel={tr("journal.CheckInPage.previousDay", { v0: formatDay(prev, DAY.long) })} onPress={() => go(prev)}>
             <ChevronLeft size={20} color={c.foreground} strokeWidth={2} />
           </Button>
           <Text className="min-w-28 text-center text-xs font-bold uppercase leading-4 tracking-[0.1em]">{dayLabel(day, today)}</Text>
-          <Button variant="ghost" size="icon-touch" accessibilityLabel={`Next day, ${formatDay(next, DAY.long)}`} disabled={next > today} onPress={() => go(next)}>
+          <Button variant="ghost" size="icon-touch" accessibilityLabel={tr("journal.CheckInPage.nextDay", { v0: formatDay(next, DAY.long) })} disabled={next > today} onPress={() => go(next)}>
             <ChevronRight size={20} color={c.foreground} strokeWidth={2} />
           </Button>
         </View>
@@ -284,15 +289,14 @@ export function CheckInPage() {
             <View className="mt-6">
               <FormAlert>
                 <View className="flex-row items-center justify-between gap-3">
-                  <Text className="shrink text-sm leading-5 text-recovery-red-text">Couldn’t load your journal.</Text>
+                  <Text className="shrink text-sm leading-5 text-recovery-red-text">{tr("journal.CheckInPage.couldnTLoadYourJournal")}</Text>
                   <Button variant="secondary" onPress={() => load(day)}>
-                    Try again
-                  </Button>
+                    {tr("common.retry")}</Button>
                 </View>
               </FormAlert>
             </View>
           ) : (
-            <View accessibilityRole="progressbar" accessibilityLabel="Loading" className="items-center py-16">
+            <View accessibilityRole="progressbar" accessibilityLabel={tr("journal.CheckInPage.loading")} className="items-center py-16">
               <Spinner />
             </View>
           ))}
@@ -313,8 +317,8 @@ export function CheckInPage() {
                         <View className="min-h-18 flex-row items-center gap-3 py-3">
                           <Text className="min-w-0 flex-1 text-[17px] leading-6">{t.question}</Text>
                           <View accessibilityRole="radiogroup" accessibilityLabel={t.question} className="flex-row gap-2">
-                            <Answer kind="no" label="No" on={v === 0} onPress={() => answer(t.tag, v === 0 ? undefined : 0)} />
-                            <Answer kind="yes" label="Yes" on={v !== undefined && v > 0} onPress={() => answer(t.tag, v !== undefined && v > 0 ? undefined : 1)} />
+                            <Answer kind="no" label={tr("journal.CheckInPage.no")} on={v === 0} onPress={() => answer(t.tag, v === 0 ? undefined : 0)} />
+                            <Answer kind="yes" label={tr("journal.CheckInPage.yes")} on={v !== undefined && v > 0} onPress={() => answer(t.tag, v !== undefined && v > 0 ? undefined : 1)} />
                           </View>
                         </View>
                         {/* journal-12: a "yes" opens its follow-up; "--" until the slider moves. */}
@@ -325,7 +329,7 @@ export function CheckInPage() {
                               <Text className="font-numeric text-[15px] font-semibold leading-[22px] tabular-nums">{d === undefined ? MISSING : followUpText(f, d)}</Text>
                             </View>
                             <View className="px-2">
-                              <Slider label={f.question} valueText={d === undefined ? "Not set" : followUpText(f, d)} min={f.min} max={f.max} step={f.step} value={d ?? f.min} onChange={(x) => setDetails((s) => ({ ...s, [t.tag]: x }))} />
+                              <Slider label={f.question} valueText={d === undefined ? tr("settings.ProfileCard.notSet") : followUpText(f, d)} min={f.min} max={f.max} step={f.step} value={d ?? f.min} onChange={(x) => setDetails((s) => ({ ...s, [t.tag]: x }))} />
                             </View>
                           </View>
                         )}
@@ -335,11 +339,11 @@ export function CheckInPage() {
                 </View>
                 {g.key === "custom" && (
                   <View className="mt-4 gap-2">
-                    <Text className="text-[15px] font-medium leading-[22px]">Add a behaviour</Text>
+                    <Text className="text-[15px] font-medium leading-[22px]">{tr("journal.CheckInPage.addABehaviour")}</Text>
                     <View className="flex-row gap-2">
                       <Input
                         ref={input}
-                        accessibilityLabel="Add a behaviour"
+                        accessibilityLabel={tr("journal.CheckInPage.addABehaviour")}
                         returnKeyType="done"
                         value={label}
                         onChangeText={(t) => {
@@ -347,13 +351,13 @@ export function CheckInPage() {
                           setAddError(null);
                         }}
                         onSubmitEditing={() => void add()}
-                        placeholder="e.g. Cold shower…"
+                        placeholder={tr("journal.CheckInPage.eGColdShower")}
                         maxLength={32}
                         className="flex-1 text-base"
                       />
                       {/* "Add" fits beside the field on a phone; the name says what it adds (label in name). */}
-                      <Button variant="secondary" disabled={adding || !label.trim()} accessibilityLabel={adding ? undefined : "Add behaviour"} onPress={() => void add()}>
-                        {adding ? "Adding…" : "Add"}
+                      <Button variant="secondary" disabled={adding || !label.trim()} accessibilityLabel={adding ? undefined : tr("journal.CheckInPage.addBehaviour")} onPress={() => void add()}>
+                        {adding ? tr("journal.CheckInPage.adding") : tr("journal.CheckInPage.add")}
                       </Button>
                     </View>
                     {addError && (
@@ -368,12 +372,12 @@ export function CheckInPage() {
           })}
         {DETAILS && loaded && (
           <View className="mt-7">
-            <TaskSection>Notes</TaskSection>
+            <TaskSection>{tr("journal.CheckInPage.notes")}</TaskSection>
             <Input
-              accessibilityLabel="Notes"
+              accessibilityLabel={tr("journal.CheckInPage.notes")}
               value={note}
               onChangeText={setNote}
-              placeholder="Add a note…"
+              placeholder={tr("journal.CheckInPage.addANote")}
               maxLength={2000}
               multiline
               textAlignVertical="top"

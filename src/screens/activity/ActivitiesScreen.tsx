@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Activities `/activities`: the workout journal behind Home's "Today's activities". Day groups newest first, each row
 // the same timeline row as Home, a sport filter, and "Show older" a month at a time. Ported from pulse
 // src/app/(app)/activities/{page,loading}.tsx. The web keeps `days` and `kind` in the URL; here they are route params.
@@ -19,9 +21,9 @@ import { CAPTION } from "@/screens/_lib/view"
 import { ScreenError } from "@/screens/recovery/shared"
 import { useScreen } from "@/screens/useScreen"
 import { Press } from "@/ui/Press";
-import { ActivityCostList, DETECTED_NOTE, DetectedRow } from "./ActivityCost"
+import { ActivityCostList, detectedNote, DetectedRow } from "./ActivityCost"
 
-const KIND_LABEL: Record<ActivityKind, string> = { run: "Runs", ride: "Rides", walk: "Walks", strength: "Strength", workout: "Workouts" }
+const KIND_LABEL: Record<ActivityKind, string> = { get run() { return tr("activity.ActivitiesScreen.runs"); }, get ride() { return tr("activity.ActivitiesScreen.rides"); }, get walk() { return tr("activity.ActivitiesScreen.walks"); }, get strength() { return tr("activity.ActivitiesScreen.strength"); }, get workout() { return tr("activity.ActivitiesScreen.workouts"); } }
 const STAT_LABEL = "text-xs leading-4 font-bold tracking-[0.1em] text-foreground-secondary uppercase"
 const PILL = "h-9 shrink-0 items-center justify-center rounded-full px-4"
 const PILL_TEXT = "text-xs font-bold tracking-[0.1em] uppercase"
@@ -33,6 +35,7 @@ const setQuery = ({ days, kind }: { days: number; kind: ActivityKind | null }) =
   router.setParams({ days: days > ACTIVITY_PAGE_DAYS ? String(days) : "", kind: kind ?? "" })
 
 export function ActivitiesScreen() {
+  useLanguage();
   const sp = useLocalSearchParams<{ days?: string; kind?: string }>()
   const pages = Math.min(120, Math.max(1, Math.round(Number(sp.days) / ACTIVITY_PAGE_DAYS) || 1))
   const days = pages * ACTIVITY_PAGE_DAYS
@@ -51,14 +54,14 @@ export function ActivitiesScreen() {
 
   return (
     <DetailShell
-      title="Activities"
-      bodySkeleton={LOADING_PRIMARY}
+      title={tr("queries.home.activities")}
+      bodySkeleton={renderLoadingPrimary()}
       backHref="/"
       primary={
         <View className={MORE_COLUMN}>
           {items.length > 0 && <Summary items={items} days={days} />}
           {kinds.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Sport" style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel={tr("activity.ActivitiesScreen.sport")} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
               {[null, ...kinds].map((k) => (
                 <Pressable
                   key={k ?? "all"}
@@ -68,28 +71,28 @@ export function ActivitiesScreen() {
                   onPress={() => setQuery({ days, kind: k })}
                   className={cn(PILL, kind === k && "bg-secondary")}
                 >
-                  <Text className={cn(PILL_TEXT, kind === k ? "text-foreground" : "text-muted-foreground")}>{k ? KIND_LABEL[k] : "All"}</Text>
+                  <Text className={cn(PILL_TEXT, kind === k ? "text-foreground" : "text-muted-foreground")}>{k ? KIND_LABEL[k] : tr("activity.ActivitiesScreen.all")}</Text>
                 </Pressable>
               ))}
             </ScrollView>
           )}
           {vm.cost && costs.length > 0 && (
             <View className="gap-2">
-              <Text accessibilityRole="header" className={GROUP_LABEL}>Recovery cost</Text>
+              <Text accessibilityRole="header" className={GROUP_LABEL}>{tr("activity.ActivitiesScreen.recoveryCost")}</Text>
               <ActivityCostList vm={vm.cost} items={costs} />
             </View>
           )}
           {groups.map((g) => (
             <Day key={g.day} g={g} today={vm.today} timeZone={timeZone} />
           ))}
-          {groups.some((g) => g.detected.length > 0) && <Text className={cn(CAPTION, "px-1")}>{DETECTED_NOTE}</Text>}
-          {!items.length && groups.length <= 1 && !vm.older && <EmptyState body="No workouts in the last month. Workouts you record on your Fitbit or phone appear here after they sync." />}
+          {groups.some((g) => g.detected.length > 0) && <Text className={cn(CAPTION, "px-1")}>{detectedNote()}</Text>}
+          {!items.length && groups.length <= 1 && !vm.older && <EmptyState body={tr("activity.ActivitiesScreen.noWorkoutsInTheLastMonthWorkouts")} />}
           {vm.older ? (
             <Press activeBg="bg-fill-faint" accessibilityRole="link" onPress={() => setQuery({ days: days + ACTIVITY_PAGE_DAYS, kind })} className="h-11 items-center justify-center self-center rounded-full px-5">
-              <Text className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-body">Show older</Text>
+              <Text className="text-xs font-bold uppercase tracking-[0.1em] text-foreground-body">{tr("activity.ActivitiesScreen.showOlder")}</Text>
             </Press>
           ) : (
-            items.length > 0 && <Text className={cn(CAPTION, "text-center")}>No older activities</Text>
+            items.length > 0 && <Text className={cn(CAPTION, "text-center")}>{tr("activity.ActivitiesScreen.noOlderActivities")}</Text>
           )}
         </View>
       }
@@ -99,6 +102,7 @@ export function ActivitiesScreen() {
 
 /** Count, total time and average activity Strain over what the list shows. */
 function Summary({ items, days }: { items: Group["items"]; days: number }) {
+  useLanguage();
   const minutes = items.reduce((m, a) => m + (a.end - a.start) / 60_000, 0)
   const strains = items.flatMap((a) => (a.strain.value === null ? [] : [a.strain.value]))
   const avg = strains.length ? strains.reduce((a, b) => a + b, 0) / strains.length : null
@@ -109,20 +113,21 @@ function Summary({ items, days }: { items: Group["items"]; days: number }) {
     </View>
   )
   return (
-    <View accessibilityLabel={`Last ${days} days`} className="gap-2">
+    <View accessibilityLabel={tr("activity.ActivitiesScreen.lastDays", { v0: days })} className="gap-2">
       <Text accessibilityRole="header" className={GROUP_LABEL}>
-        Last {days} days
+        {tr("activity.ActivitiesScreen.lastDays", { v0: days })}
       </Text>
       <Card className="flex-row gap-3 px-4">
-        {stat(items.length, items.length === 1 ? "Activity" : "Activities")}
-        {stat(hmm(minutes), "Time")}
-        {stat(<Text className={avg === null ? "text-muted-foreground" : "text-strain-text"}>{formatValue("pct", avg)}</Text>, "Avg strain")}
+        {stat(items.length, items.length === 1 ? tr("lib.dashboard.activity") : tr("queries.home.activities"))}
+        {stat(hmm(minutes), tr("common.time"))}
+        {stat(<Text className={avg === null ? "text-muted-foreground" : "text-strain-text"}>{formatValue("pct", avg)}</Text>, tr("activity.ActivitiesScreen.avgStrain"))}
       </Card>
     </View>
   )
 }
 
 function Day({ g, today, timeZone }: { g: Group; today: string; timeZone: string }) {
+  useLanguage();
   return (
     <View accessibilityLabel={dayLabel(g.day, today)} className="gap-2">
       <View className="flex-row items-baseline justify-between gap-3 px-1">
@@ -130,11 +135,11 @@ function Day({ g, today, timeZone }: { g: Group; today: string; timeZone: string
           {dayLabel(g.day, today)}
         </Text>
         <Text className="shrink font-numeric text-xs font-medium leading-4 tabular-nums text-muted-foreground" numberOfLines={1}>
-          {g.steps !== null && `${formatValue("grouped", g.steps)} steps`}
+          {g.steps !== null && tr("copy.fallback.value_steps", { v0: formatValue("grouped", g.steps) })}
           {g.steps !== null && g.dayStrain !== null && " · "}
           {g.dayStrain !== null && (
             <>
-              Day strain <Text className="font-bold text-strain-text">{formatValue("pct", g.dayStrain)}</Text>
+              {tr("activity.ActivitiesScreen.dayStrain")}<Text className="font-bold text-strain-text">{formatValue("pct", g.dayStrain)}</Text>
             </>
           )}
         </Text>
@@ -154,17 +159,17 @@ function Day({ g, today, timeZone }: { g: Group; today: string; timeZone: string
         </Card>
       ) : (
         <Card className="px-4">
-          <Text className={CAPTION}>No activities yet today. Workouts appear after Fitbit syncs them.</Text>
+          <Text className={CAPTION}>{tr("activity.ActivitiesScreen.noActivitiesYetTodayWorkoutsAppearAfter")}</Text>
         </Card>
       )}
     </View>
   )
 }
 
-const LOADING_PRIMARY = (
+const renderLoadingPrimary = () => (
   <View className={MORE_COLUMN}>
     <View className="gap-2">
-      <Text className={GROUP_LABEL}>Last 30 days</Text>
+      <Text className={GROUP_LABEL}>{tr("activity.ActivitiesScreen.last30Days")}</Text>
       <Card style={{ height: 92 }} />
     </View>
     {[1, 2].map((n) => (
@@ -180,12 +185,13 @@ const LOADING_PRIMARY = (
 
 /** Activities' loading state: the summary card and two day groups at their final size (spec §5.19). */
 function ActivitiesSkeleton() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Activities"
-      primary={LOADING_PRIMARY}
-      bodySkeleton={LOADING_PRIMARY}
+      title={tr("queries.home.activities")}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderLoadingPrimary()}
     />
   )
 }

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Strain Coach for Live Workout: the moment-to-moment half. Watches the live heart rate against a target band gated by
 // today's Recovery and says when to push or ease off, at most one cue at a time and silence when on track. Ported
 // constant for constant (one exception, marked) from noop's analytics/LiveSessionEngine.kt (© 2026 NoopApp, PolyForm
@@ -231,7 +232,7 @@ export type Guidance = { tone: GuidanceTone; title: string; body: string };
 
 /** Strain as a whole percent: "42%". */
 const pct = (x: number) => `${Math.round(x)}%`;
-const minutesWords = (m: number) => (m < 1.5 ? "about a minute" : `about ${Math.round(m)} minutes`);
+const minutesWords = (m: number) => (m < 1.5 ? tr("live.coach.aboutAMinute") : tr("live.coach.aboutMinutes", { v0: Math.round(m) }));
 
 /**
  * What to do now. Day Strain against today's target decides first (past the range: ease off; in it: hold or ease off;
@@ -250,17 +251,17 @@ export function guidance(o: {
   const range = target ? `${Math.round(target[0])} - ${pct(target[1])}` : null;
 
   if (target && strain >= target[1])
-    return { tone: "ease", title: "Ease off", body: `You’ve reached today’s target of ${range}. More strain from here adds load faster than benefit: cool down and stop.` };
-  if (coach.status === "stale") return { tone: "wait", title: "Waiting for heart rate", body: "No beats from the band for a few seconds. Keep it snug on your wrist." };
-  if (coach.status === "warmup") return { tone: "wait", title: "Warming up", body: `Coaching starts after the first minute. Today’s band is ${floor}–${ceiling} bpm.` };
+    return { tone: "ease", title: tr("live.coach.easeOff"), body: tr("live.coach.youVeReachedTodaySTargetOf", { v0: range }) };
+  if (coach.status === "stale") return { tone: "wait", title: tr("live.coach.waitingForHeartRate"), body: tr("live.coach.noBeatsFromTheBandForA") };
+  if (coach.status === "warmup") return { tone: "wait", title: tr("live.coach.warmingUp"), body: tr("live.coach.coachingStartsAfterTheFirstMinuteToday", { v0: floor, v1: ceiling }) };
 
   if (target && strain >= target[0]) {
-    if (coach.position === "above") return { tone: "ease", title: "In range: ease off", body: `You’re inside today’s target of ${range}. Bring your heart rate under ${ceiling} bpm to finish steady.` };
-    return { tone: "steady", title: "In your target range", body: `Day Strain ${pct(strain)} is inside today’s ${range}. You can stop here, or keep it easy.` };
+    if (coach.position === "above") return { tone: "ease", title: tr("live.coach.inRangeEaseOff"), body: tr("live.coach.youReInsideTodaySTargetOf", { v0: range, v1: ceiling }) };
+    return { tone: "steady", title: tr("live.coach.inYourTargetRange"), body: tr("live.coach.dayStrainIsInsideTodaySYou", { v0: pct(strain), v1: range }) };
   }
 
-  const eta = target && minutesToLow !== null && minutesToLow > 0 ? ` ${minutesWords(minutesToLow)} at this effort reaches ${pct(target[0])}.` : "";
-  if (coach.position === "below") return { tone: "push", title: "Push", body: `Pick up the pace: get above ${floor} bpm.${target ? ` You’re ${pct(target[0] - strain)} below today’s target.` : ""}` };
-  if (coach.position === "above") return { tone: "ease", title: "Ease off", body: `You’re above today’s band (${ceiling} bpm). Your Recovery favours a steadier effort.${eta}` };
-  return { tone: "steady", title: "On track", body: `Hold this effort: ${floor}–${ceiling} bpm.${eta}` };
+  const eta = target && minutesToLow !== null && minutesToLow > 0 ? tr("live.coach.atThisEffortReaches", { v0: minutesWords(minutesToLow), v1: pct(target[0]) }) : "";
+  if (coach.position === "below") return { tone: "push", title: tr("live.coach.push"), body: tr("live.coach.pickUpThePaceGetAboveBpm", { v0: floor, v1: target ? tr("live.coach.youReBelowTodaySTarget", { v0: pct(target[0] - strain) }) : "" }) };
+  if (coach.position === "above") return { tone: "ease", title: tr("live.coach.easeOff"), body: tr("live.coach.youReAboveTodaySBandBpm", { v0: ceiling, v1: eta }) };
+  return { tone: "steady", title: tr("health.factor.onTrack"), body: tr("live.coach.holdThisEffortBpm", { v0: floor, v1: ceiling, v2: eta }) };
 }

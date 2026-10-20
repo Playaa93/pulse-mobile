@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Daily goals (Fitbit-style, a phone-only addition): how far `day` has come toward each target the person set, with a
 // week of history for the rings and streaks, and Active Zone Minutes against the weekly target. Pulse's own screens
 // never set goals; they are kept on the phone (src/state/goals.ts) and come in as `goals`. Pure over the Store.
@@ -44,14 +45,14 @@ export type GoalMeta = {
 };
 
 export const GOAL_META: Record<GoalKey, GoalMeta> = {
-  steps: { key: "steps", label: "Steps", short: "Steps", goalName: "Step goal", format: "grouped", partialToday: true, href: metricHref("steps") },
-  distance: { key: "distance", label: "Distance", short: "Distance", goalName: "Distance goal", unit: "km", format: "decimal2", partialToday: true, href: metricHref("distance") },
-  floors: { key: "floors", label: "Floors", short: "Floors", goalName: "Floor goal", format: "grouped", partialToday: true, href: metricHref("floors") },
-  azm: { key: "azm", label: "Active Zone Minutes", short: "Zone min", goalName: "Active Zone Minutes goal", format: "duration", partialToday: true, href: metricHref("azm") },
-  active_minutes: { key: "active_minutes", label: "Active minutes", short: "Active", goalName: "Active minutes goal", format: "duration", partialToday: true, href: metricHref("active_minutes") },
-  active_calories: { key: "active_calories", label: "Active calories", short: "Calories", goalName: "Active calories goal", unit: "kcal", format: "grouped", partialToday: true, href: metricHref("active_calories") },
-  water: { key: "water", label: "Water", short: "Water", goalName: "Water goal", unit: "ml", format: "grouped", partialToday: true, href: metricHref("water") },
-  sleep: { key: "sleep", label: "Sleep", short: "Sleep", goalName: "Sleep goal", format: "duration", partialToday: false, href: "/sleep" },
+  steps: { key: "steps", get label() { return tr("health.dataCheckSummary.steps"); }, get short() { return tr("health.dataCheckSummary.steps"); }, get goalName() { return tr("queries.goals.stepGoal"); }, format: "grouped", partialToday: true, href: metricHref("steps") },
+  distance: { key: "distance", get label() { return tr("health.dataCheckSummary.distance"); }, get short() { return tr("health.dataCheckSummary.distance"); }, get goalName() { return tr("queries.goals.distanceGoal"); }, unit: "km", format: "decimal2", partialToday: true, href: metricHref("distance") },
+  floors: { key: "floors", get label() { return tr("lib.extraMetrics.floors"); }, get short() { return tr("lib.extraMetrics.floors"); }, get goalName() { return tr("queries.goals.floorGoal"); }, format: "grouped", partialToday: true, href: metricHref("floors") },
+  azm: { key: "azm", get label() { return tr("lib.extraMetrics.activeZoneMinutes"); }, get short() { return tr("queries.goals.zoneMin"); }, get goalName() { return tr("queries.goals.activeZoneMinutesGoal"); }, format: "duration", partialToday: true, href: metricHref("azm") },
+  active_minutes: { key: "active_minutes", get label() { return tr("lib.extraMetrics.activeMinutes"); }, get short() { return tr("queries.goals.active"); }, get goalName() { return tr("queries.goals.activeMinutesGoal"); }, format: "duration", partialToday: true, href: metricHref("active_minutes") },
+  active_calories: { key: "active_calories", get label() { return tr("lib.extraMetrics.activeCalories"); }, get short() { return tr("health.dataCheckSummary.calories"); }, get goalName() { return tr("queries.goals.activeCaloriesGoal"); }, unit: "kcal", format: "grouped", partialToday: true, href: metricHref("active_calories") },
+  water: { key: "water", get label() { return tr("lib.extraMetrics.water"); }, get short() { return tr("lib.extraMetrics.water"); }, get goalName() { return tr("queries.goals.waterGoal"); }, unit: "ml", format: "grouped", partialToday: true, href: metricHref("water") },
+  sleep: { key: "sleep", get label() { return tr("ui.shells.HomeHeader.sleep"); }, get short() { return tr("ui.shells.HomeHeader.sleep"); }, get goalName() { return tr("queries.goals.sleepGoal"); }, format: "duration", partialToday: false, href: "/sleep" },
 };
 
 /** One day of a goal: the value so far, the day's target, progress on [0, 1] (null with no value) and whether it was met. */

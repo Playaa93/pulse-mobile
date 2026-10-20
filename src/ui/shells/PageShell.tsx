@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { createContext, useCallback, useContext, useRef, type ReactNode } from "react";
 import { View } from "react-native";
 import { Text } from "../Text";
@@ -18,6 +20,7 @@ const SentinelContext = createContext<((node: View) => void) | null>(null);
  * the header's ring row takes over. A zero-height marker, not a wrapper: the note under the dials is not part of the distance.
  */
 export function HeaderSentinel({ className }: { className?: string }) {
+  useLanguage();
   const mark = useContext(SentinelContext);
   const node = useRef<View>(null);
   return <View ref={node} collapsable={false} accessibilityElementsHidden className={className ?? "h-0"} onLayout={() => node.current && mark?.(node.current)} />;
@@ -49,6 +52,7 @@ export type PageShellProps = {
 
 /** Tab roots: Home, Health, Journal, More (spec §4.5). */
 export function PageShell({ title, dateSwitcher, actions, layout = "stack", slots, rings, headerRight, loading, onRefresh, children }: PageShellProps) {
+  useLanguage();
   const { scrollY, threshold, onScroll, progress } = useCollapse();
   const home = layout === "home";
   const top = useHeaderHeight(HEADER_ROW + (dateSwitcher && !home ? 40 : 0));
@@ -71,7 +75,7 @@ export function PageShell({ title, dateSwitcher, actions, layout = "stack", slot
   return (
     <ScreenScroll header={header} top={top} onScroll={onScroll} onRefresh={onRefresh ?? shellSync?.syncNow}>
       {body && <View className="w-full px-4 pt-2" accessibilityState={{ busy: !!loading }}>
-        {loading && <Text accessibilityLiveRegion="polite" className="absolute h-px w-px opacity-0">{title.trim() ? `Loading ${title}…` : "Loading…"}</Text>}
+        {loading && <Text accessibilityLiveRegion="polite" className="absolute h-px w-px opacity-0">{title.trim() ? tr("ui.shells.DetailShell.loading", { v0: title }) : tr("common.loading")}</Text>}
         {actions && <View className="mb-4 flex-row justify-end gap-2">{actions}</View>}
         <SampleCard />
         {home && slots ? (

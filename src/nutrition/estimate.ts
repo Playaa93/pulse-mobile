@@ -1,3 +1,4 @@
+import { language } from "@/i18n";
 // Food estimates: the person's own coach provider (src/coach, their key) reads a meal photo or a typed description and
 // answers with the foods it finds and their nutrients, as structured output: a zod schema given to the AI SDK
 // (`generateText` with `Output.object`, the SDK's replacement for the deprecated `generateObject`). The answer is then
@@ -232,7 +233,7 @@ export async function estimateFood(model: LanguageModel, input: EstimateInput, o
     if (ctl.signal.aborted) return { ok: false, problem: "cancelled" };
     const result = await generateText({
       model,
-      instructions: ESTIMATE_INSTRUCTIONS,
+      instructions: `${ESTIMATE_INSTRUCTIONS}\nWrite food names, portions and the note in ${language() === "fr" ? "French" : "English"}. Keep JSON keys, confidence codes and numeric values in the specified schema.`,
       messages: [{ role: "user", content: estimateMessage(input) }],
       output: Output.object({ name: "food_estimate", description: "The foods found and their nutrients", schema: FoodEstimateSchema }),
       maxOutputTokens: 8000,

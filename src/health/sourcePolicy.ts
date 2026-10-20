@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Which Health Connect records the import keeps (the person's choice, stored on the phone). Health Connect holds
 // whatever every app wrote: the Google Health (Fitbit) app's band data, but also the phone's own step counting (from
 // Google Health itself or another health app), which reads differently and doubled steps. The default keeps the band.
@@ -65,9 +66,9 @@ export const DEFAULT_SOURCE_POLICY: SourcePolicy = "fitbit_only";
 
 /** What a settings screen shows for each choice. */
 export const SOURCE_POLICY_LABELS: Record<SourcePolicy, { label: string; detail: string }> = {
-  fitbit_only: { label: "Fitbit only", detail: "Only what your Fitbit device measured, through the Google Health app. Phone step counts and other apps are left out." },
-  fitbit_first: { label: "Fitbit first", detail: "Your Fitbit device's data; on a day it has none of a kind, what your phone or other apps recorded." },
-  all: { label: "All apps", detail: "Everything in Health Connect. Where apps overlap, Pulse takes the largest source rather than adding them up." },
+  fitbit_only: { get label() { return tr("sourcePolicy.fitbit_only.label"); }, get detail() { return tr("sourcePolicy.fitbit_only.detail"); } },
+  fitbit_first: { get label() { return tr("sourcePolicy.fitbit_first.label"); }, get detail() { return tr("sourcePolicy.fitbit_first.detail"); } },
+  all: { get label() { return tr("sourcePolicy.all.label"); }, get detail() { return tr("sourcePolicy.all.detail"); } },
 };
 
 export const SOURCE_POLICY_KEY = "pulse.sourcePolicy";

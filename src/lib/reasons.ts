@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 import { Activity, HeartPulse, Hourglass, RefreshCw, Watch, type LucideIcon } from "lucide-react";
 
 // The single source of reason copy (spec §5.14) and the metric shape every view model uses (§4.8).
@@ -29,27 +30,27 @@ type ReasonEntry = { icon: LucideIcon | null; short: string; long: (nightsLeft?:
 export const REASONS: Record<ReasonCode, ReasonEntry> = {
   calibrating: {
     icon: Hourglass,
-    short: "Calibrating",
+    get short() { return tr("lib.reasons.calibrating"); },
     long: (n) =>
-      n === undefined ? "Calibrating" : `Calibrating: ${n} ${n === 1 ? "night" : "nights"} left`,
+      n === undefined ? tr("lib.reasons.calibrating") : tr("reasons.nightsLeft", { count: n }),
   },
   no_hrv_last_night: {
     icon: HeartPulse,
-    short: "No HRV last night",
-    long: () => "No HRV in last night’s sleep",
+    get short() { return tr("lib.reasons.noHrvLastNight"); },
+    long: () => tr("lib.reasons.noHrvInLastNightSSleep"),
   },
   awaiting_sleep_sync: {
     icon: RefreshCw,
-    short: "Waiting for sleep",
-    long: () => "Waiting for last night’s sleep to sync",
+    get short() { return tr("lib.reasons.waitingForSleep"); },
+    long: () => tr("lib.reasons.waitingForLastNightSSleepTo"),
   },
   insufficient_hr_data: {
     icon: Activity,
-    short: "Not enough data",
-    long: () => "Not enough heart-rate data",
+    get short() { return tr("lib.reasons.notEnoughData"); },
+    long: () => tr("lib.reasons.notEnoughHeartRateData"),
   },
-  band_not_worn: { icon: Watch, short: "Not worn", long: () => "No data: band not worn" },
-  no_data: { icon: null, short: "--", long: () => "No data" },
+  band_not_worn: { icon: Watch, get short() { return tr("lib.reasons.notWorn"); }, long: () => tr("lib.reasons.noDataBandNotWorn") },
+  no_data: { icon: null, short: "--", long: () => tr("lib.reasons.noData") },
 };
 
 /** Any unknown or missing code falls back to `no_data`. */
@@ -66,12 +67,12 @@ export function reasonCopy(code: string | null | undefined, nightsLeft?: number)
 /** Tags shown next to a number, with the explanation used in tooltips and info sheets. */
 export const TAG_COPY = {
   provisional: {
-    label: "Provisional",
-    explain: "Based on a short history while your baselines fill in. It firms up as more days arrive.",
+    get label() { return tr("lib.reasons.provisional"); },
+    get explain() { return tr("lib.reasons.basedOnAShortHistoryWhileYour"); },
   },
   stale_baseline: {
-    label: "Baseline stale",
-    explain: "Your baseline has 14 nights or more missing. Scores firm up as new nights arrive.",
+    get label() { return tr("lib.reasons.baselineStale"); },
+    get explain() { return tr("lib.reasons.yourBaselineHas14NightsOrMore"); },
   },
-  updated: { label: "Updated", explain: "Updated after a late sync added data." },
+  updated: { get label() { return tr("lib.reasons.updated"); }, get explain() { return tr("lib.reasons.updatedAfterALateSyncAddedData"); } },
 } as const;

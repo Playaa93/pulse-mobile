@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The chart explorer's pure model: series in explorer form (x = day index or minutes from local midnight), the range
 // windows, the y axes for a visible window (fixed, from zero, fitted, or aligned to the primary grid for a compare
 // series), the summary row and the scrub readout's text per point. No React Native imports, so vitest runs it.
@@ -19,13 +20,13 @@ import {
   type TickLevel,
   type WindowStats,
 } from "@/lib/chartmath";
-import { formatValue, isSymbolUnit, type FormatKey } from "@/lib/format";
+import { displayUnit, formatValue, isSymbolUnit, type FormatKey } from "@/lib/format";
 import type { ChartColorBy, ChartDayVM, ChartDef, ChartSeriesVM, DayView } from "@/queries/chart";
 
 export type Range = ExplorerRange | "day";
 export const DAILY_RANGES: readonly ExplorerRange[] = ["w", "m", "6m", "1y", "all"];
-export const RANGE_LABEL: Record<Range, string> = { day: "Day", w: "W", m: "M", "6m": "6M", "1y": "1Y", all: "All" };
-export const RANGE_ARIA: Record<Range, string> = { day: "One day", w: "1 week", m: "1 month", "6m": "6 months", "1y": "1 year", all: "All time" };
+export const RANGE_LABEL: Record<Range, string> = { get day() { return tr("onboarding.BirthDatePicker.day"); }, get w() { return tr("chart.range.week"); }, m: "M", "6m": "6M", get "1y"() { return tr("chart.range.year"); }, get all() { return tr("activity.ActivitiesScreen.all"); } };
+export const RANGE_ARIA: Record<Range, string> = { get day() { return tr("chart.model.oneDay"); }, get w() { return tr("ui.charts.TrendChart.1Week"); }, get m() { return tr("ui.charts.TrendChart.1Month"); }, get "6m"() { return tr("queries.trendView.6Months"); }, get "1y"() { return tr("ui.charts.TrendChart.1Year"); }, get all() { return tr("chart.model.allTime"); } };
 
 /** The `r` param: a known range, `day` only for a metric with a day view; else `m` (or `day` for a day-only view). */
 export function parseRange(raw: string | undefined, hasDay: boolean): Range {
@@ -127,34 +128,34 @@ export function dayCompareView(view: DayView, picked: DayView | "none" | null): 
   return DAY_DEFAULT_COMPARE[view] ?? null;
 }
 
-const DAY_NOUN: Record<DayView, string> = { hr: "heart rate", strain: "strain", stress: "stress", energy: "the Energy Bank", sleep: "sleep" };
+const DAY_NOUN: Record<DayView, string> = { get hr() { return tr("chart.model.heartRate"); }, get strain() { return tr("chart.strainNoun"); }, stress: "stress", get energy() { return tr("chart.model.theEnergyBank"); }, get sleep() { return tr("chart.sleepNoun"); } };
 
 /** The header's line under the metric's name: what its day view draws, and what sits beside it. Short enough for two lines. */
 export function dayWhy(view: DayView, metric: string, compare: DayView | null): string {
-  const w = compare ? `, with ${DAY_NOUN[compare]}` : "";
-  if (view === "strain") return compare ? `Strain as it builds${w}` : "Strain as it builds through the day";
-  if (view === "stress") return `Stress minute by minute${w}`;
-  if (view === "energy") return `Energy Bank through the day${w}`;
-  if (view === "sleep") return "Heart rate and sleep stages, overnight";
-  const base = metric === "rhr" ? "Heart rate against resting HR" : metric === "avg_hr" ? "Heart rate against its average" : metric === "workouts" ? "Heart rate, workouts highlighted" : "Heart rate minute by minute";
+  const w = compare ? tr("chart.model.with", { v0: DAY_NOUN[compare] }) : "";
+  if (view === "strain") return compare ? tr("chart.model.strainAsItBuilds", { v0: w }) : tr("chart.model.strainAsItBuildsThroughTheDay");
+  if (view === "stress") return tr("chart.model.stressMinuteByMinute", { v0: w });
+  if (view === "energy") return tr("chart.model.energyBankThroughTheDay", { v0: w });
+  if (view === "sleep") return tr("chart.model.heartRateAndSleepStagesOvernight");
+  const base = metric === "rhr" ? tr("chart.model.heartRateAgainstRestingHr") : metric === "avg_hr" ? tr("chart.model.heartRateAgainstItsAverage") : metric === "workouts" ? tr("chart.model.heartRateWorkoutsHighlighted") : tr("chart.model.heartRateMinuteByMinute");
   return `${base}${w}`;
 }
 
 /** The labelled line a heart-rate day draws for its metric: the day's average for Average heart rate, else its resting heart rate. */
 export function dayReference(metric: string, refs: ChartDayVM["refs"]): { y: number; label: string; name: string } | null {
-  if (metric === "avg_hr") return refs.average !== null ? { y: refs.average, label: "Day average", name: "the day's average" } : null;
-  return refs.resting !== null ? { y: refs.resting, label: "Resting HR", name: "resting HR" } : null;
+  if (metric === "avg_hr") return refs.average !== null ? { y: refs.average, label: tr("chart.model.dayAverage"), name: tr("chart.reference.average") } : null;
+  return refs.resting !== null ? { y: refs.resting, label: tr("chart.model.restingHr"), name: tr("chart.reference.resting") } : null;
 }
 
-export const STAGE_NAME = { awake: "Awake", rem: "REM", light: "Light", deep: "Deep" } as const;
+export const STAGE_NAME = { get awake() { return tr("queries.mobileExtras.awake"); }, get rem() { return tr("sleep.rem"); }, get light() { return tr("ui.metrics.SleepStages.light"); }, get deep() { return tr("queries.mobileExtras.deep"); } } as const;
 
 /** Per point of a night: the stage it falls in and that stretch's times ("REM · 02:14–02:37"); before bed or after waking, that. */
 export function stageNotes(xs: readonly number[], stages: ChartDayVM["stages"], bed: number | null, wake: number | null): string[] {
   const sorted = [...stages].sort((a, b) => a.from - b.from);
   const froms = sorted.map((s) => s.from);
   return xs.map((x) => {
-    if (bed !== null && x < bed) return "Before sleep";
-    if (wake !== null && x >= wake) return "After waking";
+    if (bed !== null && x < bed) return tr("chart.model.beforeSleep");
+    if (wake !== null && x >= wake) return tr("chart.model.afterWaking");
     const g = sorted[lastAtOrBefore(froms, x)];
     return g && x < g.to ? `${STAGE_NAME[g.stage]} · ${minuteText(g.from)}–${minuteText(g.to)}` : "";
   });
@@ -167,7 +168,7 @@ export function gainNotes(series: Series, window = 60): string[] {
     if (y === null) return "";
     const before = runningAt(series, x - window) ?? 0;
     const gain = y - before;
-    return gain >= 0.05 ? `+${formatValue(series.format, gain)} in the last hour` : "No change in the last hour";
+    return gain >= 0.05 ? tr("chart.model.inTheLastHour", { v0: formatValue(series.format, gain) }) : tr("chart.model.noChangeInTheLastHour");
   });
 }
 
@@ -236,7 +237,7 @@ export function runningStats(series: Series, from: number, to: number): { start:
 // --- Text ---
 
 /** The unit after a value: "%" tight, words after a space. */
-export const unitText = (unit?: string) => (!unit ? "" : isSymbolUnit(unit) ? unit : ` ${unit}`);
+export const unitText = (unit?: string) => (!unit ? "" : isSymbolUnit(unit) ? unit : ` ${displayUnit(unit)}`);
 
 /** "72 bpm", "64%", "--". */
 export const valueText = (v: number | null | undefined, format: FormatKey, unit?: string) => {
@@ -263,16 +264,16 @@ export type NoteBasis = {
 export function noteFor(v: number | null, format: FormatKey, unit: string | undefined, basis: NoteBasis): string {
   if (v === null) return "";
   const { baseline, goal, average, reference } = basis;
-  if (reference) return `${deltaText(v - reference.y, format, unit)} vs. ${reference.name}`;
+  if (reference) return tr("chart.model.vs", { v0: deltaText(v - reference.y, format, unit), v1: reference.name });
   if (baseline) {
-    if (v > baseline.mean + baseline.sd) return "Above your normal range";
-    if (v < baseline.mean - baseline.sd) return "Below your normal range";
-    return "Within your normal range";
+    if (v > baseline.mean + baseline.sd) return tr("chart.model.aboveYourNormalRange");
+    if (v < baseline.mean - baseline.sd) return tr("chart.model.belowYourNormalRange");
+    return tr("chart.model.withinYourNormalRange");
   }
-  if (goal != null) return v >= goal ? "Goal met" : `${formatValue(format, goal - v)}${unitText(unit)} to goal`;
+  if (goal != null) return v >= goal ? tr("chart.model.goalMet") : tr("chart.model.toGoal", { v0: formatValue(format, goal - v), v1: unitText(unit) });
   if (average != null) {
     const d = v - average;
-    return formatValue(format, Math.abs(d)) === formatValue(format, 0) ? "At the average" : `${deltaText(d, format, unit)} vs. average`;
+    return formatValue(format, Math.abs(d)) === formatValue(format, 0) ? tr("chart.model.atTheAverage") : tr("chart.model.vsAverage", { v0: deltaText(d, format, unit) });
   }
   return "";
 }

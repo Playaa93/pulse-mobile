@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Weekly Plan (a phone addition, after WHOOP's Weekly Plan): the week holding `day` against the person's weekly
 // targets (src/state/weeklyPlan.ts), with pace, streaks of weeks met and what each habit is worth on Pulse Age today.
 // The scoring is pure (src/core/algorithms/weeklyPlan.ts); this maps the Store's days into it. Pure over the Store.
@@ -31,12 +32,12 @@ export type PlanMeta = {
 };
 
 export const PLAN_META: Record<PlanKey, PlanMeta> = {
-  zone13: { key: "zone13", label: "Moderate activity", short: "Moderate", detail: "Zones 1–3, from a brisk walk up", unit: "min", format: "grouped", href: "/strain#zones", ageInput: "zone13" },
-  zone45: { key: "zone45", label: "Vigorous activity", short: "Vigorous", detail: "Zones 4–5", unit: "min", format: "grouped", href: "/strain#zones", ageInput: "zone45" },
-  strength: { key: "strength", label: "Strength sessions", short: "Strength", detail: "Strength, weights, HIIT or calisthenics", unit: "sessions", format: "int", href: "/activities", ageInput: "strength" },
-  steps: { key: "steps", label: "Daily steps", short: "Steps", detail: "Average a day", unit: "steps", format: "grouped", href: metricHref("steps"), ageInput: "steps" },
-  consistency: { key: "consistency", label: "Sleep consistency", short: "Consistency", detail: "Your last 7 nights", unit: "%", format: "int", href: "/sleep#consistency", ageInput: "sri" },
-  sleepNeed: { key: "sleepNeed", label: "Sleep need met", short: "Sleep need", detail: "Nights you slept your need", unit: "nights", format: "int", href: "/sleep#need", ageInput: "sleepHours" },
+  zone13: { key: "zone13", get label() { return tr("queries.health.moderateActivity"); }, get short() { return tr("queries.training.moderate"); }, get detail() { return tr("queries.weeklyPlan.zones13FromABriskWalk"); }, unit: "min", format: "grouped", href: "/strain#zones", ageInput: "zone13" },
+  zone45: { key: "zone45", get label() { return tr("queries.reports.vigorousActivity"); }, get short() { return tr("queries.weeklyPlan.vigorous"); }, get detail() { return tr("queries.weeklyPlan.zones45"); }, unit: "min", format: "grouped", href: "/strain#zones", ageInput: "zone45" },
+  strength: { key: "strength", get label() { return tr("queries.reports.strengthSessions"); }, get short() { return tr("activity.ActivitiesScreen.strength"); }, get detail() { return tr("queries.weeklyPlan.strengthWeightsHiitOrCalisthenics"); }, unit: "sessions", format: "int", href: "/activities", ageInput: "strength" },
+  steps: { key: "steps", get label() { return tr("queries.health.dailySteps"); }, get short() { return tr("health.dataCheckSummary.steps"); }, get detail() { return tr("queries.weeklyPlan.averageADay"); }, unit: "steps", format: "grouped", href: metricHref("steps"), ageInput: "steps" },
+  consistency: { key: "consistency", get label() { return tr("lib.dashboard.sleepConsistency"); }, get short() { return tr("queries.weeklyPlan.consistency"); }, get detail() { return tr("queries.weeklyPlan.yourLast7Nights"); }, unit: "%", format: "int", href: "/sleep#consistency", ageInput: "sri" },
+  sleepNeed: { key: "sleepNeed", get label() { return tr("queries.weeklyPlan.sleepNeedMet"); }, get short() { return tr("queries.weeklyPlan.sleepNeed"); }, get detail() { return tr("queries.weeklyPlan.nightsYouSleptYourNeed"); }, unit: "nights", format: "int", href: "/sleep#need", ageInput: "sleepHours" },
 };
 
 export type PlanRow = PlanItem &
