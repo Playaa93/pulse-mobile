@@ -1,3 +1,5 @@
+import { HEALTH_RECORD_LABEL } from "@/lib/healthRecordLabels";
+import { tr } from "@/i18n";
 // App-wide state: the Store, the profile, where data comes from (Health Connect, or the demo generator for "Explore
 // with sample data"), the sync + scoring run, and the query context the screens read with. Follows halo's
 // src/state/app.tsx (boot, status, run serialisation, the data version, the foreground re-sync, the demo source) in
@@ -243,7 +245,7 @@ export async function setPhoto(photo: string | null): Promise<void> {
 export async function exploreSample(): Promise<void> {
   const { store, profile, source } = state;
   if (!store) return;
-  patch({ status: "syncing", error: null, progress: { step: "Generating sample data", done: 0, total: 1 } });
+  patch({ status: "syncing", error: null, progress: { step: tr("state.app.generatingSampleData"), done: 0, total: 1 } });
   try {
     // The demo data belongs to a demo person with their own profile; keep the person's own to restore later.
     if (profile && source !== "demo") await AsyncStorage.setItem(OWN_PROFILE_KEY, JSON.stringify(profile));
@@ -271,7 +273,7 @@ export async function connectHealth(): Promise<PermissionState | null> {
   if (!store) return null;
   const perms = await askPermissions();
   if (perms.granted.length === 0) {
-    patch({ error: "Health Connect permissions were not granted." });
+    patch({ error: tr("state.app.healthConnectPermissionsWereNotGranted") });
     return perms;
   }
   let profile = state.profile;
@@ -316,17 +318,17 @@ export async function reset(): Promise<void> {
 export const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
 const STEP_LABEL: Record<string, string> = {
-  write: "Saving your data",
-  done: "Imported",
-  stage1: "Scoring your days",
-  stage2: "Scoring Recovery, Sleep and Strain",
-  journal: "Matching your journal",
+  get write() { return tr("state.app.savingYourData"); },
+  get done() { return tr("state.app.imported"); },
+  get stage1() { return tr("state.app.scoringYourDays"); },
+  get stage2() { return tr("state.app.scoringRecoverySleepAndStrain"); },
+  get journal() { return tr("state.app.matchingYourJournal"); },
 };
 
 /** A sync or scoring step ("read:HeartRate", "stage2"…) as a short line (halo's progressLabel, without the count). */
 export const stepLabel = (step: string): string =>
   step.startsWith("read:day:")
-    ? "Reading Health Connect"
+    ? tr("state.app.readingHealthConnect")
     : step.startsWith("read:")
-      ? `Reading ${step.slice(5).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}`
+      ? tr("state.app.reading", { v0: HEALTH_RECORD_LABEL[step.slice(5) as keyof typeof HEALTH_RECORD_LABEL] ?? step.slice(5).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase() })
       : (STEP_LABEL[step] ?? step);

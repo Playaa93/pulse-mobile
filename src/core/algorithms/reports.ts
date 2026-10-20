@@ -356,11 +356,21 @@ function riseLine(s: AssessmentStat, word: string): string {
   return `${name[s.key]} ${verb} ${by[s.key]} from last ${word}; keep doing what you’re doing.`;
 }
 
+/** Optional presentation copy supplied by the caller; the engine has no global locale or I/O. */
+export type AssessmentCopy = {
+  decline: (key: AssessKey, delta: number, target: number | null) => string;
+  gap: (key: AssessKey, value: number, sleep: Assessment["sleep"], targets: PlanTargets) => string;
+  rise: (stat: AssessmentStat, kind: Report["kind"]) => string;
+  early: (days: number, kind: Report["kind"]) => string;
+  sparsePrevious: (days: number, kind: Report["kind"]) => string;
+  steady: (kind: Report["kind"]) => string;
+};
+
 /**
  * The assessment of a period: `cur` its days (up to the last with data), `prev` the period before's, `targets` the
  * Weekly Plan's (the gaps a focus point can name).
  */
-export function assessPeriod(cur: readonly AssessmentDay[], prev: readonly AssessmentDay[], kind: Report["kind"], targets: PlanTargets = PLAN_DEFAULTS.targets): Assessment {
+export function assessPeriod(cur: readonly AssessmentDay[], prev: readonly AssessmentDay[], kind: Report["kind"], targets: PlanTargets = PLAN_DEFAULTS.targets, copy?: AssessmentCopy): Assessment {
   const word = kind;
   const { minDays, changeThreshold, focusThreshold } = assessConfig;
   const stats = Object.fromEntries(
@@ -390,8 +400,9 @@ export function assessPeriod(cur: readonly AssessmentDay[], prev: readonly Asses
   const candidates: { salience: number; line: string }[] = [];
   for (const key of ASSESS_KEYS) {
     const s = stats[key];
-    const drop = s.move !== null && s.move <= -focusThreshold ? { salience: -s.move, line: declineLine(key, Math.abs(s.delta!), key === "strength" ? targets.strength : null) } : null;
+    const drop = s.move !== null && s.move <= -focusThreshold ? { salience: -s.move, line: (copy?.decline ?? declineLine)(key, Math.abs(s.delta!), key === "strength" ? targets.strength : null) } : null;
     const gap = gapOf(key, s, sleep, targets);
+    if (gap && copy) gap.line = copy.gap(key, s.value!, sleep, targets);
     const best = [drop, gap && gap.salience >= focusThreshold ? gap : null].filter((x) => x !== null).sort((a, b) => b.salience - a.salience)[0];
     if (best?.line) candidates.push(best);
   }
@@ -401,13 +412,13 @@ export function assessPeriod(cur: readonly AssessmentDay[], prev: readonly Asses
   const prevDays = prev.filter(hasAny).length;
   const focus: string[] = [];
   // Too few days to call a trend: say so first, as noop's digest does (its #463), then still name a clear gap.
-  if (days > 0 && days < minDays) focus.push(`Only ${plural(days, "day")} into this ${word} so far: too early to call a trend.`);
+  if (days > 0 && days < minDays) focus.push(copy?.early(days, kind) ?? `Only ${plural(days, "day")} into this ${word} so far: too early to call a trend.`);
   focus.push(...candidates.map((c) => c.line));
   if (!focus.length) {
     const top = improved.find((s) => s.move! >= focusThreshold);
-    if (top) focus.push(riseLine(top, word));
-    else if (days >= minDays && prevDays > 0 && prevDays < minDays) focus.push(`Last ${word} had only ${plural(prevDays, "day")} of data, so the changes are rough, not a trend.`);
-    else if (days > 0) focus.push(`A steady ${word}: nothing moved much from last ${word}.`);
+    if (top) focus.push(copy?.rise(top, kind) ?? riseLine(top, word));
+    else if (days >= minDays && prevDays > 0 && prevDays < minDays) focus.push(copy?.sparsePrevious(prevDays, kind) ?? `Last ${word} had only ${plural(prevDays, "day")} of data, so the changes are rough, not a trend.`);
+    else if (days > 0) focus.push(copy?.steady(kind) ?? `A steady ${word}: nothing moved much from last ${word}.`);
   }
 
   return { stats, sleep, improved: improved.slice(0, 2), declined: declined.slice(0, 2), focus: focus.slice(0, 2), days, prevDays };

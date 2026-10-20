@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The DateSwitcher calendar's month of scores (spec §4.3). Ported from Pulse's src/server/queries/calendar.ts.
 import { addDays } from "@/lib/time";
 import { finite, loadDays, type QueryCtx, dayStrainOf } from "./common";
@@ -7,7 +8,7 @@ export const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** Recovery, Strain (a percent) and Sleep performance for every day of `month` ("YYYY-MM"). */
 export async function getCalendarMonth(month: string, ctx: QueryCtx): Promise<CalendarMonthVM> {
-  if (!MONTH.test(month)) throw new Error(`Bad month: ${month}`);
+  if (!MONTH.test(month)) throw new Error(tr("queries.calendar.badMonth", { v0: month }));
   const [y, m] = month.split("-").map(Number);
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const rows = await loadDays(ctx, `${month}-01`, addDays(`${month}-01`, last - 1));

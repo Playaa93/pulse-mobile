@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The Trend View's chart (web: components/charts/TrendViewChart.tsx, Recharts). One Skia <Canvas> of marks with every
 // piece of text laid over it as React Native <Text>, as the kit's charts are built (src/ui/charts). The numbers (domain,
 // ticks, rows) come from trendViewLayout.ts, once per data set; the plot below only maps them to pixels.
@@ -37,11 +39,14 @@ const roundedPath = (x: number, top: number, w: number, h: number, r: number) =>
 
 
 export function TrendViewChart(p: TrendViewChartProps) {
+  const locale = useLanguage();
   const { label, bars, chart, range, format, unit, series, domain, typical, average, segments, compact } = p;
   // Once per data set: neither the width nor the theme changes any of this.
   const m = useMemo(
     () => buildModel({ label, bars, chart, range, format, unit, series, domain, typical, average, segments, compact, colorBy: p.colorBy, direction: p.direction }, (v) => formatValue(format, v)),
-    [label, bars, chart, range, format, unit, series, domain, typical, average, segments, compact, p.colorBy, p.direction],
+    // Number formatting reads the current locale, even when the label is unchanged.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [label, bars, chart, range, format, unit, series, domain, typical, average, segments, compact, p.colorBy, p.direction, locale],
   );
   return (
     <ChartFigure summary={m.summary} height={m.height}>
@@ -51,6 +56,7 @@ export function TrendViewChart(p: TrendViewChartProps) {
 }
 
 function Plot({ p, m, width, height }: { p: TrendViewChartProps; m: Model; width: number; height: number }) {
+  useLanguage();
   const { css, c } = useTheme();
   const fmt = (v: number) => formatValue(p.format, v);
   const { rows, keys, weekly, pair } = m;
@@ -180,7 +186,7 @@ function Plot({ p, m, width, height }: { p: TrendViewChartProps; m: Model; width
         );
       })}
 
-      {m.showAvg && <Pill x={2} y={y(p.average!)} text="AVG." fill={c.foreground} color={c.background} />}
+      {m.showAvg && <Pill x={2} y={y(p.average!)} text={tr("trends.TrendViewChart.avg")} fill={c.foreground} color={c.background} />}
 
       {/* Each column's value over it (bars: the bar's colour; a stack's total: the text colour). */}
       {(p.chart === "stack" || p.chart === "bars") && m.labelled && !m.faint &&

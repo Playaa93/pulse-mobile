@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Heart rate's hero while the band shares heart rate over Bluetooth (from halo src/screens/health/HeartRate.tsx,
 // `LiveHero` and the hero's Go live button). Today, while live or reconnecting, the live section takes the hero: the
 // band's bpm with a beating heart, the "Live · Fitbit Air" pill, the last 2 minutes and the live RMSSD. Otherwise the
@@ -17,12 +19,13 @@ export const GO_LIVE_HREF = "/settings?s=live&go=1";
 
 /** "HRV 42 ms · RMSSD, last minute", "HRV: measuring…" while too few clean beats, or null without RR. */
 function rmssdLine(rmssd: number | null, rrCount: number): string | null {
-  if (rmssd !== null) return `HRV ${Math.round(rmssd)} ms · RMSSD, last minute`;
-  return rrCount ? "HRV: measuring…" : null;
+  if (rmssd !== null) return tr("breathe.BreatheScreen.hrvMsRmssdLastMinute", { v0: Math.round(rmssd) });
+  return rrCount ? tr("breathe.BreatheScreen.hrvMeasuring") : null;
 }
 
 /** The live section. It reads the per-beat data itself, so only it re-renders with each flush (≤ 4 a second). */
 function LiveHero() {
+  useLanguage();
   const live = useLiveBle();
   const lost = live.status !== "live";
   const bpm = live.bpm;
@@ -31,7 +34,7 @@ function LiveHero() {
     <View className="w-full max-w-[360px] items-center gap-3 py-4">
       <View
         accessible
-        accessibilityLabel={`${lost ? "Reconnecting. Last live reading" : "Live heart rate"} ${bpm ?? "unknown"} beats per minute${live.device?.name ? ` from ${live.device.name}` : ""}`}
+        accessibilityLabel={tr("health.LiveHeartRateHero.beatsPerMinute", { v0: lost ? tr("health.LiveHeartRateHero.reconnectingLastLiveReading") : tr("settings.LiveHeartRate.liveHeartRate"), v1: bpm ?? "unknown", v2: live.device?.name ? tr("health.LiveHeartRateHero.from", { v0: live.device.name }) : "" })}
         className="flex-row items-center gap-3"
       >
         <BeatingHeart bpm={bpm ?? 60} live={!lost} size={30} />
@@ -43,7 +46,7 @@ function LiveHero() {
         />
       </View>
       <LivePill name={live.device?.name ?? null} lost={lost} className="self-center" />
-      {live.contact === false && <Text className="text-[13px] font-medium leading-[18px] text-recovery-red-text">No skin contact: wear the band snug.</Text>}
+      {live.contact === false && <Text className="text-[13px] font-medium leading-[18px] text-recovery-red-text">{tr("breathe.BreatheScreen.noSkinContactWearTheBandSnug")}</Text>}
       <LiveTrace history={live.history} />
       {hrv && <Text className={CAPTION}>{hrv}</Text>}
       <StopLiveButton onPress={() => void live.disconnect()} className="mt-1" />
@@ -53,6 +56,7 @@ function LiveHero() {
 
 /** Today and live: the live section. Otherwise `children` (the day's hero), with Go live under it today. */
 export function LiveHeartRateHero({ isToday, children }: { isToday: boolean; children: ReactNode }) {
+  useLanguage();
   const { status } = useLiveBleControl();
   if (isToday && (status === "live" || status === "lost")) return <LiveHero />;
   return (

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The web's <input type="datetime-local"> and <input type="date"> (Log.tsx): a field like the other inputs that shows the
 // value as text and opens the system's picker. iOS: the picker's wheels in a centred card over a dim, as the app's
 // dialogs (InfoDialog), with Done. Android: the system date dialog, then the time dialog. Both come from @expo/ui's
@@ -27,13 +29,14 @@ export type DateTimeFieldProps = {
 const FRAME = "h-11 justify-center rounded-lg border border-input px-2.5";
 
 export function DateTimeField({ value, onChange, mode, max, min, label }: DateTimeFieldProps) {
+  useLanguage();
   const { c, scheme } = useTheme();
   const [step, setStep] = useState<"date" | "time" | null>(null);
   const date = mode === "date";
   const clamp = (w: string) => (max && w > max ? max : min && w < min ? min : w);
   const maximumDate = max ? wallToDate(max) : undefined;
   const minimumDate = min ? wallToDate(min) : undefined;
-  const shown = value ? (date ? formatDay(value, DAY.full) : `${formatDay(value.slice(0, 10), DAY.full)}, ${value.slice(11, 16)}`) : date ? "Choose a day" : "Choose a time";
+  const shown = value ? (date ? formatDay(value, DAY.full) : `${formatDay(value.slice(0, 10), DAY.full)}, ${value.slice(11, 16)}`) : date ? tr("log.DateTimeField.chooseADay") : tr("log.DateTimeField.chooseATime");
   const current = wallToDate(value || (date ? dateToDay(new Date()) : dateToWall(new Date())));
 
   const field = (
@@ -60,7 +63,7 @@ export function DateTimeField({ value, onChange, mode, max, min, label }: DateTi
       <>
         {field}
         <Modal visible={step !== null} transparent animationType="fade" onRequestClose={() => setStep(null)}>
-          <Pressable accessibilityLabel="Close" onPress={() => setStep(null)} className="flex-1 items-center justify-center bg-dim-strong px-4">
+          <Pressable accessibilityLabel={tr("common.close")} onPress={() => setStep(null)} className="flex-1 items-center justify-center bg-dim-strong px-4">
             {/* The card swallows taps, so only the dim closes it. */}
             <Panel ring={null} shadow={null} onStartShouldSetResponder={() => true} className="w-full max-w-[360px] items-center gap-4 rounded-3xl p-4">
               <DateTimePicker
@@ -78,8 +81,7 @@ export function DateTimeField({ value, onChange, mode, max, min, label }: DateTi
                 }}
               />
               <Button onPress={() => setStep(null)}>
-                Done
-              </Button>
+                {tr("common.done")}</Button>
             </Panel>
           </Pressable>
         </Modal>

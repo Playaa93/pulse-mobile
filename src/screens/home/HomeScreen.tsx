@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { useFocusEffect } from "expo-router";
@@ -60,19 +62,19 @@ import { push } from "@/ui/navigate";
 import { Press } from "@/ui/Press";
 
 const STRESS_TONE: Record<StressLevel, { chip: string; text: string; word: string }> = {
-  low: { chip: "bg-stress-low/15", text: "text-stress-low-text", word: "Low" },
-  medium: { chip: "bg-stress-medium/15", text: "text-stress-medium-text", word: "Medium" },
-  high: { chip: "bg-stress-high/15", text: "text-stress-high-text", word: "High" },
+  low: { chip: "bg-stress-low/15", text: "text-stress-low-text", get word() { return tr("health.StressScreen.low"); } },
+  medium: { chip: "bg-stress-medium/15", text: "text-stress-medium-text", get word() { return tr("queries.trendView.medium"); } },
+  high: { chip: "bg-stress-high/15", text: "text-stress-high-text", get word() { return tr("health.StressScreen.high"); } },
 };
 const CHIP_BOX = "h-7 min-w-7 shrink-0 items-center justify-center rounded-md px-1";
 const NO_BAND_INFO = {
-  title: "No band data yet",
-  body: (
+  get title() { return tr("home.HomeScreen.noBandDataYet"); },
+  get body() { return (
     <>
-      <Text className="text-[15px] leading-[22px] text-foreground-body">Sleep, Recovery and Strain are scored from your Fitbit’s heart rate, which your phone can’t measure.</Text>
-      <Text className="text-[15px] leading-[22px] text-foreground-body">Until your Fitbit syncs, Home shows what your phone counts: steps, distance, calories and active minutes.</Text>
+      <Text className="text-[15px] leading-[22px] text-foreground-body">{tr("home.HomeScreen.sleepRecoveryAndStrainAreScoredFrom")}</Text>
+      <Text className="text-[15px] leading-[22px] text-foreground-body">{tr("home.HomeScreen.untilYourFitbitSyncsHomeShowsWhat")}</Text>
     </>
-  ),
+  ); },
 };
 
 const go = (href: string) => push(href);
@@ -87,6 +89,7 @@ const homeQuery = (d: string) => async (ctx: QueryCtx): Promise<HomePageVM> => {
 const homeKey = (d: string) => ["home", d] as const;
 
 export function HomeScreen() {
+  useLanguage();
   const [d] = useSelectedDay();
   const { timeZone } = useShellCalendar();
   const { data } = useScreen(homeQuery(d), homeKey(d));
@@ -121,6 +124,7 @@ export function HomeScreen() {
 }
 
 function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
+  useLanguage();
   const d = vm.day;
   const { today } = vm;
   const at = (href: string) => dayHref(href, d, today);
@@ -130,7 +134,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
 
   return (
     <PageShell
-      title="Home"
+      title={tr("ui.shells.TabBar.home")}
       layout="home"
       rings={{
         sleep: { value: dials.sleep.value, href: at("/sleep") },
@@ -166,7 +170,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
                 <View className="items-center pt-3">
                   {vm.phone ? (
                     <InfoCardTrigger info={NO_BAND_INFO} className="flex-row items-center gap-1.5 rounded-md py-3">
-                      <ReasonPlaceholder reason={dials.reason.reason} size="sm" copy="No band data yet" />
+                      <ReasonPlaceholder reason={dials.reason.reason} size="sm" copy={tr("home.noBandData")} />
                       <Icon icon={Info} size={14} tone="muted-foreground" strokeWidth={1.75} />
                     </InfoCardTrigger>
                   ) : (
@@ -192,10 +196,10 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
               {vm.insights.length > 0 && <HomeInsight day={d} items={vm.insights} />}
               {vm.monitorAlert && <MonitorAlert alert={vm.monitorAlert} href={at("/health/monitor")} />}
             </View>
-            <SectionShell variant="section" title="My Day" action={<PlusKey label={vm.isToday ? "Add to today" : `Add to ${formatDay(d, DAY.short)}`} />}>
+            <SectionShell variant="section" title={tr("home.HomeScreen.myDay")} action={<PlusKey label={vm.isToday ? tr("home.HomeScreen.addToToday") : tr("home.HomeScreen.addTo", { v0: formatDay(d, DAY.short) })} />}>
               <View className="gap-3">
                 {vm.outlook && <DayBanner outlook={vm.outlook} />}
-                <SectionShell variant="card" title={vm.activities.title} action={<IconLink href="/activities" label="All activities" icon={Maximize2} />}>
+                <SectionShell variant="card" title={vm.activities.title} action={<IconLink href="/activities" label={tr("home.HomeScreen.allActivities")} icon={Maximize2} />}>
                   {vm.activities.items.length || vm.activities.detected.length ? (
                     <View className="gap-1.5">
                       {vm.activities.items.map((it) =>
@@ -208,23 +212,23 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
                       {vm.activities.detected.map((it) => <DetectedRow key={`detected-${it.start}`} item={it} timeZone={timeZone} />)}
                     </View>
                   ) : (
-                    <EmptyState body={vm.isToday ? "No activities yet today. Workouts appear after Fitbit syncs them." : "No activities on this day."} />
+                    <EmptyState body={vm.isToday ? tr("activity.ActivitiesScreen.noActivitiesYetTodayWorkoutsAppearAfter") : tr("home.HomeScreen.noActivitiesOnThisDay")} />
                   )}
                   {/* Workouts come from Google, so Add explains importing rather than creating a local workout. */}
                   <View className="mt-3">
                     <InfoCardTrigger info={ADD_ACTIVITY_INFO} activeScale={0.96} className={CARD_BUTTON}>
-                      <CardButtonContent icon={Plus} label="Add activity" />
+                      <CardButtonContent icon={Plus} label={tr("home.HomeScreen.addActivity")} />
                     </InfoCardTrigger>
                   </View>
                 </SectionShell>
                 {vm.isToday && (
-                  <SectionShell variant="card" title="Tonight’s sleep" info={TONIGHT_INFO} fill action={<IconLink href={at("/sleep?section=planner")} label="Open Sleep Planner" icon={ChevronRight} />}>
+                  <SectionShell variant="card" title={tr("info.tonightSSleep")} info={TONIGHT_INFO} fill action={<IconLink href={at("/sleep?section=planner")} label={tr("home.HomeScreen.openSleepPlanner")} icon={ChevronRight} />}>
                     <MetricState
                       metric={vm.tonight}
                       skeleton={null}
                       renderReason={(r, meta) => (
                         <View className="my-auto">
-                          <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? "Sleep Planner needs 7 nights to learn your wake time." : undefined} />
+                          <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? tr("home.HomeScreen.sleepPlannerNeeds7NightsToLearn") : undefined} />
                         </View>
                       )}
                     >
@@ -241,7 +245,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
         aside: (
           <SectionShell
             variant="section"
-            title="My Dashboard"
+            title={tr("home.EditDashboard.myDashboard")}
             action={<EditDashboardButton keys={dashboardKeysShown} empty={vm.dashboard.empty} />}
           >
             <View accessibilityRole="list" className="gap-2">
@@ -251,7 +255,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
             </View>
             {/* One point cannot show a trend. */}
             {vm.strainRecovery.filter((p) => p.strain !== null || p.recovery !== null).length >= 2 && (
-              <SectionShell variant="card" title="Strain & recovery" info={STRAIN_RECOVERY_INFO} fill className="mt-3">
+              <SectionShell variant="card" title={tr("info.strainRecovery")} info={STRAIN_RECOVERY_INFO} fill className="mt-3">
                 <StrainRecoveryChart points={vm.strainRecovery} today={d} />
               </SectionShell>
             )}
@@ -260,7 +264,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
         bottom: vm.weeklyTeaser && (
           <GradientBanner from={c["banner-from"]} to={c["banner-to"]} role="link" onPress={() => go(`/reports/${vm.weeklyTeaser!.period}`)}>
             <Icon icon={CalendarRange} size={22} tone="foreground" strokeWidth={1.5} />
-            <Text className="min-w-0 flex-1 text-base font-semibold leading-[22px]">Your week in review</Text>
+            <Text className="min-w-0 flex-1 text-base font-semibold leading-[22px]">{tr("home.HomeScreen.yourWeekInReview")}</Text>
             <Text className="font-numeric text-xs font-medium leading-4 tabular-nums text-foreground-secondary">{rangeLabel(vm.weeklyTeaser.start, vm.weeklyTeaser.end)}</Text>
             <Icon icon={ChevronRight} size={20} tone="foreground-secondary" strokeWidth={1.75} />
           </GradientBanner>
@@ -271,6 +275,7 @@ function Home({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
 }
 
 function DayBanner({ outlook }: { outlook: NonNullable<HomeVM["outlook"]> }) {
+  useLanguage();
   const { c } = useTheme();
   const [open, setOpen] = useState(false);
   const review = outlook.kind === "review";
@@ -288,8 +293,9 @@ function DayBanner({ outlook }: { outlook: NonNullable<HomeVM["outlook"]> }) {
 }
 
 function JournalWeek({ vm, at }: { vm: HomePageVM; at: (href: string) => string }) {
+  useLanguage();
   return (
-    <SectionShell variant="card" title="My journal" action={<IconLink href={at("/journal")} label="Open Journal" icon={ChevronRight} />}>
+    <SectionShell variant="card" title={tr("home.HomeScreen.myJournal")} action={<IconLink href={at("/journal")} label={tr("home.HomeScreen.openJournal")} icon={ChevronRight} />}>
       <View accessibilityRole="list" className="flex-row pt-1">
         {vm.journalWeek.map((w) => {
           const current = w.day === vm.day;
@@ -298,7 +304,7 @@ function JournalWeek({ vm, at }: { vm: HomePageVM; at: (href: string) => string 
               activeBg="bg-accent"
               key={w.day}
               accessibilityRole="link"
-              accessibilityLabel={`${formatDay(w.day, DAY.long)}: ${w.done ? "checked in" : "no check-in"}`}
+              accessibilityLabel={`${formatDay(w.day, DAY.long)}: ${w.done ? tr("home.HomeScreen.checkedIn") : tr("home.HomeScreen.noCheckIn")}`}
               accessibilityState={{ selected: current }}
               onPress={() => go(dayHref("/journal", w.day, vm.today))}
               className="min-h-16 flex-1 items-center justify-center gap-2 rounded-lg"
@@ -313,15 +319,16 @@ function JournalWeek({ vm, at }: { vm: HomePageVM; at: (href: string) => string 
           );
         })}
       </View>
-      <CardButtonLink href="/journal/insights" icon={Lightbulb} label="Behaviour insights" className="mt-3" />
+      <CardButtonLink href="/journal/insights" icon={Lightbulb} label={tr("coach.Evidence.behaviourInsights")} className="mt-3" />
     </SectionShell>
   );
 }
 
 function MonitorAlert({ alert, href }: { alert: NonNullable<HomeVM["monitorAlert"]>; href: string }) {
+  useLanguage();
   const { c } = useTheme();
   const illness = alert.kind === "illness";
-  const names = alert.names.length > 1 ? `${alert.names.slice(0, -1).join(", ")} and ${alert.names.at(-1)}` : (alert.names[0] ?? "Some vitals");
+  const names = alert.names.length > 1 ? tr("background.smart.and", { v0: alert.names.slice(0, -1).join(", "), v1: alert.names.at(-1) }) : (alert.names[0] ?? tr("home.someVitals"));
   // ring-1 ring-recovery-red/60 (or warning/50): one more shadow on the card's own.
   const shadow = useCardStyle(ring(illness ? c["alert-ring"] : c["warning-ring"], { inset: false }));
   return (
@@ -331,15 +338,15 @@ function MonitorAlert({ alert, href }: { alert: NonNullable<HomeVM["monitorAlert
         <Icon icon={illness ? CircleAlert : TriangleAlert} size={20} tone={illness ? "recovery-red-text" : "warning-text"} strokeWidth={1.75} />
       </View>
       <View className="min-w-0 flex-1 gap-0.5">
-        <Text className="text-base font-semibold leading-[22px]">{illness ? "Your body may be fighting something" : `${alert.count} ${alert.count === 1 ? "vital" : "vitals"} outside your normal range`}</Text>
+        <Text className="text-base font-semibold leading-[22px]">{illness ? tr("background.smart.yourBodyMayBeFightingSomething") : tr("home.vitalsOut", { count: alert.count })}</Text>
         <View className="gap-2">
           <Text className="text-[15px] leading-[22px] text-foreground-secondary">
             {illness
-              ? "Several vitals moved away from your normal range together, a pattern that often comes before feeling unwell. Consider an easier day."
-              : `${names} ${alert.names.length === 1 ? "is" : "are"} outside your usual range. This can be an early sign of illness or heavy strain.`}
+              ? tr("background.smart.severalVitalsMovedAwayFromYourNormal")
+              : tr("home.vitalDetail", { names, count: alert.names.length })}
           </Text>
           <Press activeOpacity={0.7} accessibilityRole="link" onPress={() => go(href)} hitSlop={{ left: 8, right: 8, top: 14, bottom: 14 }} className="flex-row items-center gap-0.5 self-start">
-            <Text className="text-xs font-bold uppercase leading-4 tracking-[0.1em]">View Health Monitor</Text>
+            <Text className="text-xs font-bold uppercase leading-4 tracking-[0.1em]">{tr("home.HomeScreen.viewHealthMonitor")}</Text>
             <Icon icon={ChevronRight} size={14} tone="foreground" strokeWidth={2} />
           </Press>
         </View>
@@ -349,13 +356,14 @@ function MonitorAlert({ alert, href }: { alert: NonNullable<HomeVM["monitorAlert
 }
 
 function PhoneActivity({ stats, link }: { stats: KeyStat[]; link: { d: string; today: string } }) {
+  useLanguage();
   // An odd count lets the first tile (steps) span the row as a wide strip that spells out its comparison.
   const wide = stats.length % 2 === 1;
   const rest = wide ? stats.slice(1) : stats;
   const rows: KeyStat[][] = [];
   for (let i = 0; i < rest.length; i += 2) rows.push(rest.slice(i, i + 2));
   return (
-    <SectionShell variant="section" title="From your phone" aside="vs. 30-day avg">
+    <SectionShell variant="section" title={tr("home.HomeScreen.fromYourPhone")} aside="vs. 30-day avg">
       <View accessibilityRole="list" className="gap-3">
         {wide && <KeyStatRow variant="tile" {...statProps(stats[0], link)} wide />}
         {rows.map((row) => (
@@ -371,6 +379,7 @@ function PhoneActivity({ stats, link }: { stats: KeyStat[]; link: { d: string; t
 }
 
 function MonitorLine({ chip, chipClass, top, topClass, bottom }: { chip: ReactNode; chipClass: string; top: string; topClass: string; bottom: string }) {
+  useLanguage();
   return (
     <View className="min-w-0 flex-row items-center gap-2">
       <View className={cn(CHIP_BOX, chipClass)}>{chip}</View>
@@ -383,61 +392,64 @@ function MonitorLine({ chip, chipClass, top, topClass, bottom }: { chip: ReactNo
   );
 }
 
-const NO_READING_CHIP = <Text className="font-numeric text-base font-bold text-muted-foreground">{MISSING}</Text>;
+const renderNoReadingChip = () => <Text className="font-numeric text-base font-bold text-muted-foreground">{MISSING}</Text>;
 
 function MonitorCard({ vm, href }: { vm: HomePageVM; href: string }) {
+  useLanguage();
   const m = vm.monitor;
   return (
-    <SectionShell variant="card" title="Health Monitor" info={false} href={href} fill>
+    <SectionShell variant="card" title={tr("settings.NotificationsSection.healthMonitor")} info={false} href={href} fill>
       {m.value === null || m.value.inRange + m.value.flagged === 0 ? (
         // No vital judged yet (no readings, or every baseline still calibrating): never "Within range".
-        <MonitorLine chip={NO_READING_CHIP} chipClass="bg-secondary" top="No readings" topClass="text-foreground-secondary" bottom={reasonCopy(m.value === null ? m.reason : "calibrating").short} />
+        <MonitorLine chip={renderNoReadingChip()} chipClass="bg-secondary" top={tr("home.noReadings")} topClass="text-foreground-secondary" bottom={reasonCopy(m.value === null ? m.reason : "calibrating").short} />
       ) : m.value.flagged === 0 ? (
-        <MonitorLine chip={<Icon icon={Check} size={16} tone="optimal-text" strokeWidth={2.5} />} chipClass="bg-optimal/15" top="Within range" topClass="text-optimal-text" bottom={`${m.value.inRange}/${m.value.total} Metrics`} />
+        <MonitorLine chip={<Icon icon={Check} size={16} tone="optimal-text" strokeWidth={2.5} />} chipClass="bg-optimal/15" top={tr("home.withinRange")} topClass="text-optimal-text" bottom={tr("home.HomeScreen.metrics", { v0: m.value.inRange, v1: m.value.total })} />
       ) : (
-        <MonitorLine chip={<Icon icon={TriangleAlert} size={16} tone="warning-text" strokeWidth={2} />} chipClass="bg-warning/15" top="Out of range" topClass="text-warning-text" bottom={`${m.value.inRange}/${m.value.total} Metrics`} />
+        <MonitorLine chip={<Icon icon={TriangleAlert} size={16} tone="warning-text" strokeWidth={2} />} chipClass="bg-warning/15" top={tr("home.outRange")} topClass="text-warning-text" bottom={tr("home.HomeScreen.metrics", { v0: m.value.inRange, v1: m.value.total })} />
       )}
     </SectionShell>
   );
 }
 
 function StressCard({ vm, href, timeZone }: { vm: HomePageVM; href: string; timeZone: string }) {
+  useLanguage();
   const s = vm.stress;
   if (s.value === null)
     return (
-      <SectionShell variant="card" title="Stress Monitor" info={false} href={href} fill>
-        <MonitorLine chip={NO_READING_CHIP} chipClass="bg-secondary" top={s.reason === "band_not_worn" ? "Not worn" : "No stress scored yet"} topClass="text-foreground-secondary" bottom={vm.isToday ? "Today" : "This day"} />
+      <SectionShell variant="card" title={tr("lib.dashboard.stressMonitor")} info={false} href={href} fill>
+        <MonitorLine chip={renderNoReadingChip()} chipClass="bg-secondary" top={s.reason === "band_not_worn" ? tr("lib.reasons.notWorn") : tr("home.HomeScreen.noStressScoredYet")} topClass="text-foreground-secondary" bottom={vm.isToday ? tr("common.today") : tr("home.HomeScreen.thisDay")} />
       </SectionShell>
     );
   const tone = STRESS_TONE[s.value.level];
   return (
-    <SectionShell variant="card" title="Stress Monitor" info={false} href={href} fill>
+    <SectionShell variant="card" title={tr("lib.dashboard.stressMonitor")} info={false} href={href} fill>
       <MonitorLine
         chip={<Text className={cn("font-numeric text-lg font-bold tabular-nums", tone.text)}>{formatValue("int", s.value.value)}</Text>}
         chipClass={tone.chip}
         top={tone.word}
         topClass={tone.text}
-        bottom={s.value.at !== null ? clock(s.value.at, timeZone) : "Day average"}
+        bottom={s.value.at !== null ? clock(s.value.at, timeZone) : tr("chart.model.dayAverage")}
       />
     </SectionShell>
   );
 }
 
 function StressTile({ vm, href, timeZone }: { vm: HomePageVM; href: string; timeZone: string }) {
+  useLanguage();
   const s = vm.stress.value;
   const tone = s && STRESS_TONE[s.level];
   const data = useMemo(() => vm.stressChart && stressSeries(vm.stressChart), [vm.stressChart]);
   return (
-    <SectionShell variant="card" title="Stress Monitor" info={false} href={href}>
+    <SectionShell variant="card" title={tr("lib.dashboard.stressMonitor")} info={false} href={href}>
       {s && tone && (
         <View className="-mt-1 mb-3 flex-row items-baseline justify-between gap-3">
           <Text className="text-xs font-medium leading-4 text-foreground-secondary">
             {s.at !== null ? (
               <>
-                Last updated <Text className="font-numeric tabular-nums">{clock(s.at, timeZone)}</Text>
+                {tr("home.HomeScreen.lastUpdated")}<Text className="font-numeric tabular-nums">{clock(s.at, timeZone)}</Text>
               </>
             ) : (
-              "Day average"
+              tr("chart.model.dayAverage")
             )}
           </Text>
           <View className="flex-row items-baseline gap-1.5">
@@ -452,9 +464,10 @@ function StressTile({ vm, href, timeZone }: { vm: HomePageVM; href: string; time
 }
 
 function EnergyCard({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
+  useLanguage();
   const e = vm.energyBank;
   return (
-    <SectionShell variant="card" title="Energy Bank" info={ENERGY_INFO} fill>
+    <SectionShell variant="card" title={tr("queries.chart.energyBank")} info={ENERGY_INFO} fill>
       <MetricState
         metric={e}
         skeleton={null}
@@ -472,27 +485,28 @@ function EnergyCard({ vm, timeZone }: { vm: HomePageVM; timeZone: string }) {
 }
 
 function EnergyBody({ eb, timeZone }: { eb: NonNullable<HomeVM["energyBank"]["value"]>; timeZone: string }) {
+  useLanguage();
   const metric = useMemo(() => ({ value: energySeries(eb), reason: null, provisional: false }), [eb]);
   const drains = useMemo(() => [...(metric.value.drains ?? [])].sort((a, b) => b.amount - a.amount).slice(0, 3).sort((a, b) => a.t - b.t), [metric]);
   return (
     <View className="flex-1 gap-4">
       <View className="gap-1.5">
-        <TickScale variant="meter" label="Energy" metric={{ value: eb.current, reason: null, provisional: false }} min={0} max={100} format="int" unit="%" />
+        <TickScale variant="meter" label={tr("home.HomeScreen.energy")} metric={{ value: eb.current, reason: null, provisional: false }} min={0} max={100} format="int" unit="%" />
         <Text className={CAPTION}>
-          Woke at <Text className="font-numeric tabular-nums">{clock(eb.startAt, timeZone)}</Text> with <Text className="font-numeric tabular-nums">{formatValue("int", eb.startLevel)}%</Text>
+          {tr("home.HomeScreen.wokeAt")}<Text className="font-numeric tabular-nums">{clock(eb.startAt, timeZone)}</Text> {tr("home.HomeScreen.with")}<Text className="font-numeric tabular-nums">{formatValue("int", eb.startLevel)}%</Text>
         </Text>
       </View>
       <EnergyBankChart data={metric} />
       <View className="mt-auto flex-row gap-3">
-        <MiniStat label="Charged" value={formatValue("signedInt", eb.charged)} className="text-optimal-text" />
-        <MiniStat label="Drained" value={formatValue("signedInt", eb.drained)} className="text-warning-text" />
+        <MiniStat label={tr("home.HomeScreen.charged")} value={formatValue("signedInt", eb.charged)} className="text-optimal-text" />
+        <MiniStat label={tr("home.HomeScreen.drained")} value={formatValue("signedInt", eb.drained)} className="text-warning-text" />
       </View>
       {/* The chart's dots, in time order. */}
       {drains.length > 0 && (
         <View accessibilityRole="list" className="gap-1">
           {drains.map((dr) => (
             <Text key={dr.t} className="text-xs font-medium leading-4 text-foreground-secondary">
-              {dr.label} at <Text className="font-numeric tabular-nums">{clock(dr.t, timeZone)}</Text> · <Text className="font-numeric tabular-nums">{formatValue("signedInt", -Math.abs(dr.amount))}</Text>
+              {dr.label} {tr("home.HomeScreen.at")}<Text className="font-numeric tabular-nums">{clock(dr.t, timeZone)}</Text> · <Text className="font-numeric tabular-nums">{formatValue("signedInt", -Math.abs(dr.amount))}</Text>
             </Text>
           ))}
         </View>
@@ -502,6 +516,7 @@ function EnergyBody({ eb, timeZone }: { eb: NonNullable<HomeVM["energyBank"]["va
 }
 
 function MiniStat({ label, value, className }: { label: string; value: string; className: string }) {
+  useLanguage();
   return (
     <View className={cn(SECONDARY_ROW, "flex-1 p-3")}>
       <Text className={cn(LABEL, "text-muted-foreground")}>{label}</Text>
@@ -511,12 +526,13 @@ function MiniStat({ label, value, className }: { label: string; value: string; c
 }
 
 function FirstSync() {
+  useLanguage();
   const s = useShellSync();
   if (!s || (s.connection !== "importing" && !(s.sync.state === "syncing" && s.sync.lastSuccessAt == null))) return null;
   const p = s.importProgress;
   return (
     <Text accessibilityLiveRegion="polite" className={cn(LABEL, "text-center text-muted-foreground")}>
-      {p ? `Syncing · ${Math.floor(p.done / p.total * 100)}%` : "Syncing…"}
+      {p ? tr("home.HomeScreen.syncing", { v0: Math.floor(p.done / p.total * 100) }) : tr("settings.DataSource.syncing")}
     </Text>
   );
 }

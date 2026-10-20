@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Fitness `/health/fitness` (spec §7.10): latest values, no date switcher. Ported from pulse
 // src/app/(app)/health/fitness/page.tsx and loading.tsx (the skeleton shows while the query runs).
 import { View } from "react-native";
@@ -22,33 +24,35 @@ import { LoadChart } from "./LoadChart";
 
 const BODY = "text-[15px] leading-[22px] text-foreground-secondary";
 // The engine's load status calibrates until its confidence reaches 0.35 (loadConfidence: active days in 42, recent ones).
-const NO_LOAD = "Training load needs workouts on about 10 of the last 42 days, a few of them recent.";
-const NO_FFS = "Fitness, fatigue and form need workouts with heart rate.";
+const noLoad = () => tr("health.FitnessScreen.trainingLoadNeedsWorkoutsOnAbout10");
+const noFfs = () => tr("health.FitnessScreen.fitnessFatigueAndFormNeedWorkoutsWith");
 
 const STATUS: Record<NonNullable<FitnessVM["trainingLoad"]["value"]>["status"], { word: string; body: string }> = {
-  detraining: { word: "Detraining", body: "Detraining: your recent load is below your usual and your fitness is falling." },
-  optimal: { word: "Optimal", body: "Optimal: your recent load matches what you are used to." },
-  pushing: { word: "Pushing", body: "Pushing: load is above your usual while your Recovery is low. Ease off." },
-  high_risk: { word: "High risk", body: "High risk: load jumped well above your usual. Injury and illness risk rise." },
+  detraining: { get word() { return tr("health.FitnessScreen.detraining"); }, get body() { return tr("health.FitnessScreen.detrainingYourRecentLoadIsBelowYour"); } },
+  optimal: { get word() { return tr("queries.trendView.optimal"); }, get body() { return tr("health.FitnessScreen.optimalYourRecentLoadMatchesWhatYou"); } },
+  pushing: { get word() { return tr("health.FitnessScreen.pushing"); }, get body() { return tr("health.FitnessScreen.pushingLoadIsAboveYourUsualWhile"); } },
+  high_risk: { get word() { return tr("health.FitnessScreen.highRisk"); }, get body() { return tr("health.FitnessScreen.highRiskLoadJumpedWellAboveYour"); } },
 };
-const CATEGORIES = ["Poor", "Fair", "Good", "Excellent", "Superior"];
+const categoryLabels = () => [tr("queries.training.poor"), tr("health.FitnessScreen.fair"), tr("health.FitnessScreen.good"), tr("health.FitnessScreen.excellent"), tr("health.FitnessScreen.superior")];
 
 function Hero({ vo2 }: { vo2: FitnessVM["vo2"] }) {
+  useLanguage();
   const v = vo2.value;
-  if (!v) return <EmptyState body="No VO2 max yet. Fitbit estimates it from runs and resting heart rate." />;
+  if (!v) return <EmptyState body={tr("health.FitnessScreen.noVo2MaxYetFitbitEstimatesIt")} />;
   return (
     <View className="items-center gap-2 py-4">
       <ValueUnit value={formatValue("decimal1", v.value)} unit="ml/kg/min" className="text-center font-numeric text-[64px] font-bold leading-[64px] tracking-[-0.01em]" />
       <View className="flex-row items-center gap-3">
-        <Text className={LABEL}>VO2 max</Text>
+        <Text className={LABEL}>{tr("health.dataCheckSummary.vo2Max")}</Text>
         <Text className={cn(LABEL, categoryTone(v.category))}>{categoryWord(v.category)}</Text>
       </View>
-      <Text className={CAPTION}>{v.source === "run" ? `From a run on ${formatDay(v.sourceDay, DAY.monthDay)}` : "Daily estimate from Fitbit"}</Text>
+      <Text className={CAPTION}>{v.source === "run" ? tr("health.FitnessScreen.fromARunOn", { v0: formatDay(v.sourceDay, DAY.monthDay) }) : tr("health.FitnessScreen.dailyEstimateFromFitbit")}</Text>
     </View>
   );
 }
 
 export function FitnessScreen() {
+  useLanguage();
   const { data: vm, error, reload } = useScreen((ctx) => getFitness(ctx), ["fitness"]);
   if (!vm) return error ? <ErrorView detail retry={reload} /> : <FitnessLoading />;
   const v = vm.vo2.value;
@@ -56,21 +60,21 @@ export function FitnessScreen() {
 
   return (
     <DetailShell
-      title="Fitness"
-      bodySkeleton={BODY_SKELETON}
+      title={tr("health.FirstAge.fitness")}
+      bodySkeleton={bodySkeleton()}
       info={FITNESS_INFO}
       hero={<Hero vo2={vm.vo2} />}
       summary={
         v && (
-          <SectionShell variant="card" title="Percentile">
+          <SectionShell variant="card" title={tr("health.FitnessScreen.percentile")}>
             <TickScale
               variant="marker"
-              label="VO2 max percentile"
+              label={tr("health.FitnessScreen.vo2MaxPercentile")}
               metric={{ value: v.percentile, reason: null, provisional: false }}
               min={0}
               max={100}
               format="int"
-              describe={`${categoryWord(v.category)} for ${v.sex === "male" ? "men" : "women"} ${v.ageBand}`}
+              describe={tr("health.FitnessScreen.for", { v0: categoryWord(v.category), v1: v.sex === "male" ? tr("health.fitness.men") : tr("health.fitness.women"), v2: v.ageBand })}
               bands={[
                 { from: 0, to: 39.9, tone: "warning" },
                 { from: 60, to: 100, tone: "optimal" },
@@ -78,25 +82,25 @@ export function FitnessScreen() {
               ends={["0", "50", "100"]}
             />
             <View accessibilityElementsHidden className="mt-2 flex-row">
-              {CATEGORIES.map((c) => (
+              {categoryLabels().map((c) => (
                 <Text key={c} numberOfLines={1} className={cn(CAPTION, "flex-1 text-center", c === categoryWord(v.category) && "font-bold text-foreground")}>
                   {c}
                 </Text>
               ))}
             </View>
             <Text className={cn(CAPTION, "mt-3")}>
-              {ordinal(v.percentile)} percentile for {v.sex === "male" ? "men" : "women"} {v.ageBand} (FRIEND registry).
+              {tr("health.fitness.percentile", { rank: ordinal(v.percentile), sex: v.sex === "male" ? tr("health.fitness.men") : tr("health.fitness.women"), ageBand: v.ageBand })}
             </Text>
           </SectionShell>
         )
       }
       primary={
-        <SectionShell variant="card" title="VO2 max trend">
-          <TrendChart label="VO2 max" data={{ value: vm.trend.points.map((p) => ({ date: p.day, value: p.value })), reason: null, provisional: false }} unit="ml/kg/min" format="decimal1" colorBy="single" direction="up" defaultRange="6m" />
+        <SectionShell variant="card" title={tr("health.FitnessScreen.vo2MaxTrend")}>
+          <TrendChart label={tr("health.dataCheckSummary.vo2Max")} data={{ value: vm.trend.points.map((p) => ({ date: p.day, value: p.value })), reason: null, provisional: false }} unit="ml/kg/min" format="decimal1" colorBy="single" direction="up" defaultRange="6m" />
         </SectionShell>
       }
       secondary={[
-        <SectionShell key="load" variant="card" title="Training load">
+        <SectionShell key="load" variant="card" title={tr("health.FitnessScreen.trainingLoad")}>
           {tl ? (
             <View className="gap-4">
               <View className="flex-row items-center gap-3">
@@ -105,7 +109,7 @@ export function FitnessScreen() {
               </View>
               <TickScale
                 variant="marker"
-                label="Training load"
+                label={tr("health.FitnessScreen.trainingLoad")}
                 metric={vm.trainingLoad.value ? { value: tl.acwr, reason: null, provisional: false } : null}
                 min={0.5}
                 max={2}
@@ -119,16 +123,16 @@ export function FitnessScreen() {
               <Text className={BODY}>{STATUS[tl.status].body}</Text>
             </View>
           ) : (
-            <ReasonPlaceholder reason="calibrating" size="md" copy={NO_LOAD} />
+            <ReasonPlaceholder reason="calibrating" size="md" copy={noLoad()} />
           )}
         </SectionShell>,
-        <SectionShell key="ffs" variant="card" title="Fitness, fatigue and form">
+        <SectionShell key="ffs" variant="card" title={tr("health.FitnessScreen.fitnessFatigueAndForm")}>
           {vm.loadReason ? (
-            <ReasonPlaceholder reason={vm.loadReason.reason} size="md" copy={NO_FFS} />
+            <ReasonPlaceholder reason={vm.loadReason.reason} size="md" copy={noFfs()} />
           ) : (
             <>
               <LoadChart load={vm.load} />
-              <Text className={cn(CAPTION, "mt-2")}>Fitness is your 42-day load, fatigue your 7-day load, form the difference.</Text>
+              <Text className={cn(CAPTION, "mt-2")}>{tr("health.FitnessScreen.fitnessIsYour42DayLoadFatigue")}</Text>
             </>
           )}
         </SectionShell>,
@@ -137,14 +141,14 @@ export function FitnessScreen() {
   );
 }
 
-const LOADING_PRIMARY = (
-  <SectionShell variant="card" title="VO2 max trend">
+const loadingPrimary = () => (
+  <SectionShell variant="card" title={tr("health.FitnessScreen.vo2MaxTrend")}>
     <TrendChartSkeleton />
   </SectionShell>
 );
 
-const LOADING_SECONDARY = [
-  <SectionShell key="load" variant="card" title="Training load">
+const loadingSecondary = () => [
+  <SectionShell key="load" variant="card" title={tr("health.FitnessScreen.trainingLoad")}>
     <View accessibilityElementsHidden className="gap-4">
       <View className="flex-row items-center gap-3">
         <SkeletonText lh={40} fs={36} className="w-[75px]" />
@@ -157,44 +161,45 @@ const LOADING_SECONDARY = [
       </View>
     </View>
   </SectionShell>,
-  <SectionShell key="ffs" variant="card" title="Fitness, fatigue and form">
+  <SectionShell key="ffs" variant="card" title={tr("health.FitnessScreen.fitnessFatigueAndForm")}>
     <View accessibilityElementsHidden>
       <Skeleton className="h-[220px] rounded-lg bg-skeleton" />
-      <Text className={cn(CAPTION, "mt-2")}>Fitness is your 42-day load, fatigue your 7-day load, form the difference.</Text>
+      <Text className={cn(CAPTION, "mt-2")}>{tr("health.FitnessScreen.fitnessIsYour42DayLoadFatigue")}</Text>
     </View>
   </SectionShell>,
 ];
 
 /** Below the fold while a cold push slides in: the loading state's first sections. */
-const BODY_SKELETON = (
+const bodySkeleton = () => (
   <>
-    {LOADING_PRIMARY}
-    <View className="gap-3">{LOADING_SECONDARY.slice(0, 2)}</View>
+    {loadingPrimary()}
+    <View className="gap-3">{loadingSecondary().slice(0, 2)}</View>
   </>
 );
 
 /** Fitness loading (spec §7.10, §5.19): no date row; the VO2 max hero with Percentile, the VO2 max trend, then Training load and Fitness, fatigue and form. */
 function FitnessLoading() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Fitness"
+      title={tr("health.FirstAge.fitness")}
       hero={
         <View accessibilityElementsHidden className="items-center gap-2 py-4">
           <SkeletonText lh={64} fs={64} className="w-[133px]" />
           <View className="flex-row items-center gap-3">
-            <Text className={LABEL}>VO2 max</Text>
+            <Text className={LABEL}>{tr("health.dataCheckSummary.vo2Max")}</Text>
             <SkeletonText className="w-16" />
           </View>
           <SkeletonText className="w-32" />
         </View>
       }
       summary={
-        <SectionShell variant="card" title="Percentile">
+        <SectionShell variant="card" title={tr("health.FitnessScreen.percentile")}>
           <View accessibilityElementsHidden>
             <TickScaleSkeleton variant="marker" />
             <View className="mt-2 flex-row">
-              {CATEGORIES.map((c) => (
+              {categoryLabels().map((c) => (
                 <Text key={c} numberOfLines={1} className={cn(CAPTION, "flex-1 text-center")}>
                   {c}
                 </Text>
@@ -204,9 +209,9 @@ function FitnessLoading() {
           </View>
         </SectionShell>
       }
-      primary={LOADING_PRIMARY}
-      bodySkeleton={BODY_SKELETON}
-      secondary={LOADING_SECONDARY}
+      primary={loadingPrimary()}
+      bodySkeleton={bodySkeleton()}
+      secondary={loadingSecondary()}
     />
   );
 }

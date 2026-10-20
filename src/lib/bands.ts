@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Band and tone logic for data colour (spec §2.3, §5.0). Colour is a data channel: every helper
 // here returns a meaning first, and the token for it second.
 import { acwrBand, type AcwrBand } from "@/core/scoring/readiness";
@@ -67,7 +68,7 @@ export function recoveryBand(value: number): RecoveryBand {
   return "red";
 }
 
-export const BAND_WORD: Record<RecoveryBand, string> = { green: "Green", yellow: "Yellow", red: "Red" };
+export const BAND_WORD: Record<RecoveryBand, string> = { get green() { return tr("lib.bands.green"); }, get yellow() { return tr("lib.bands.yellow"); }, get red() { return tr("lib.bands.red"); } };
 export const BAND_COLOR: Record<RecoveryBand, DataColor> = {
   green: "recovery-green",
   yellow: "recovery-yellow",
@@ -89,7 +90,7 @@ export function stressLevel(value: number): StressLevel {
   if (value >= 30) return "medium";
   return "low";
 }
-export const STRESS_WORD: Record<StressLevel, string> = { low: "Low", medium: "Medium", high: "High" };
+export const STRESS_WORD: Record<StressLevel, string> = { get low() { return tr("health.StressScreen.low"); }, get medium() { return tr("health.StressScreen.medium"); }, get high() { return tr("health.StressScreen.high"); } };
 export const STRESS_COLOR: Record<StressLevel, DataColor> = {
   low: "stress-low",
   medium: "stress-medium",

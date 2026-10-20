@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { Children, cloneElement, isValidElement, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { useIsFocused } from "expo-router";
@@ -52,6 +54,7 @@ export type DetailShellProps = {
 };
 
 export function DetailShell({ title, subtitle, info, backHref, dateSwitcher, dismiss, align, titleIcon, action, ground, hero, stats, collapse, summary, notch, insight, primary, secondary, footer, bodySkeleton, loading, onRefresh }: DetailShellProps) {
+  useLanguage();
   const insets = useSafeAreaInsets();
   const side = summary ?? (hero ? insight : null);
   const inHeader = dateSwitcher?.placement === "header";
@@ -76,7 +79,7 @@ export function DetailShell({ title, subtitle, info, backHref, dateSwitcher, dis
   return (
     <ScreenScroll header={header} top={headerHeight} onScroll={onScroll} healthspan={ground === "healthspan"} onRefresh={onRefresh ?? shellSync?.syncNow}>
       {body && <View removeClippedSubviews className="w-full px-4 pt-2" accessibilityState={{ busy: !!loading }}>
-        {loading && <Text accessibilityLiveRegion="polite" className="absolute h-px w-px opacity-0">{title.trim() ? `Loading ${title}…` : "Loading…"}</Text>}
+        {loading && <Text accessibilityLiveRegion="polite" className="absolute h-px w-px opacity-0">{title.trim() ? tr("ui.shells.DetailShell.loading", { v0: title }) : tr("common.loading")}</Text>}
         {dateSwitcher && !inHeader && (
           <View className="mb-6 items-center">
             <DateSwitcher {...dateSwitcher} placement="header" />
@@ -126,6 +129,7 @@ export function DetailShell({ title, subtitle, info, backHref, dateSwitcher, dis
 
 /** The small square above a summary card, pointing at the hero (the web's rotated notch). */
 function Notch() {
+  useLanguage();
   return <View accessibilityElementsHidden className="absolute -top-2 left-1/2 -ml-2 size-4 rotate-45 rounded-tl-[3px] bg-card" />;
 }
 
@@ -136,6 +140,7 @@ function Notch() {
  * enough to fill the screen.
  */
 function BodySkeleton({ sections }: { sections: ReactNode[] }) {
+  useLanguage();
   return (
     <View className="gap-3">
       {Children.toArray(sections)

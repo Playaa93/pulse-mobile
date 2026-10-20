@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Health Monitor's five vital tiles with their note. Ported from pulse src/app/(app)/health/monitor/VitalTiles.tsx.
 import type { ReactNode } from "react";
 import { View } from "react-native";
@@ -11,12 +13,13 @@ import { vitalHref } from "./vitals";
 
 const GLYPH: Record<VitalKey, LucideIcon> = { resp: Wind, spo2: Droplet, restingHr: Heart, hrv: Activity, skinTempDev: Thermometer };
 // A tile's icon: 20 px, stroke 1.5, muted (the web's `[&_svg]:stroke-[1.5]`).
-const ICON = (k: VitalKey): ReactNode => <Icon icon={GLYPH[k]} size={20} tone="muted-foreground" strokeWidth={1.5} />;
+const ICON = (k: VitalKey): ReactNode => { useLanguage(); return <Icon icon={GLYPH[k]} size={20} tone="muted-foreground" strokeWidth={1.5} />; };
 const FORMAT: Record<VitalKey, FormatKey> = { resp: "decimal1", spo2: "int", restingHr: "int", hrv: "int", skinTempDev: "signed1" };
-const NOTE = "Your range is your average ± 1 SD over the last 30 nights; skin temp is the change from your baseline.";
+const rangeNote = () => tr("health.VitalTiles.yourRangeIsYourAverage1Sd");
 
 /** Rows of two tiles (four vitals since SpO2 left: no wide last tile). */
 function Grid({ tiles }: { tiles: ReactNode[] }) {
+  useLanguage();
   const rows: ReactNode[][] = [];
   for (let i = 0; i < tiles.length; i += 2) rows.push(tiles.slice(i, i + 2));
   return (
@@ -35,6 +38,7 @@ function Grid({ tiles }: { tiles: ReactNode[] }) {
 }
 
 export function VitalTiles({ vitals, day, today }: { vitals: Vital[]; day: string; today: string }) {
+  useLanguage();
   return (
     <>
       <Grid
@@ -53,23 +57,24 @@ export function VitalTiles({ vitals, day, today }: { vitals: Vital[]; day: strin
           />
         ))}
       />
-      <Text className="mt-3 text-xs font-medium leading-4 text-muted-foreground">{NOTE}</Text>
+      <Text className="mt-3 text-xs font-medium leading-4 text-muted-foreground">{rangeNote()}</Text>
     </>
   );
 }
 
-const SKELETON_LABEL: [VitalKey, string][] = [
-  ["resp", "Respiratory rate"],
-  ["restingHr", "RHR"],
-  ["hrv", "HRV"],
-  ["skinTempDev", "Skin temperature"],
+const skeletonLabels = (): [VitalKey, string][] => [
+  ["resp", tr("lib.dashboard.respiratoryRate")],
+  ["restingHr", tr("chart.model.restingHr")],
+  ["hrv", tr("breathe.BreatheScreen.hrv_49a6fe")],
+  ["skinTempDev", tr("lib.dashboard.skinTemperature")],
 ];
 
 export function VitalTilesSkeleton() {
+  useLanguage();
   return (
     <>
-      <Grid tiles={SKELETON_LABEL.map(([k, l]) => <KeyStatRowSkeleton key={k} variant="tile" label={l} icon={ICON(k)} />)} />
-      <Text className="mt-3 text-xs font-medium leading-4 text-muted-foreground">{NOTE}</Text>
+      <Grid tiles={skeletonLabels().map(([k, l]) => <KeyStatRowSkeleton key={k} variant="tile" label={l} icon={ICON(k)} />)} />
+      <Text className="mt-3 text-xs font-medium leading-4 text-muted-foreground">{rangeNote()}</Text>
     </>
   );
 }

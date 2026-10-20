@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The reference app's Behavior Insights card on Recovery (recovery-11, spec §11 R34): a lightbulb title linking to
 // Journal insights, one line of copy, then a chip per behaviour from the day before, green up when it has gone with a
 // higher next-day Recovery, orange down when lower, grey when no clear effect. Ported from pulse
@@ -12,13 +14,14 @@ import { Text } from "@/ui/Text"
 
 const TONE = { up: "optimal", down: "warning", neutral: "neutral" } as const
 const DIR = { up: "up", down: "down", neutral: "flat" } as const
-const SPOKEN = { up: ", went with higher Recovery", down: ", went with lower Recovery", neutral: ", no clear effect" } as const
+const SPOKEN = { get up() { return tr("recovery.BehaviorInsights.wentWithHigherRecovery"); }, get down() { return tr("recovery.BehaviorInsights.wentWithLowerRecovery"); }, get neutral() { return tr("recovery.BehaviorInsights.noClearEffect"); } } as const
 
 export function BehaviorInsights({ chips, href }: { chips: BehaviorChip[]; href: string }) {
+  useLanguage();
   if (!chips.length) return null
   return (
-    <SectionShell variant="card" title="Behavior insights" info={false} href={href} icon={<Icon icon={Lightbulb} size={20} tone="foreground" />}>
-      <Text className="text-[15px] leading-[22px] text-foreground-secondary">Some of your behaviors from yesterday may have affected your Recovery score today.</Text>
+    <SectionShell variant="card" title={tr("recovery.BehaviorInsights.behaviorInsights")} info={false} href={href} icon={<Icon icon={Lightbulb} size={20} tone="foreground" />}>
+      <Text className="text-[15px] leading-[22px] text-foreground-secondary">{tr("recovery.BehaviorInsights.someOfYourBehaviorsFromYesterdayMay")}</Text>
       <View className="mt-3 flex-row flex-wrap gap-2">
         {chips.map((c) => (
           <View key={c.key} accessible accessibilityLabel={`${c.label}${SPOKEN[c.effect]}`}>

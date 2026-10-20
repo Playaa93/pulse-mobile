@@ -1,3 +1,5 @@
+import { language } from "@/i18n";
+import { useLanguage } from "@/i18n/react";
 // The pieces the Goals and Weekly plan cards and pages share, in the look of Strain's own rows: KeyStatRow's row (caps
 // label, grey caption, value over a grey sub-value, a small DeltaMark), ZoneBars' bar (a solid fill on a hatched track),
 // and the week as seven small grey dots.
@@ -90,18 +92,19 @@ export function GoalRowShell({ icon, label, caption, value, of, muted, mark, spo
   );
 }
 
-const LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+const weekdayLetters = () => language() === "fr" ? ["L", "M", "M", "J", "V", "S", "D"] : ["M", "T", "W", "T", "F", "S", "S"];
 const weekday = (day: string) => (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
 
 export type WeekColumn = { day: string; met: boolean };
 
 /** The week as seven small grey dots under day letters: filled on days that met their share; `current`'s letter in ink. */
 export function WeekColumns({ cols, current, label, className }: { cols: WeekColumn[]; current: string; label: string; className?: string }) {
+  useLanguage();
   return (
     <View accessible accessibilityLabel={label} className={cn("flex-row", className)}>
       {cols.map((col) => (
         <View key={col.day} className="flex-1 items-center gap-1">
-          <Text className={cn("text-[10px] font-semibold leading-3 text-muted-foreground", col.day === current && "text-foreground")}>{LETTERS[weekday(col.day)]}</Text>
+          <Text className={cn("text-[10px] font-semibold leading-3 text-muted-foreground", col.day === current && "text-foreground")}>{weekdayLetters()[weekday(col.day)]}</Text>
           <View className={cn("size-2 rounded-full", col.met ? "bg-foreground-secondary" : "border border-border")} />
         </View>
       ))}

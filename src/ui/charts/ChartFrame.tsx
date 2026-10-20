@@ -1,3 +1,4 @@
+import { FORMATS } from "@/lib/format";
 import { haptic } from "../haptics";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { type LayoutChangeEvent, View } from "react-native";
@@ -163,7 +164,7 @@ export const labelGutter = (labels: (string | false | null | undefined)[], base 
 };
 
 /** Tick text for a numeric axis: whole numbers drop their ".0" (48, not 48.0); others keep the metric's format. */
-export const wholeTick = (fmt: (v: number) => string) => (v: number) => (Number.isInteger(v) ? Math.round(v).toLocaleString("en-US") : fmt(v));
+export const wholeTick = (fmt: (v: number) => string) => (v: number) => (Number.isInteger(v) ? FORMATS.grouped(v) : fmt(v));
 
 // --- Scrubbing: the web's hover tooltip, as a touch ---
 

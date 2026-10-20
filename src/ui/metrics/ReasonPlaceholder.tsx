@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { View } from "react-native";
 import { reasonCopy } from "@/lib/reasons";
 import { cn } from "../cn";
@@ -17,6 +19,7 @@ export type ReasonPlaceholderProps = {
 
 /** Copy and icon for a reason code (spec §5.14). Text is real text; the icon is decorative. */
 export function ReasonPlaceholder({ reason, nightsLeft, size, copy, className }: ReasonPlaceholderProps) {
+  useLanguage();
   const r = reasonCopy(reason, nightsLeft);
   const glyph = REASON_ICON[r.code];
   const long = copy ?? r.long;
@@ -42,7 +45,7 @@ export function ReasonPlaceholder({ reason, nightsLeft, size, copy, className }:
     <View className={cn("items-center gap-2", className)}>
       {glyph && <Icon icon={glyph} size={24} tone="foreground-secondary" />}
       <Text className="max-w-40 text-center text-base font-semibold leading-[22px] text-foreground-secondary" numberOfLines={2}>
-        {r.code === "no_data" ? "No data" : r.short}
+        {r.code === "no_data" ? tr("lib.reasons.noData") : r.short}
       </Text>
     </View>
   );

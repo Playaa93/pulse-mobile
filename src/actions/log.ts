@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Logging from Pulse, as halo's src/screens/journal/actions.ts does it: water, food, weight (and body fat), blood
 // oxygen, mood, symptoms, or (female profiles) a period or ovulation test. Every entry stays on the phone
 // (`logged_entries`, source "pulse"): nothing is written to Health Connect or Google. Same validation and messages as
@@ -6,15 +7,15 @@ import { addDays, fromWall, localDay } from "@/lib/time";
 import {
   CYCLE_SYMPTOMS,
   deleteEntry,
-  FLOWS,
+  flowOptions,
   isCycleKind,
-  MEALS,
-  MOODS,
+  mealOptions,
+  moodOptions,
   type NewEntry,
-  OVULATION_RESULTS,
+  ovulationOptions,
   saveEntries,
-  SYMPTOMS,
-  VALENCES,
+  symptomOptions,
+  valenceOptions,
   type Flow,
   type Meal,
   type Mood,
@@ -50,63 +51,63 @@ const validAt = (at: string) => {
   return !!m && isDay(m[1]) && +m[2] < 24 && +m[3] < 60;
 };
 const keys = (list: readonly (readonly [string, ...unknown[]])[]) => new Set(list.map((x) => x[0]));
-const MEAL_KEYS = keys(MEALS);
-const MOOD_KEYS = keys(MOODS);
-const VALENCE_KEYS = keys(VALENCES);
-const SYMPTOM_KEYS = keys(SYMPTOMS);
-const FLOW_KEYS = keys(FLOWS);
-const RESULT_KEYS = keys(OVULATION_RESULTS);
+const MEAL_KEYS = keys(mealOptions());
+const MOOD_KEYS = keys(moodOptions());
+const VALENCE_KEYS = keys(valenceOptions());
+const SYMPTOM_KEYS = keys(symptomOptions());
+const FLOW_KEYS = keys(flowOptions());
+const RESULT_KEYS = keys(ovulationOptions());
 const num = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const grams = (v: unknown) => v === null || (num(v) && v >= 0 && v <= 1000);
-const ENUM = "Invalid option";
+const invalidOption = () => tr("actions.log.invalidOption");
 const VIA_KEYS = new Set<string>(["photo", "text", "manual"]);
 /** Most foods one save takes (a photo estimate lists each food it sees). */
 export const MAX_FOODS = 20;
 
 /** The first problem with `v`, as the web's zod schema reports it; null when it's valid. */
 function invalid(v: LogInput): string | null {
-  if ("at" in v && v.at !== undefined && !validAt(v.at)) return "Choose a time";
+  if ("at" in v && v.at !== undefined && !validAt(v.at)) return tr("actions.log.chooseATime");
   switch (v.kind) {
     case "water":
-      if (!num(v.ml) || !Number.isInteger(v.ml)) return "Enter the amount in millilitres.";
-      if (v.ml < 10) return "At least 10 ml";
-      if (v.ml > 5000) return "At most 5,000 ml";
+      if (!num(v.ml) || !Number.isInteger(v.ml)) return tr("log.form.enterTheAmountInMillilitres");
+      if (v.ml < 10) return tr("actions.log.atLeast10Ml");
+      if (v.ml > 5000) return tr("actions.log.atMost5000Ml");
       return null;
     case "food":
-      if (!MEAL_KEYS.has(v.meal) || (v.via !== undefined && !VIA_KEYS.has(v.via))) return ENUM;
+      if (!MEAL_KEYS.has(v.meal) || (v.via !== undefined && !VIA_KEYS.has(v.via))) return invalidOption();
       return invalidFood(v);
     case "weight":
-      if (!num(v.kg) || v.kg < 20 || v.kg > 300) return "Between 20 and 300 kg";
-      if (v.fatPct !== null && (!num(v.fatPct) || v.fatPct < 2 || v.fatPct > 75)) return "Between 2 and 75%";
+      if (!num(v.kg) || v.kg < 20 || v.kg > 300) return tr("actions.log.between20And300Kg");
+      if (v.fatPct !== null && (!num(v.fatPct) || v.fatPct < 2 || v.fatPct > 75)) return tr("actions.log.between2And75");
       return null;
     case "spo2":
-      return num(v.pct) && v.pct >= 70 && v.pct <= 100 ? null : "Between 70 and 100%";
+      return num(v.pct) && v.pct >= 70 && v.pct <= 100 ? null : tr("actions.log.between70And100");
     case "mood":
-      if (!Array.isArray(v.moods) || v.moods.length < 1) return "Choose how you feel";
-      if (v.moods.length > 5) return "Choose up to 5 feelings";
-      if (!v.moods.every((m) => MOOD_KEYS.has(m)) || (v.valence !== null && !VALENCE_KEYS.has(v.valence))) return ENUM;
+      if (!Array.isArray(v.moods) || v.moods.length < 1) return tr("actions.log.chooseHowYouFeel");
+      if (v.moods.length > 5) return tr("actions.log.chooseUpTo5Feelings");
+      if (!v.moods.every((m) => MOOD_KEYS.has(m)) || (v.valence !== null && !VALENCE_KEYS.has(v.valence))) return invalidOption();
       return null;
     case "symptoms":
-      if (!Array.isArray(v.symptoms) || v.symptoms.length < 1) return "Choose a symptom";
-      if (v.symptoms.length > 10) return "Choose up to 10 symptoms";
-      if (!v.symptoms.every((s) => SYMPTOM_KEYS.has(s))) return ENUM;
+      if (!Array.isArray(v.symptoms) || v.symptoms.length < 1) return tr("actions.log.chooseASymptom");
+      if (v.symptoms.length > 10) return tr("actions.log.chooseUpTo10Symptoms");
+      if (!v.symptoms.every((s) => SYMPTOM_KEYS.has(s))) return invalidOption();
       return null;
     case "period":
-      if (!isDay(v.start) || !isDay(v.end)) return "Choose the first and last day.";
-      if (v.flow !== null && !FLOW_KEYS.has(v.flow)) return ENUM;
+      if (!isDay(v.start) || !isDay(v.end)) return tr("log.form.chooseTheFirstAndLastDay");
+      if (v.flow !== null && !FLOW_KEYS.has(v.flow)) return invalidOption();
       return null;
     case "ovulation":
-      return RESULT_KEYS.has(v.result) ? null : ENUM;
+      return RESULT_KEYS.has(v.result) ? null : invalidOption();
   }
 }
 
 /** The first problem with one food, as the web's rules phrase them (portion and fiber are the phone's additions). */
 export function invalidFood(v: FoodItemInput): string | null {
-  if (typeof v.name !== "string" || v.name.trim().length > 80) return "Use 80 characters or fewer.";
-  if (v.portion !== undefined && (typeof v.portion !== "string" || v.portion.trim().length > 60)) return "Keep the portion to 60 characters or fewer.";
-  if (!num(v.kcal) || !Number.isInteger(v.kcal) || v.kcal < 0) return "Enter calories as a whole number.";
-  if (v.kcal > 10_000) return "At most 10,000 kcal";
-  if (![v.protein, v.carbs, v.fat, v.fiber ?? null].every(grams)) return "Macros are grams, between 0 and 1,000.";
+  if (typeof v.name !== "string" || v.name.trim().length > 80) return tr("actions.log.use80CharactersOrFewer");
+  if (v.portion !== undefined && (typeof v.portion !== "string" || v.portion.trim().length > 60)) return tr("actions.log.keepThePortionTo60CharactersOr");
+  if (!num(v.kcal) || !Number.isInteger(v.kcal) || v.kcal < 0) return tr("log.form.enterCaloriesAsAWholeNumber");
+  if (v.kcal > 10_000) return tr("actions.log.atMost10000Kcal");
+  if (![v.protein, v.carbs, v.fat, v.fiber ?? null].every(grams)) return tr("actions.log.macrosAreGramsBetween0And1");
   return null;
 }
 
@@ -128,11 +129,11 @@ function foodData(v: FoodItemInput, meal: Meal, via: FoodVia | undefined): FoodD
 
 /** `at` as a moment for a log entry, or why it can't be one (not a time, in the future, over a year back). */
 function momentOf(c: ActionCtx, at: string | undefined): { ok: true; ts: number } | { ok: false; error: string } {
-  if (at !== undefined && !validAt(at)) return fail("Choose a time");
+  if (at !== undefined && !validAt(at)) return fail(tr("actions.log.chooseATime"));
   const now = nowOf(c);
   const ts = at ? fromWall(at, c.timeZone) : now;
-  if (ts > now + 60) return fail("Can’t log the future");
-  if (ts < now - 366 * 86_400) return fail("Can’t log more than a year back");
+  if (ts > now + 60) return fail(tr("actions.log.canTLogTheFuture"));
+  if (ts < now - 366 * 86_400) return fail(tr("actions.log.canTLogMoreThanAYear"));
   return { ok: true, ts };
 }
 
@@ -141,9 +142,9 @@ function momentOf(c: ActionCtx, at: string | undefined): { ok: true; ts: number 
  * one): every food is checked before any is saved, and all share the meal and the time.
  */
 export async function logFoods(c: ActionCtx, input: { meal: Meal; via: FoodVia; at?: string; items: FoodItemInput[] }): Promise<ActionResult<{ count: number }>> {
-  if (!MEAL_KEYS.has(input.meal) || !VIA_KEYS.has(input.via)) return fail(ENUM);
-  if (!Array.isArray(input.items) || input.items.length < 1) return fail("Add a food to save.");
-  if (input.items.length > MAX_FOODS) return fail(`Save up to ${MAX_FOODS} foods at a time.`);
+  if (!MEAL_KEYS.has(input.meal) || !VIA_KEYS.has(input.via)) return fail(invalidOption());
+  if (!Array.isArray(input.items) || input.items.length < 1) return fail(tr("actions.log.addAFoodToSave"));
+  if (input.items.length > MAX_FOODS) return fail(tr("actions.log.saveUpToFoodsAtATime", { v0: MAX_FOODS }));
   for (const item of input.items) {
     const problem = invalidFood(item);
     if (problem) return fail(input.items.length > 1 && item.name.trim() ? `${item.name.trim()}: ${problem}` : problem);
@@ -160,14 +161,14 @@ export async function logFoods(c: ActionCtx, input: { meal: Meal; via: FoodVia; 
  * time as listed (it is found from there). Food read from Health Connect (logged in Fitbit) is changed in Fitbit only.
  */
 export async function updateFoodEntry(c: ActionCtx, input: { id: string; ts: number; meal: Meal; at?: string; item: FoodItemInput }): Promise<ActionResult> {
-  if (!MEAL_KEYS.has(input.meal)) return fail(ENUM);
+  if (!MEAL_KEYS.has(input.meal)) return fail(invalidOption());
   const problem = invalidFood(input.item);
   if (problem) return fail(problem);
   const when = momentOf(c, input.at);
   if (!when.ok) return when;
   const row = (await c.store.loggedEntries(Math.min(input.ts, when.ts) - 1, 5000)).find((r) => r.id === input.id);
-  if (!row || row.type !== "nutrition-log") return fail("This food is no longer in your log.");
-  if (row.source !== "pulse") return fail("Food logged in Fitbit is changed in Fitbit.");
+  if (!row || row.type !== "nutrition-log") return fail(tr("actions.log.thisFoodIsNoLongerInYour"));
+  if (row.source !== "pulse") return fail(tr("actions.log.foodLoggedInFitbitIsChangedIn"));
   const before = row.data as Partial<FoodData> | null;
   const via = before && typeof before.via === "string" && VIA_KEYS.has(before.via) ? before.via : undefined;
   const data = foodData(input.item, input.meal, via);
@@ -182,8 +183,8 @@ export async function updateFoodEntry(c: ActionCtx, input: { id: string; ts: num
  */
 export async function setFoodSeparate(c: ActionCtx, input: { id: string; ts: number; separate: boolean }): Promise<ActionResult> {
   const row = (await c.store.loggedEntries(input.ts - 1, 5000)).find((r) => r.id === input.id);
-  if (!row || row.type !== "nutrition-log") return fail("This food is no longer in your log.");
-  if (row.source !== "pulse") return fail("Food logged in Fitbit is changed in Fitbit.");
+  if (!row || row.type !== "nutrition-log") return fail(tr("actions.log.thisFoodIsNoLongerInYour"));
+  if (row.source !== "pulse") return fail(tr("actions.log.foodLoggedInFitbitIsChangedIn"));
   const { separate: _old, ...data } = (row.data ?? {}) as FoodData;
   await c.store.addLoggedEntries([{ ...row, data: input.separate ? { ...data, separate: true } : data }]);
   return { ok: true, data: undefined };
@@ -197,14 +198,14 @@ export async function logEntry(c: ActionCtx, input: LogInput): Promise<ActionRes
   const tz = c.timeZone;
   // Cycle tracking never exists on a male profile, whatever a request says.
   if (c.profile.sex !== "female" && (isCycleKind(v.kind) || (v.kind === "symptoms" && v.symptoms.some((s) => CYCLE_SYMPTOMS.has(s))))) {
-    return fail("Not available for this profile");
+    return fail(tr("actions.log.notAvailableForThisProfile"));
   }
 
   const now = nowOf(c);
   const today = localDay(now, tz);
   const ts = "at" in v && v.at ? fromWall(v.at, tz) : now;
-  if (ts > now + 60) return fail("Can’t log the future");
-  if (ts < now - 366 * 86_400) return fail("Can’t log more than a year back");
+  if (ts > now + 60) return fail(tr("actions.log.canTLogTheFuture"));
+  if (ts < now - 366 * 86_400) return fail(tr("actions.log.canTLogMoreThanAYear"));
 
   let entries: NewEntry[];
   switch (v.kind) {
@@ -230,10 +231,10 @@ export async function logEntry(c: ActionCtx, input: LogInput): Promise<ActionRes
       entries = [{ type: "symptoms", ts, data: { symptoms: v.symptoms } }];
       break;
     case "period": {
-      if (v.end < v.start) return fail("The last day is before the first");
-      if (v.end > today) return fail("Can’t log a future day");
-      if (v.start < addDays(today, -366)) return fail("Can’t log more than a year back");
-      if (v.end > addDays(v.start, 14)) return fail("A period is 15 days at most");
+      if (v.end < v.start) return fail(tr("actions.log.theLastDayIsBeforeTheFirst"));
+      if (v.end > today) return fail(tr("actions.journal.canTLogAFutureDay"));
+      if (v.start < addDays(today, -366)) return fail(tr("actions.log.canTLogMoreThanAYear"));
+      if (v.end > addDays(v.start, 14)) return fail(tr("actions.log.aPeriodIs15DaysAtMost"));
       entries = [{ type: "menstrual-period", ts: fromWall(`${v.start}T00:00`, tz), data: { start: v.start, end: v.end, flow: v.flow } }];
       break;
     }
@@ -247,7 +248,7 @@ export async function logEntry(c: ActionCtx, input: LogInput): Promise<ActionRes
 
 /** Deletes a logged entry. */
 export async function deleteLogEntry(c: ActionCtx, input: { id: string }): Promise<ActionResult> {
-  if (typeof input.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.id)) return fail("Invalid UUID");
+  if (typeof input.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.id)) return fail(tr("actions.log.invalidUuid"));
   await deleteEntry(c.store, input.id);
   return { ok: true, data: undefined };
 }

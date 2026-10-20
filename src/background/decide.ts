@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Which notifications to send, and whether the background task should run: pure functions (decide.test.ts), with
 // the expo modules kept in notify.ts and task.ts. Copied from halo's src/background/decide.ts without the Google
 // source. The web's src/server/push.ts sends two daily alerts, "Recovery ready" once per local day once today's Recovery exists and "Pulse can't sync" once per local day; the markers
@@ -109,14 +110,14 @@ export function decide(input: DecideInput): Alert[] {
   const day = localDay(input.now, input.timeZone);
   const rec = input.recoveryToday;
   if (input.settings.recoveryReady && rec != null && Number.isFinite(rec) && !sentFor(input.markers.recoveryDay, day)) {
-    out.push({ kind: "recovery", title: "Recovery ready", body: recoveryBody(rec), url: DEEP_LINK.recovery, day, mark: { recoveryDay: day } });
+    out.push({ kind: "recovery", title: tr("settings.NotificationsSection.recoveryReady"), body: recoveryBody(rec), url: DEEP_LINK.recovery, day, mark: { recoveryDay: day } });
   }
   const last = input.lastSyncTs;
   if (input.settings.cantSync && last != null && input.now - last >= CANT_SYNC_AFTER_S && !sentFor(input.markers.cantSyncDay, day)) {
     out.push({
       kind: "cant_sync",
-      title: "Pulse can’t sync",
-      body: `Health Connect hasn’t synced for ${sinceWords(input.now - last)}. Open Pulse to sync.`,
+      title: tr("settings.NotificationsSection.pulseCanTSync"),
+      body: tr("background.decide.healthConnectHasnTSyncedForOpen", { v0: sinceWords(input.now - last) }),
       url: DEEP_LINK.source,
       day,
       mark: { cantSyncDay: day },
@@ -153,10 +154,10 @@ export type TaskGate = {
 
 /** Why the background task should not import, or null to go ahead. Every reason is quiet: logged, never shown. */
 export function taskSkipReason(g: TaskGate): string | null {
-  if (!g.enabled) return "background sync is off";
-  if (!g.hasProfile) return "no profile yet";
-  if (g.source === "demo") return "demo data";
-  if (g.source !== "health_connect") return "no data source";
-  if (!g.background) return "no background access";
+  if (!g.enabled) return tr("background.decide.backgroundSyncIsOff");
+  if (!g.hasProfile) return tr("background.decide.noProfileYet");
+  if (g.source === "demo") return tr("background.decide.demoData");
+  if (g.source !== "health_connect") return tr("background.decide.noDataSource");
+  if (!g.background) return tr("background.decide.noBackgroundAccess");
   return null;
 }

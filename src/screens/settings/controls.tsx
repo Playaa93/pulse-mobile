@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // The form and settings pieces Settings, onboarding and Behaviours share. The web draws them with its shadcn components
 // (Input, Switch, Dialog, outline Button, Progress) and a few class strings; the kit has none of these, so they are
 // built here from the same classes and tokens, never from a platform control.
@@ -29,17 +31,18 @@ const LABEL = "text-xs font-bold uppercase leading-4 tracking-[0.1em] text-foreg
 const ERROR = "text-[13px] font-medium leading-[18px] text-recovery-red-text";
 
 /** A hairline between rows (the web's `divide-y divide-border`) for rows of automatic height, where the border adds its 1 px. */
-export const Divider = ({ className }: { className?: string }) => <View className={cn("h-px bg-border", className)} />;
+export const Divider = ({ className }: { className?: string }) => { useLanguage(); return <View className={cn("h-px bg-border", className)} />; };
 /** The same rule as the top border of a row with a minimum height (ROW): the web's min-h includes the border, so the row stays 52 px. */
 export const ROW_RULE = "border-t border-border";
 
 /** A form field: caps label (with "Optional"), the control, then its error or its hint (web ProfileForm `Field`). */
 export function Field({ label, hint, error, optional, children }: { label: string; hint: string; error?: string; optional?: boolean; children: ReactNode }) {
+  useLanguage();
   return (
     <View className="gap-2">
       <Text className={LABEL}>
         {label}
-        {optional && <Text className="ml-2 text-[15px] font-medium normal-case tracking-normal text-muted-foreground">{"  "}Optional</Text>}
+        {optional && <Text className="ml-2 text-[15px] font-medium normal-case tracking-normal text-muted-foreground">{"  "}{tr("settings.controls.optional")}</Text>}
       </Text>
       {children}
       {error ? (
@@ -77,6 +80,7 @@ const BORDERED: readonly (keyof typeof FIELDS)[] = ["input", "number"];
 
 /** A text field; the ring shows on focus (web: focus-visible:ring-2 ring-foreground/70) and when `invalid`. */
 export function TextField({ invalid, left, right, variant = "field", ...props }: TextInputProps & { ref?: Ref<TextInput>; invalid?: boolean; left?: ReactNode; right?: ReactNode; variant?: keyof typeof FIELDS }) {
+  useLanguage();
   const { c } = useTheme();
   const [focus, setFocus] = useState(false);
   const v = FIELDS[variant];
@@ -109,16 +113,18 @@ export function TextField({ invalid, left, right, variant = "field", ...props }:
  * Choices as a segmented control (web: a radio group, `grid gap-1 rounded-[14px] bg-field p-1`): the chosen one is the
  * foreground colour with background text. Used for sex (two) and the theme (three, with icons).
  */
-export function RadioSegments<T extends string>({ value, options, onChange, label, feedback = "select" }: { value: T | null; options: readonly { value: T; label: string; icon?: LucideIcon }[]; onChange: (v: T) => void; label: string; /** The theme choice is a "toggle" tick, other choices a "select" tick. */ feedback?: "select" | "toggle" }) {
+export function RadioSegments<T extends string>({ value, options, onChange, label, textClassName, feedback = "select" }: { value: T | null; options: readonly { value: T; label: string; accessibilityLabel?: string; icon?: LucideIcon }[]; onChange: (v: T) => void; label: string; textClassName?: string; /** The theme choice is a "toggle" tick, other choices a "select" tick. */ feedback?: "select" | "toggle" }) {
+  useLanguage();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} className="flex-row gap-1 rounded-[14px] bg-field p-1">
-      {options.map(({ value: v, label: text, icon }) => {
+      {options.map(({ value: v, label: text, accessibilityLabel, icon }) => {
         const on = v === value;
         return (
           <Press
             activeScale={0.96}
             key={v}
             accessibilityRole="radio"
+            accessibilityLabel={accessibilityLabel ?? text}
             accessibilityState={{ checked: on }}
             onPress={() => {
               if (on) return;
@@ -126,10 +132,10 @@ export function RadioSegments<T extends string>({ value, options, onChange, labe
               else haptic.select();
               onChange(v);
             }}
-            className={cn("h-11 flex-1 flex-row items-center justify-center gap-2 rounded-lg", on && "bg-foreground")}
+            className={cn("min-h-11 min-w-0 flex-1 flex-row items-center justify-center gap-2 rounded-lg px-2 py-2", on && "bg-foreground")}
           >
             {icon && <Icon icon={icon} size={16} tone={on ? "background" : "foreground-secondary"} strokeWidth={2} />}
-            <Text className={cn("text-[15px] font-semibold", on ? "text-background" : "text-foreground-secondary")}>{text}</Text>
+            <Text className={cn("min-w-0 shrink text-center text-[15px] leading-5 font-semibold", textClassName, on ? "text-background" : "text-foreground-secondary")}>{text}</Text>
           </Press>
         );
       })}
@@ -139,6 +145,7 @@ export function RadioSegments<T extends string>({ value, options, onChange, labe
 
 /** A small text button on the ground ("Edit", "Change", "Done"): the web's ghost / sm sizes, which the kit's Button lacks. */
 export function SmallButton({ label, accessibilityLabel, onPress, icon, solid, className }: { label: string; accessibilityLabel?: string; onPress: () => void; icon?: LucideIcon; solid?: boolean; className?: string }) {
+  useLanguage();
   return (
     <Press
       activeScale={0.96}
@@ -163,6 +170,7 @@ export function SmallButton({ label, accessibilityLabel, onPress, icon, solid, c
  * the web's 32 × 18 shadcn switch read as a toy on a phone (owner's call). On, the track is the optimal green.
  */
 export function Switch({ value, onValueChange, disabled, label }: { value: boolean; onValueChange: (v: boolean) => void; disabled?: boolean; label: string }) {
+  useLanguage();
   const { c } = useTheme();
   const on = useDerivedValue(() => withTiming(value ? 1 : 0, { duration: DURATION.fast }), [value]);
   const track = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [c.input, c.optimal]) }));
@@ -189,6 +197,7 @@ export function Switch({ value, onValueChange, disabled, label }: { value: boole
 
 /** The web's Progress (h-1.5 on bg-muted, the fill bg-primary). */
 export function ProgressBar({ value, label }: { value: number; label: string }) {
+  useLanguage();
   return (
     <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max: 100, now: Math.round(value) }} className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <View className="h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
@@ -225,13 +234,14 @@ export function ConfirmDialog({
   /** "outline" (red text, the web's Disconnect and Delete) or "primary" (Choose account). */
   confirmVariant?: "outline" | "primary";
 }) {
+  useLanguage();
   const panel = usePanelStyle({ ring: "border", shadow: null });
   useEffect(() => {
     if (open && confirmVariant === "outline") haptic.warning();
   }, [open, confirmVariant]);
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => !pending && onCancel()} statusBarTranslucent navigationBarTranslucent>
-      <Pressable accessibilityLabel="Close" accessible={false} onPress={() => !pending && onCancel()} className="flex-1 items-center justify-center bg-dim-strong px-4">
+      <Pressable accessibilityLabel={tr("common.close")} accessible={false} onPress={() => !pending && onCancel()} className="flex-1 items-center justify-center bg-dim-strong px-4">
         <Pressable accessible={false} onPress={() => {}} className="w-full max-w-sm overflow-hidden rounded-xl bg-popover" style={panel}>
           <View className="gap-4 p-4">
             <View className="gap-2">
@@ -248,8 +258,7 @@ export function ConfirmDialog({
           </View>
           <View className="flex-col-reverse gap-2 border-t border-border bg-muted/50 p-4">
             <Button variant="secondary" onPress={onCancel} disabled={pending}>
-              Cancel
-            </Button>
+              {tr("common.cancel")}</Button>
             {confirmVariant === "primary" ? (
               <Button onPress={onConfirm} disabled={pending}>
                 {pending ? pendingLabel : confirmLabel}

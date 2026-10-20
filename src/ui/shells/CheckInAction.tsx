@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { View } from "react-native";
 import { useGlobalSearchParams } from "expo-router";
 import { useHasCoachKey } from "@/coach/session";
@@ -16,6 +18,7 @@ import { GLASS_RADIUS } from "../radius";
 
 /** The reference app's ringed monogram: "P" in a 30 px circle with the indigo-to-blue rim. */
 function Monogram() {
+  useLanguage();
   const { c } = useTheme();
   return (
     <View accessibilityElementsHidden className="size-[30px] items-center justify-center">
@@ -40,11 +43,12 @@ function Monogram() {
  * the global params, not the layout's own.) With a coach key saved, it opens the coach instead (the web's coach access).
  */
 export function CheckInAction({ onPress }: { onPress?: () => void }) {
+  useLanguage();
   const { today } = useShellCalendar();
   const { d: raw } = useGlobalSearchParams<{ d?: string }>();
   const { d } = parseDay(raw, today);
   const coach = useHasCoachKey();
-  const label = coach ? "Coach" : `Check in for ${dayLabel(d, today)}`;
+  const label = coach ? tr("ui.shells.CheckInAction.coach") : tr("ui.shells.CheckInAction.checkInFor", { v0: dayLabel(d, today) });
   return (
     <Press
       activeScale={0.96}
@@ -72,6 +76,7 @@ export function showsCheckIn(pathname: string) {
 
 /** The action floating alone at the foot of a detail screen, where the tab bar would sit. Rendered by <ScreenScroll>. */
 export function FloatingCheckIn() {
+  useLanguage();
   const bottom = useTabBarBottom();
   return (
     <View pointerEvents="box-none" className="absolute right-3" style={{ bottom }}>

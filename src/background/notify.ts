@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Local notifications through expo-notifications (SDK 57): the "Pulse" channel, the Android 13+ POST_NOTIFICATIONS
 // request, sending one now, the daily check-in schedule and the bedtime reminder's. No push server: every notification is composed on the
 // phone. No React in here, so the background task can import it; the tap → screen hook is in links.ts.
@@ -76,7 +77,7 @@ export async function scheduleCheckIn(hour: number, minute: number): Promise<voi
   await Notifications.cancelScheduledNotificationAsync(CHECK_IN_ID).catch(() => {});
   await Notifications.scheduleNotificationAsync({
     identifier: CHECK_IN_ID,
-    content: { title: "Check in", body: "How was today? Take a minute for your check-in.", data: { url: DEEP_LINK.journal } },
+    content: { title: tr("background.notify.checkIn"), body: tr("background.notify.howWasTodayTakeAMinuteFor"), data: { url: DEEP_LINK.journal } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: CHANNEL_ID },
   });
 }

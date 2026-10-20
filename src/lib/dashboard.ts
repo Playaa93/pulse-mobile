@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Home's My Dashboard catalogue: every metric the Home view model can show, grouped as the editor lists them
 // (spec §7.1 row 8, §11 CD1, CD2). Stored keys are these keys; never rename one.
 import type { GoodDirection } from "./bands"
@@ -6,24 +7,24 @@ import type { FormatKey } from "./format"
 import { metricHref } from "./url"
 
 export const DASHBOARD_GROUPS = [
-  { key: "recovery", label: "Recovery & sleep" },
-  { key: "activity", label: "Activity" },
-  { key: "body", label: "Body" },
-  { key: "nutrition", label: "Nutrition" },
-  { key: "vitals", label: "Vitals" },
+  { key: "recovery", get label() { return tr("lib.dashboard.recoverySleep"); } },
+  { key: "activity", get label() { return tr("lib.dashboard.activity"); } },
+  { key: "body", get label() { return tr("lib.dashboard.body"); } },
+  { key: "nutrition", get label() { return tr("lib.behaviors.nutrition"); } },
+  { key: "vitals", get label() { return tr("lib.dashboard.vitals"); } },
 ] as const
 export type DashboardGroup = (typeof DASHBOARD_GROUPS)[number]["key"]
 
 /** The eight v1 rows; their units and reasons live in the Home query (`keyStats`). */
 const CORE = [
-  { key: "hrv", label: "Heart rate variability", group: "recovery" },
-  { key: "rhr", label: "Resting heart rate", group: "recovery" },
-  { key: "resp", label: "Respiratory rate", group: "vitals" },
-  { key: "sleep", label: "Sleep performance", group: "recovery" },
-  { key: "calories", label: "Calories", group: "activity" },
-  { key: "steps", label: "Steps", group: "activity" },
-  { key: "spo2", label: "Blood oxygen", group: "vitals" },
-  { key: "skin", label: "Skin temperature", group: "vitals" },
+  { key: "hrv", get label() { return tr("lib.dashboard.heartRateVariability"); }, group: "recovery" },
+  { key: "rhr", get label() { return tr("lib.dashboard.restingHeartRate"); }, group: "recovery" },
+  { key: "resp", get label() { return tr("lib.dashboard.respiratoryRate"); }, group: "vitals" },
+  { key: "sleep", get label() { return tr("lib.dashboard.sleepPerformance"); }, group: "recovery" },
+  { key: "calories", get label() { return tr("health.dataCheckSummary.calories"); }, group: "activity" },
+  { key: "steps", get label() { return tr("health.dataCheckSummary.steps"); }, group: "activity" },
+  { key: "spo2", get label() { return tr("lib.dashboard.bloodOxygen"); }, group: "vitals" },
+  { key: "skin", get label() { return tr("lib.dashboard.skinTemperature"); }, group: "vitals" },
 ] as const
 
 /**
@@ -31,29 +32,29 @@ const CORE = [
  * "(weekly)" rows total the 7 days ending on the day and compare with the same 7-day total over the prior 30 days.
  */
 const SCORED = [
-  { key: "recovery", label: "Recovery", group: "recovery" },
-  { key: "consistency", label: "Sleep consistency", group: "recovery" },
-  { key: "hours", label: "Hours of sleep", group: "recovery" },
-  { key: "restorative_pct", label: "Restorative sleep (%)", group: "recovery" },
-  { key: "restorative", label: "Restorative sleep (hours)", group: "recovery" },
-  { key: "debt", label: "Sleep debt", group: "recovery" },
-  { key: "strain", label: "Day strain", group: "activity" },
-  { key: "zones13", label: "HR zones 1-3 (weekly)", group: "activity" },
-  { key: "zones45", label: "HR zones 4-5 (weekly)", group: "activity" },
-  { key: "zones_all", label: "HR zones all (weekly)", group: "activity" },
-  { key: "strength", label: "Strength activity time (weekly)", group: "activity" },
-  { key: "vo2max", label: "VO2 max", group: "body" },
-  { key: "lean_mass", label: "Lean body mass", group: "body" },
+  { key: "recovery", get label() { return tr("ui.shells.HomeHeader.recovery"); }, group: "recovery" },
+  { key: "consistency", get label() { return tr("lib.dashboard.sleepConsistency"); }, group: "recovery" },
+  { key: "hours", get label() { return tr("lib.dashboard.hoursOfSleep"); }, group: "recovery" },
+  { key: "restorative_pct", get label() { return tr("lib.dashboard.restorativeSleep"); }, group: "recovery" },
+  { key: "restorative", get label() { return tr("lib.dashboard.restorativeSleepHours"); }, group: "recovery" },
+  { key: "debt", get label() { return tr("lib.dashboard.sleepDebt"); }, group: "recovery" },
+  { key: "strain", get label() { return tr("lib.dashboard.dayStrain"); }, group: "activity" },
+  { key: "zones13", get label() { return tr("lib.dashboard.hrZones13Weekly"); }, group: "activity" },
+  { key: "zones45", get label() { return tr("lib.dashboard.hrZones45Weekly"); }, group: "activity" },
+  { key: "zones_all", get label() { return tr("lib.dashboard.hrZonesAllWeekly"); }, group: "activity" },
+  { key: "strength", get label() { return tr("lib.dashboard.strengthActivityTimeWeekly"); }, group: "activity" },
+  { key: "vo2max", get label() { return tr("health.dataCheckSummary.vo2Max"); }, group: "body" },
+  { key: "lean_mass", get label() { return tr("lib.dashboard.leanBodyMass"); }, group: "body" },
 ] as const
 export type ScoredKey = (typeof SCORED)[number]["key"]
 
 /** Stress Monitor: a chart tile rather than a row (the day's stress line), placed and reordered like any metric. */
-const STRESS = { key: "stress", label: "Stress Monitor", group: "recovery" } as const
+const STRESS = { key: "stress", get label() { return tr("lib.dashboard.stressMonitor"); }, group: "recovery" } as const
 
 /** Google's weight and body-fat readings (daily_metrics); each opens its detail screen. */
 export const BODY_METRICS = [
-  { key: "weight", label: "Weight", unit: "kg", format: "decimal1", direction: "neutral", href: metricHref("weight") },
-  { key: "body_fat", label: "Body fat", unit: "%", format: "decimal1", direction: "neutral", href: metricHref("body_fat") },
+  { key: "weight", get label() { return tr("lib.dashboard.weight"); }, unit: "kg", format: "decimal1", direction: "neutral", href: metricHref("weight") },
+  { key: "body_fat", get label() { return tr("lib.dashboard.bodyFat"); }, unit: "%", format: "decimal1", direction: "neutral", href: metricHref("body_fat") },
 ] as const satisfies readonly { key: string; label: string; unit: string; format: FormatKey; direction: GoodDirection; href: string }[]
 export type BodyKey = (typeof BODY_METRICS)[number]["key"]
 
@@ -63,14 +64,14 @@ const ALL: { key: DashboardKey; label: string; group: DashboardGroup }[] = [
   ...CORE,
   ...SCORED,
   STRESS,
-  ...BODY_METRICS.map((m) => ({ key: m.key, label: m.label, group: "body" as const })),
-  ...EXTRA_METRICS.map((m) => ({ key: m.key, label: m.label, group: m.group })),
+  ...BODY_METRICS.map((m) => ({ key: m.key, get label() { return m.label; }, group: "body" as const })),
+  ...EXTRA_METRICS.map((m) => ({ key: m.key, get label() { return m.label; }, group: m.group })),
 ]
 
 /** Every metric, in editor order: by group, then catalogue order within it. */
 export const DASHBOARD_METRICS = DASHBOARD_GROUPS.flatMap((g) => ALL.filter((m) => m.group === g.key))
 
-export const DASHBOARD_LABEL = Object.fromEntries(ALL.map((m) => [m.key, m.label])) as Record<DashboardKey, string>
+export const DASHBOARD_LABEL = Object.defineProperties({}, Object.fromEntries(ALL.map((m) => [m.key, { enumerable: true, get: () => m.label }]))) as Record<DashboardKey, string>
 
 export const isDashboardKey = (k: string): k is DashboardKey => Object.hasOwn(DASHBOARD_LABEL, k)
 

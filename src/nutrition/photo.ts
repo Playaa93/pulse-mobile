@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // A meal photo for the estimate: taken with the camera or chosen from the gallery (expo-image-picker), scaled down to
 // 1024 px on its long side and re-encoded as a JPEG (expo-image-manipulator), then handed over as base64 for the one
 // request to the person's AI provider. Nothing is kept: the picker's copy and the scaled file in the app's cache are
@@ -38,7 +39,7 @@ async function prepare(asset: ImagePicker.ImagePickerAsset): Promise<MealPhoto> 
     try {
       const out = await image.saveAsync({ format: SaveFormat.JPEG, compress: QUALITY, base64: true });
       saved = out.uri;
-      if (!out.base64) throw new Error("no image data");
+      if (!out.base64) throw new Error(tr("nutrition.photo.noImageData"));
       return { base64: out.base64, mediaType: "image/jpeg" };
     } finally {
       image.release();

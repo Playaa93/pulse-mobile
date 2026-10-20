@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The log sheets' form state and its translation to the log action's input: the pure half of pulse's
 // (app)/journal/Log.tsx (EMPTY, toInput, num, wallNow), unchanged, so it is tested in Node (form.test.ts).
 import type { FoodItemInput, LogInput } from "@/actions/log";
@@ -24,9 +25,9 @@ export const EMPTY_FOOD: FoodForm = { name: "", portion: "", kcal: "", protein: 
 /** One food's fields as the action's item (portion and fiber only when given), or the first problem to show. */
 export function foodItemOf(f: FoodForm): FoodItemInput | string {
   const kcal = num(f.kcal);
-  if (kcal == null || Number.isNaN(kcal) || !Number.isInteger(kcal)) return "Enter calories as a whole number.";
+  if (kcal == null || Number.isNaN(kcal) || !Number.isInteger(kcal)) return tr("log.form.enterCaloriesAsAWholeNumber");
   const [protein, carbs, fat, fiber] = [f.protein, f.carbs, f.fat, f.fiber].map(num);
-  if ([protein, carbs, fat, fiber].some((g) => Number.isNaN(g))) return "Macros are grams, as numbers.";
+  if ([protein, carbs, fat, fiber].some((g) => Number.isNaN(g))) return tr("log.form.macrosAreGramsAsNumbers");
   const portion = f.portion.trim();
   return { name: f.name, ...(portion && { portion }), kcal, protein, carbs, fat, ...(fiber !== null && { fiber }) };
 }
@@ -66,35 +67,35 @@ export function toInput(kind: LogKind, f: Form, at: string): LogInput | string {
   switch (kind) {
     case "water": {
       const ml = num(s("ml"));
-      return ml && Number.isInteger(ml) ? { kind, ml, at } : "Enter the amount in millilitres.";
+      return ml && Number.isInteger(ml) ? { kind, ml, at } : tr("log.form.enterTheAmountInMillilitres");
     }
     case "food": {
       const [kcal, protein, carbs, fat] = ["kcal", "protein", "carbs", "fat"].map((k) => num(s(k)));
-      if (!s("meal")) return "Choose a meal.";
-      if (kcal == null || Number.isNaN(kcal) || !Number.isInteger(kcal)) return "Enter calories as a whole number.";
-      if ([protein, carbs, fat].some((g) => Number.isNaN(g))) return "Macros are grams, as numbers.";
+      if (!s("meal")) return tr("log.form.chooseAMeal");
+      if (kcal == null || Number.isNaN(kcal) || !Number.isInteger(kcal)) return tr("log.form.enterCaloriesAsAWholeNumber");
+      if ([protein, carbs, fat].some((g) => Number.isNaN(g))) return tr("log.form.macrosAreGramsAsNumbers");
       return { kind, name: s("name"), meal: s("meal") as never, kcal, protein, carbs, fat, at };
     }
     case "weight": {
       const kg = num(s("kg"));
       const fatPct = num(s("fat"));
-      if (kg == null || Number.isNaN(kg)) return "Enter your weight in kilograms.";
-      if (Number.isNaN(fatPct)) return "Body fat is a percentage, as a number.";
+      if (kg == null || Number.isNaN(kg)) return tr("log.form.enterYourWeightInKilograms");
+      if (Number.isNaN(fatPct)) return tr("log.form.bodyFatIsAPercentageAsA");
       return { kind, kg, fatPct, at };
     }
     case "spo2": {
       const pct = num(s("pct"));
-      return pct == null || Number.isNaN(pct) ? "Enter blood oxygen as a percentage, e.g. 95." : { kind, pct, at };
+      return pct == null || Number.isNaN(pct) ? tr("log.form.enterBloodOxygenAsAPercentageE") : { kind, pct, at };
     }
     case "mood":
-      return a("moods").length ? { kind, moods: a("moods") as never, valence: (s("valence") || null) as never, at } : "Choose how you feel.";
+      return a("moods").length ? { kind, moods: a("moods") as never, valence: (s("valence") || null) as never, at } : tr("log.form.chooseHowYouFeel");
     case "symptoms":
-      return a("symptoms").length ? { kind, symptoms: a("symptoms") as never, at } : "Choose a symptom.";
+      return a("symptoms").length ? { kind, symptoms: a("symptoms") as never, at } : tr("log.form.chooseASymptom");
     case "period":
-      if (!s("start") || !s("end")) return "Choose the first and last day.";
+      if (!s("start") || !s("end")) return tr("log.form.chooseTheFirstAndLastDay");
       return { kind, start: s("start"), end: s("end"), flow: (s("flow") || null) as never };
     case "ovulation":
-      return s("result") ? { kind, result: s("result") as never, at } : "Choose the result.";
+      return s("result") ? { kind, result: s("result") as never, at } : tr("log.form.chooseTheResult");
   }
 }
 

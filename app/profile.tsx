@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { View } from "react-native";
 import { ProfileForm, SaveButton } from "@/screens/onboarding/ProfileForm";
 import { toast } from "@/ui/Toast";
@@ -9,22 +11,23 @@ import { goBack } from "@/ui/navigate";
 // day's scores. Registered in app/_layout.tsx. Ported from pulse (app)/settings/SettingsClient.tsx `EditProfileButton`.
 // The fields scroll in the sheet's body and Save is pinned under them, as in the log sheets, so it stays in reach however
 // long the form grows. The web wraps the form in its own `px-4`: 32 px of side margin, for the fields and Save alike.
-const TITLE = "Profile";
-const DESCRIPTION = "Changing it recomputes every day’s scores.";
+const profileTitle = () => tr("settings.ProfileCard.profile");
+const profileDescription = () => tr("app.profile.changingItRecomputesEveryDaySScores");
 
 export default function EditProfile() {
+  useLanguage();
   const { data } = useScreen(async (ctx) => ctx.profile, ["profile"]);
-  if (!data) return <TaskPage title={TITLE} description={DESCRIPTION}>{null}</TaskPage>;
+  if (!data) return <TaskPage title={profileTitle()} description={profileDescription()}>{null}</TaskPage>;
   return (
     <ProfileForm
       defaults={{ birthDate: data.birthDate, sex: data.sex, maxHr: data.maxHr, heightCm: data.heightCm, timeZone: data.timeZone, name: data.name }}
       onSaved={() => {
         goBack();
-        toast.success("Profile saved. Scores are being recomputed.");
+        toast.success(tr("app.profile.profileSavedScoresAreBeingRecomputed"));
       }}
-      footer={({ pending, submit }) => <SaveButton pending={pending} label="Save profile" onPress={submit} />}
+      footer={({ pending, submit }) => <SaveButton pending={pending} label={tr("app.profile.saveProfile")} onPress={submit} />}
       sheet={(fields, footer) => (
-        <TaskPage title={TITLE} description={DESCRIPTION} footer={<View className="px-4">{footer}</View>}>
+        <TaskPage title={profileTitle()} description={profileDescription()} footer={<View className="px-4">{footer}</View>}>
           <View className="px-4">{fields}</View>
         </TaskPage>
       )}

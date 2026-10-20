@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Home › My Dashboard's CUSTOMIZE (dashboard-03..06, spec §11 CD1, CD2, R41): the reference app's full-screen editor,
 // ported from pulse (app)/_lib/EditDashboard.tsx. "My Dashboard" holds the shown metrics in order, each dragged by its
 // handle and removed with its minus; "Add to My Dashboard" holds the rest by group with a search field, and a tap adds
@@ -40,16 +42,17 @@ const moveTo = <T,>(items: T[], from: number, to: number) => {
 
 /** "CUSTOMIZE" with a pencil at My Dashboard's header (home-12): opens the editor sheet. */
 export function EditDashboardButton({ keys, empty }: { keys: DashboardKey[]; empty: DashboardKey[] }) {
+  useLanguage();
   return (
     <Press
       activeBg="bg-fill-faint"
       accessibilityRole="button"
-      accessibilityLabel="Customize My Dashboard"
+      accessibilityLabel={tr("home.EditDashboard.customizeMyDashboard")}
       onPress={() => push(`/dashboard?keys=${keys.join(",")}&empty=${empty.join(",")}`)}
       hitSlop={{ top: 6, bottom: 6 }}
       className="-mr-2 h-8 flex-row items-center gap-1.5 rounded-full px-2"
     >
-      <Text className="text-xs font-bold uppercase leading-4 tracking-[0.1em]">Customize</Text>
+      <Text className="text-xs font-bold uppercase leading-4 tracking-[0.1em]">{tr("home.EditDashboard.customize")}</Text>
       <Icon icon={Pencil} size={16} tone="foreground" strokeWidth={1.75} />
     </Press>
   );
@@ -58,6 +61,7 @@ export function EditDashboardButton({ keys, empty }: { keys: DashboardKey[]; emp
 const keysOf = (raw: string | undefined) => (raw ?? "").split(",").filter(isDashboardKey);
 
 export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: string; empty?: string }) {
+  useLanguage();
   const { c } = useTheme();
   const [shown, setShown] = useState(() => keysOf(rawKeys));
   const [query, setQuery] = useState("");
@@ -75,17 +79,17 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
   const move = (from: number, to: number) => {
     if (to < 0 || to >= shown.length || to === from) return;
     setShown((s) => moveTo(s, from, to));
-    setStatus(`${DASHBOARD_LABEL[shown[from]]} moved to position ${to + 1} of ${shown.length}`);
+    setStatus(tr("home.EditDashboard.movedToPositionOf", { v0: DASHBOARD_LABEL[shown[from]], v1: to + 1, v2: shown.length }));
   };
   const remove = (i: number) => {
     haptic.tap();
     setShown((s) => s.filter((_, j) => j !== i));
-    setStatus(`${DASHBOARD_LABEL[shown[i]]} removed from Home`);
+    setStatus(tr("home.EditDashboard.removedFromHome", { v0: DASHBOARD_LABEL[shown[i]] }));
   };
   const add = (key: DashboardKey) => {
     haptic.tap();
     setShown((s) => [...s, key]);
-    setStatus(`${DASHBOARD_LABEL[key]} added at position ${shown.length + 1}`);
+    setStatus(tr("home.EditDashboard.addedAtPosition", { v0: DASHBOARD_LABEL[key], v1: shown.length + 1 }));
   };
   const save = async () => {
     setSaving(true);
@@ -104,21 +108,21 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
 
   return (
     <TaskPage
-      title="Customize dashboard"
-      done={done ? { title: "Success", body: "Your preferences have been saved.", onDone: goBack } : null}
+      title={tr("home.EditDashboard.customizeDashboard")}
+      done={done ? { title: tr("home.EditDashboard.success"), body: tr("home.EditDashboard.yourPreferencesHaveBeenSaved"), onDone: goBack } : null}
       footer={
         <>
           {/* The web shows a toast; a phone sheet shows the line above its button. */}
-          {failed && <Text accessibilityRole="alert" className="text-center text-[15px] leading-[22px] text-destructive">Couldn’t save your dashboard. Try again.</Text>}
+          {failed && <Text accessibilityRole="alert" className="text-center text-[15px] leading-[22px] text-destructive">{tr("home.EditDashboard.couldnTSaveYourDashboardTryAgain")}</Text>}
           <Button variant="outline-pill" onPress={save} disabled={saving || shown.length === 0}>
-            {saving ? "Saving…" : "Save"}
+            {saving ? tr("onboarding.ProfileForm.saving") : tr("common.save")}
           </Button>
         </>
       }
     >
-      <Text accessibilityRole="header" className="mt-4 text-[22px] font-semibold leading-7">My Dashboard</Text>
+      <Text accessibilityRole="header" className="mt-4 text-[22px] font-semibold leading-7">{tr("home.EditDashboard.myDashboard")}</Text>
       {shown.length === 0 ? (
-        <Text accessibilityRole="alert" className="py-4 text-[15px] leading-[22px] text-foreground-secondary">Add at least one metric to save.</Text>
+        <Text accessibilityRole="alert" className="py-4 text-[15px] leading-[22px] text-foreground-secondary">{tr("home.EditDashboard.addAtLeastOneMetricToSave")}</Text>
       ) : (
         // Rows sit at fixed places (index × pitch) so a drag only moves one row and the others slide into the gap.
         <GestureHandlerRootView>
@@ -131,7 +135,7 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
       )}
 
       <View className="mt-8">
-        <TaskSection>Add to My Dashboard</TaskSection>
+        <TaskSection>{tr("home.EditDashboard.addToMyDashboard")}</TaskSection>
       </View>
       <View className="relative mt-3">
         <View pointerEvents="none" className="absolute left-3.5 top-0 z-10 h-12 justify-center">
@@ -140,9 +144,9 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search metrics…"
+          placeholder={tr("home.EditDashboard.searchMetrics")}
           placeholderTextColor={c["muted-foreground"]}
-          accessibilityLabel="Search metrics"
+          accessibilityLabel={tr("home.EditDashboard.searchMetrics_180deb")}
           autoCapitalize="none"
           autoCorrect={false}
           spellCheck={false}
@@ -161,7 +165,7 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
                 activeScale={0.98}
                 key={m.key}
                 accessibilityRole="button"
-                accessibilityLabel={`Add ${m.label}${noData.has(m.key) ? ", no data yet" : ""}`}
+                accessibilityLabel={tr("home.EditDashboard.add", { v0: m.label, v1: noData.has(m.key) ? tr("home.EditDashboard.noDataYet") : "" })}
                 onPress={() => add(m.key)}
                 className={cn(CARD, "w-full pr-3")}
               >
@@ -169,7 +173,7 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
                 <View className="min-w-0 flex-1">
                   {/* In a column, flex-1 would stretch the label down the row (on the web it is inert inside a block span). */}
                   <Text className={NAME.replace("flex-1 ", "")}>{m.label}</Text>
-                  {noData.has(m.key) && <Text className="mt-0.5 text-xs font-medium leading-4 text-muted-foreground">No data yet</Text>}
+                  {noData.has(m.key) && <Text className="mt-0.5 text-xs font-medium leading-4 text-muted-foreground">{tr("goals.weeklyPlanView.noDataYet")}</Text>}
                 </View>
                 <Icon icon={Plus} size={24} tone="foreground" strokeWidth={2} />
               </Press>
@@ -178,7 +182,7 @@ export function EditDashboardPage({ keys: rawKeys, empty: rawEmpty }: { keys?: s
         </View>
       ))}
       {groups.length === 0 && (
-        <Text className="py-6 text-center text-[15px] leading-[22px] text-foreground-secondary">{hidden.length ? `No metric matches “${query.trim()}”.` : "Every metric is on Home."}</Text>
+        <Text className="py-6 text-center text-[15px] leading-[22px] text-foreground-secondary">{hidden.length ? tr("home.EditDashboard.noMetricMatches", { v0: query.trim() }) : tr("home.EditDashboard.everyMetricIsOnHome")}</Text>
       )}
       <Text accessibilityLiveRegion="polite" className="absolute h-px w-px opacity-0">{status}</Text>
     </TaskPage>
@@ -219,6 +223,7 @@ function sortPan(p: Place, count: number, onMove: (from: number, to: number) => 
  * thread) and asks the list to reorder each time it crosses a neighbour, the others slide to their new places.
  */
 function SortableRow({ id, index, count, onMove, onRemove }: { id: DashboardKey; index: number; count: number; onMove: (from: number, to: number) => void; onRemove: () => void }) {
+  useLanguage();
   const label = DASHBOARD_LABEL[id];
   const top = useSharedValue(index * PITCH);
   const start = useSharedValue(0);
@@ -249,7 +254,7 @@ function SortableRow({ id, index, count, onMove, onRemove }: { id: DashboardKey;
         {/* dashboard-03: the chart tile carries a small bar-chart glyph. */}
         {id === "stress" && <Icon icon={ChartNoAxesColumn} size={20} tone="muted-foreground" strokeWidth={1.5} />}
         {/* the reference app hides removal behind a swipe that members could not find; Pulse shows it (spec §11 CD2). */}
-        <Press activeScale={0.96} accessibilityRole="button" accessibilityLabel={`Remove ${label}`} onPress={onRemove} className="size-11 items-center justify-center rounded-full">
+        <Press activeScale={0.96} accessibilityRole="button" accessibilityLabel={tr("nutrition.FoodPage.remove", { v0: label })} onPress={onRemove} className="size-11 items-center justify-center rounded-full">
           <View className="size-6 items-center justify-center rounded-full border border-foreground-secondary">
             <Icon icon={Minus} size={14} tone="foreground-secondary" strokeWidth={2.25} />
           </View>
@@ -258,9 +263,9 @@ function SortableRow({ id, index, count, onMove, onRemove }: { id: DashboardKey;
           <View
             accessible
             accessibilityRole="adjustable"
-            accessibilityLabel={`Reorder ${label}, position ${index + 1} of ${count}`}
-            accessibilityHint="Drag, or swipe up or down, to move"
-            accessibilityActions={[{ name: "increment", label: "Move up" }, { name: "decrement", label: "Move down" }]}
+            accessibilityLabel={tr("home.EditDashboard.reorderPositionOf", { v0: label, v1: index + 1, v2: count })}
+            accessibilityHint={tr("home.EditDashboard.dragOrSwipeUpOrDownTo")}
+            accessibilityActions={[{ name: "increment", label: tr("home.EditDashboard.moveUp") }, { name: "decrement", label: tr("home.EditDashboard.moveDown") }]}
             onAccessibilityAction={(e) => onMove(index, index + (e.nativeEvent.actionName === "increment" ? -1 : 1))}
             className="size-11 items-center justify-center rounded-full"
           >

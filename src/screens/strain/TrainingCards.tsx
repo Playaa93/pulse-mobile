@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Version 19's training cards, from halo src/screens/detail/TrainingCards.tsx (its fields and copy) drawn with Pulse's
 // kit: Training Readiness with Recovery Time and Training Status (Strain), and a workout's Aerobic Training Effect
 // (Activity). Plain views only: a value, a band word, rows and ZoneBars-style meters; nothing animates.
@@ -25,9 +27,10 @@ import { useTheme } from "@/ui/theme";
 import { useScreen } from "../useScreen";
 
 function P({ children }: { children: ReactNode }) {
+  useLanguage();
   return <Text className="text-[15px] leading-[22px] text-foreground-body">{children}</Text>;
 }
-export const SOURCE_NOTE = <Text className="text-[13px] leading-[18px] text-muted-foreground">Pulse scores, computed from your Fitbit data.</Text>;
+export const renderSourceNote = () => <Text className="text-[13px] leading-[18px] text-muted-foreground">{tr("info.pulseScoresComputedFromYourFitbitData")}</Text>;
 
 /** A meter stays quiet unless it flags something: only a weak value (warning, alert) takes a colour. */
 const TONE_FILL: Record<ChipTone, TokenName> = { optimal: "foreground-secondary", warning: "warning", alert: "recovery-red", neutral: "foreground-secondary" };
@@ -39,12 +42,14 @@ const BAND = cn(LABEL, "text-foreground-secondary");
 
 /** A quiet meter, ZoneBars' bar: `frac` of a hatched track. */
 function Meter({ frac, tone }: { frac: number; tone: ChipTone }) {
+  useLanguage();
   const { c } = useTheme();
   return <Bar value={frac} color={c[TONE_FILL[tone]]} />;
 }
 
 /** A score hero (Health's Fitness card): the number and its unit, the band word in caps under it, then a grey caption. */
 export function Hero({ value, unit, band, caption, spoken }: { value: string; unit?: string; band: string; caption?: string | null; spoken: string }) {
+  useLanguage();
   return (
     <View accessible accessibilityLabel={spoken} className="gap-1">
       <ValueUnit value={value} unit={unit} className={HERO} />
@@ -75,6 +80,7 @@ export function StatRow({
   spoken: string;
   word?: boolean;
 }) {
+  useLanguage();
   const missing = value === MISSING;
   return (
     <View accessible accessibilityLabel={spoken} className="min-h-14 flex-row items-center gap-3 py-2">
@@ -93,61 +99,46 @@ export function StatRow({
 }
 
 export const TRAINING_READINESS_INFO: InfoContent = {
-  title: "Training Readiness",
-  body: (
+  get title() { return tr("strain.TrainingCards.trainingReadiness"); },
+  get body() { return (
     <>
       <P>
-        How ready you are for hard training today, from 1 to 100, in the manner of Garmin’s Training Readiness. Last night’s sleep and your recovery time weigh
-        most (a quarter each), then your HRV status and load ratio, then your sleep over the last 3 nights and your stress over the last 3 days. One very weak
-        factor caps the score, and a very long day awake before last night takes 10 off.
-      </P>
-      <P>95-100 Prime, 75-94 High, 50-74 Moderate, 25-49 Low, 1-24 Poor. It is set at wake and drops after training as recovery time builds.</P>
+        {tr("strain.TrainingCards.howReadyYouAreForHardTraining")}</P>
+      <P>{tr("strain.TrainingCards.95100Prime7594High50")}</P>
       <P>
-        Recovery time is how long until you are ready for another hard session: each workout adds hours from its Training Effect (about a day at 3.5, three at
-        5), up to 96. It counts down faster during good sleep and slower in stressful hours or after a poor night.
-      </P>
-      <P>Garmin doesn’t publish its weights; these are Pulse’s.</P>
-      {SOURCE_NOTE}
+        {tr("strain.TrainingCards.recoveryTimeIsHowLongUntilYou")}</P>
+      <P>{tr("strain.TrainingCards.garminDoesnTPublishItsWeightsThese")}</P>
+      {renderSourceNote()}
     </>
-  ),
+  ); },
 };
 
 export const TRAINING_STATUS_INFO: InfoContent = {
-  title: "Training Status",
-  body: (
+  get title() { return tr("strain.TrainingCards.trainingStatus"); },
+  get body() { return (
     <>
       <P>
-        What your recent training is doing, in the manner of Garmin’s Training Status: from your load ratio (Garmin’s acute against chronic load), the trend of
-        Fitbit’s VO2 max over 28 days, and your HRV Status.
-      </P>
+        {tr("strain.TrainingCards.whatYourRecentTrainingIsDoingIn")}</P>
       <P>
-        Productive: load at your usual or above, with VO2 max rising or HRV steady. Maintaining: enough to hold fitness. Recovery: a lighter stretch. Peaking:
-        fitness up while load eases. Unproductive: steady load but VO2 max falling. Overreaching: very high load that is starting to cost you. Strained: HRV low
-        under load. Detraining: far below your usual load for a week.
-      </P>
-      <P>Fitbit’s VO2 max moves slowly, so the trend is read over 28 days, not Garmin’s 14. Needs about 3 weeks of data, and a VO2 max or an HRV Status.</P>
-      {SOURCE_NOTE}
+        {tr("strain.TrainingCards.productiveLoadAtYourUsualOrAbove")}</P>
+      <P>{tr("strain.TrainingCards.fitbitSVo2MaxMovesSlowlySo")}</P>
+      {renderSourceNote()}
     </>
-  ),
+  ); },
 };
 
 export const TRAINING_EFFECT_INFO: InfoContent = {
-  title: "Training Effect",
-  body: (
+  get title() { return tr("strain.TrainingCards.trainingEffect"); },
+  get body() { return (
     <>
       <P>
-        How much this workout improves your aerobic fitness, from 0 to 5, in the manner of Garmin’s Aerobic Training Effect. Pulse estimates the session’s EPOC
-        (the extra oxygen your body uses afterwards to recover) from your heart rate and VO2 max, and compares it with what your fitness and recent training make
-        routine: the same run counts for less the fitter and busier you are.
-      </P>
-      <P>0-0.9 No benefit, 1-1.9 Minor, 2-2.9 Maintaining, 3-3.9 Improving, 4-4.9 Highly improving, 5 Overreaching.</P>
+        {tr("strain.TrainingCards.howMuchThisWorkoutImprovesYourAerobic")}</P>
+      <P>{tr("strain.TrainingCards.009NoBenefit11")}</P>
       <P>
-        Garmin estimates EPOC with beat-to-beat data and constants it doesn’t publish; Pulse’s comes from heart rate alone, fitted to Firstbeat’s published
-        figures. There is no anaerobic Training Effect: it needs pace or power.
-      </P>
-      {SOURCE_NOTE}
+        {tr("strain.TrainingCards.garminEstimatesEpocWithBeatToBeat")}</P>
+      {renderSourceNote()}
     </>
-  ),
+  ); },
 };
 
 /** "13 h" / "1 h 30 min" for recovery hours. */
@@ -158,15 +149,16 @@ export const hoursText = (h: number) => {
 };
 
 const FACTOR_ICON: Record<ReadinessFactorKey, LucideIcon> = { sleep: Moon, recoveryTime: Timer, hrv: Activity, load: Gauge, sleepHistory: BedDouble, stressHistory: Brain };
-const cardSkeleton = <Skeleton className="h-40 w-full rounded-lg" />;
+const renderCardskeleton = () => <Skeleton className="h-40 w-full rounded-lg" />;
 
 function ReadinessBody({ vm, timeZone }: { vm: TrainingVM; timeZone: string }) {
+  useLanguage();
   const rt = vm.recoveryTime.value;
   return (
     <MetricState
       metric={vm.readiness}
-      skeleton={cardSkeleton}
-      renderReason={(r, meta) => <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? "Training Readiness needs a scored night and about 3 weeks of training data." : undefined} />}
+      skeleton={renderCardskeleton()}
+      renderReason={(r, meta) => <ReasonPlaceholder reason={r} nightsLeft={meta.nightsLeft} size="md" copy={r === "calibrating" ? tr("strain.TrainingCards.trainingReadinessNeedsAScoredNightAnd") : undefined} />}
     >
       {(r) => (
         <View className="gap-4">
@@ -175,8 +167,8 @@ function ReadinessBody({ vm, timeZone }: { vm: TrainingVM; timeZone: string }) {
               value={String(r.score)}
               unit="of 100"
               band={r.band}
-              caption={vm.isToday && r.atWake !== null && r.atWake !== r.score ? `At wake ${r.atWake}` : null}
-              spoken={`Training Readiness ${r.score} of 100, ${r.band}`}
+              caption={vm.isToday && r.atWake !== null && r.atWake !== r.score ? tr("strain.TrainingCards.atWake", { v0: r.atWake }) : null}
+              spoken={tr("strain.TrainingCards.trainingReadinessOf100", { v0: r.score, v1: r.band })}
             />
             <Text className={LINE}>{r.line}</Text>
           </View>
@@ -184,16 +176,16 @@ function ReadinessBody({ vm, timeZone }: { vm: TrainingVM; timeZone: string }) {
             {rt && (
               <StatRow
                 icon={<Icon icon={Timer} size={20} tone="muted-foreground" strokeWidth={1.75} />}
-                label="Recovery time"
+                label={tr("queries.training.recoveryTime")}
                 caption={
                   rt.hours <= 0
-                    ? "Recovered"
+                    ? tr("strain.TrainingCards.recovered")
                     : rt.readyAt !== null && vm.isToday
-                    ? `Ready for hard training around ${clock(rt.readyAt, timeZone)}${rt.hours >= 24 ? ` in ${Math.round(rt.hours / 24)} day${Math.round(rt.hours / 24) === 1 ? "" : "s"}` : ""}`
+                    ? tr("strain.TrainingCards.readyForHardTrainingAround", { v0: clock(rt.readyAt, timeZone), v1: rt.hours >= 24 ? tr("training.daysFromNow", { count: Math.round(rt.hours / 24) }) : "" })
                     : null
                 }
                 value={hoursText(rt.hours)}
-                spoken={rt.hours > 0 ? `Recovery time ${hoursText(rt.hours)}` : "Recovery time: fully recovered"}
+                spoken={rt.hours > 0 ? tr("strain.TrainingCards.recoveryTime", { v0: hoursText(rt.hours) }) : tr("strain.TrainingCards.recoveryTimeFullyRecovered")}
               />
             )}
             {/* WHOOP's contributor rows (strain-02): icon, caps label, the value on the right. */}
@@ -203,7 +195,7 @@ function ReadinessBody({ vm, timeZone }: { vm: TrainingVM; timeZone: string }) {
                 icon={<Icon icon={FACTOR_ICON[f.key]} size={20} tone="muted-foreground" strokeWidth={1.75} />}
                 label={f.label}
                 value={f.value === null ? MISSING : String(f.value)}
-                spoken={`${f.label}: ${f.value === null ? "not available" : `${f.value} of 100`}`}
+                spoken={`${f.label}: ${f.value === null ? tr("strain.TrainingCards.notAvailable") : tr("strain.TrainingCards.of100", { v0: f.value })}`}
               />
             ))}
           </Divided>
@@ -214,16 +206,17 @@ function ReadinessBody({ vm, timeZone }: { vm: TrainingVM; timeZone: string }) {
 }
 
 function StatusBody({ status }: { status: TrainingVM["status"] }) {
+  useLanguage();
   return (
     <MetricState
       metric={status}
-      skeleton={cardSkeleton}
+      skeleton={renderCardskeleton()}
       renderReason={(r, meta) => (
         <ReasonPlaceholder
           reason={r}
           nightsLeft={meta.nightsLeft}
           size="md"
-          copy={r === "calibrating" ? "Training Status needs about 3 weeks of training data." : r === "no_data" ? "Training Status needs a VO2 max from Fitbit or an HRV Status." : undefined}
+          copy={r === "calibrating" ? tr("strain.TrainingCards.trainingStatusNeedsAbout3WeeksOf") : r === "no_data" ? tr("strain.TrainingCards.trainingStatusNeedsAVo2MaxFrom") : undefined}
         />
       )}
     >
@@ -234,14 +227,14 @@ function StatusBody({ status }: { status: TrainingVM["status"] }) {
             <Text className={LINE}>{s.line}</Text>
           </View>
           <Divided>
-            <StatRow label="Load ratio" value={formatValue("decimal2", s.loadRatio)} spoken={`Load ratio ${s.loadRatio ?? "not available"}`} />
+            <StatRow label={tr("queries.training.loadRatio")} value={formatValue("decimal2", s.loadRatio)} spoken={tr("strain.TrainingCards.loadRatio", { v0: s.loadRatio ?? tr("display.unavailable") })} />
             <StatRow
-              label="VO2 max trend"
+              label={tr("health.FitnessScreen.vo2MaxTrend")}
               value={s.vo2PerMonth === null ? MISSING : `${s.vo2PerMonth > 0 ? "+" : ""}${formatValue("decimal1", s.vo2PerMonth)}`}
               unit="a month"
-              spoken={s.vo2PerMonth === null ? "VO2 max trend not available" : `VO2 max trend ${s.vo2PerMonth} a month`}
+              spoken={s.vo2PerMonth === null ? tr("strain.TrainingCards.vo2MaxTrendNotAvailable") : tr("strain.TrainingCards.vo2MaxTrendAMonth", { v0: s.vo2PerMonth })}
             />
-            <StatRow label="HRV status" value={s.hrv ?? "Not yet"} word spoken={`HRV status ${s.hrv ?? "not yet"}`} />
+            <StatRow label={tr("queries.training.hrvStatus")} value={s.hrv ?? tr("copy.fallback.not_yet")} word spoken={tr("strain.TrainingCards.hrvStatus", { v0: s.hrv ?? tr("display.notYet") })} />
           </Divided>
         </View>
       )}
@@ -251,14 +244,15 @@ function StatusBody({ status }: { status: TrainingVM["status"] }) {
 
 /** Strain's two training cards for day `d`, loaded on their own so the page's query is unchanged. */
 export function TrainingSection({ d, timeZone }: { d: string; timeZone: string }) {
+  useLanguage();
   const vm = useScreen((ctx) => getTraining(d, ctx), ["training", d]).data;
   return (
     <View className="gap-4">
-      <SectionShell variant="card" title="Training Readiness" info={TRAINING_READINESS_INFO}>
-        {vm ? <ReadinessBody vm={vm} timeZone={timeZone} /> : cardSkeleton}
+      <SectionShell variant="card" title={tr("strain.TrainingCards.trainingReadiness")} info={TRAINING_READINESS_INFO}>
+        {vm ? <ReadinessBody vm={vm} timeZone={timeZone} /> : renderCardskeleton()}
       </SectionShell>
-      <SectionShell variant="card" title="Training Status" info={TRAINING_STATUS_INFO}>
-        {vm ? <StatusBody status={vm.status} /> : cardSkeleton}
+      <SectionShell variant="card" title={tr("strain.TrainingCards.trainingStatus")} info={TRAINING_STATUS_INFO}>
+        {vm ? <StatusBody status={vm.status} /> : renderCardskeleton()}
       </SectionShell>
     </View>
   );
@@ -266,24 +260,25 @@ export function TrainingSection({ d, timeZone }: { d: string; timeZone: string }
 
 /** A workout's Aerobic Training Effect, its main benefit and the recovery time it added (Activity). */
 export function TrainingEffectCard({ te }: { te: TrainingEffectVM | null }) {
+  useLanguage();
   const metric: Metric<TrainingEffectVM> = te ? { value: te, reason: null, provisional: false } : { value: null, reason: "insufficient_hr_data", provisional: false };
   return (
-    <SectionShell variant="card" title="Training effect" info={TRAINING_EFFECT_INFO}>
+    <SectionShell variant="card" title={tr("strain.TrainingCards.trainingEffect_7bfc05")} info={TRAINING_EFFECT_INFO}>
       <MetricState metric={metric} skeleton={null}>
         {(t) => (
           <View className="gap-3">
             <View className="gap-3">
-              <Hero value={formatValue("decimal1", t.te)} unit="of 5" band={t.label} spoken={`Aerobic Training Effect ${formatValue("decimal1", t.te)} of 5, ${t.label}`} />
+              <Hero value={formatValue("decimal1", t.te)} unit="of 5" band={t.label} spoken={tr("strain.TrainingCards.aerobicTrainingEffectOf5", { v0: formatValue("decimal1", t.te), v1: t.label })} />
               <Meter frac={t.te / 5} tone={t.tone} />
             </View>
             <Divided>
-              <StatRow label="Main benefit" caption={t.benefitLine} value={t.benefit} word spoken={`Main benefit ${t.benefit}. ${t.benefitLine}`} />
+              <StatRow label={tr("strain.TrainingCards.mainBenefit")} caption={t.benefitLine} value={t.benefit} word spoken={tr("strain.TrainingCards.mainBenefit_6fd0a1", { v0: t.benefit, v1: t.benefitLine })} />
               {t.recoveryHours > 0 && (
                 <StatRow
                   icon={<Icon icon={Timer} size={20} tone="muted-foreground" strokeWidth={1.75} />}
-                  label="Adds recovery time"
+                  label={tr("strain.TrainingCards.addsRecoveryTime")}
                   value={hoursText(t.recoveryHours)}
-                  spoken={`Adds ${hoursText(t.recoveryHours)} of recovery time`}
+                  spoken={tr("strain.TrainingCards.addsOfRecoveryTime", { v0: hoursText(t.recoveryHours) })}
                 />
               )}
             </Divided>

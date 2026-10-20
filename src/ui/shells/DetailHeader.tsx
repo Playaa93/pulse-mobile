@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ComponentProps, ReactNode } from "react";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
@@ -39,9 +41,10 @@ function goBack(backHref?: string) {
 export const detailRowHeight = ({ subtitle, dateTitle }: Pick<DetailHeaderProps, "subtitle" | "dateTitle">) => (subtitle && !dateTitle ? 52 : HEADER_ROW);
 
 export function DetailHeaderRow({ title, subtitle, info, backHref, dateTitle, dismiss = "back", align = "center", titleIcon, action, onBack, className, centerStyle }: DetailHeaderProps & { className?: string; centerStyle?: ComponentProps<typeof Animated.View>["style"] }) {
+  useLanguage();
   const close = dismiss === "close";
   const back = (
-    <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel={close ? "Close" : "Back"} onPress={onBack ?? (() => goBack(backHref))} className="size-11 items-center justify-center rounded-full">
+    <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel={close ? tr("common.close") : tr("common.back")} onPress={onBack ?? (() => goBack(backHref))} className="size-11 items-center justify-center rounded-full">
       <Icon icon={close ? X : ChevronLeft} size={close ? 24 : 26} tone="foreground" strokeWidth={1.75} />
     </Press>
   );
@@ -84,6 +87,7 @@ export function DetailHeaderRow({ title, subtitle, info, backHref, dateTitle, di
 }
 
 export function DetailHeader({ onHeight, ...props }: DetailHeaderProps & { onHeight?: (height: number) => void }) {
+  useLanguage();
   return (
     <HeaderFrame rows={detailRowHeight(props)} onHeight={onHeight}>
       <DetailHeaderRow {...props} />

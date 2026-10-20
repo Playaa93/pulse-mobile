@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Journal's Log section (spec §11 LG1), ported from Pulse's src/lib/log.ts (the choices the sheets offer),
 // src/server/log.ts (the stored entries) and src/server/queries/log.ts (the view model).
 //
@@ -37,96 +38,96 @@ export const KIND_TYPES: Record<LogKind, LogType[]> = {
   ovulation: ["ovulation-test"],
 };
 export const KIND_LABEL: Record<LogKind, string> = {
-  water: "Water",
-  food: "Food",
-  weight: "Weight",
-  spo2: "Blood oxygen",
-  mood: "Mood",
-  symptoms: "Symptoms",
-  period: "Period",
-  ovulation: "Ovulation test",
+  get water() { return tr("lib.extraMetrics.water"); },
+  get food() { return tr("journal.WeekCard.food"); },
+  get weight() { return tr("lib.dashboard.weight"); },
+  get spo2() { return tr("lib.dashboard.bloodOxygen"); },
+  get mood() { return tr("queries.log.mood"); },
+  get symptoms() { return tr("app.log.symptoms"); },
+  get period() { return tr("queries.log.period"); },
+  get ovulation() { return tr("queries.log.ovulationTest"); },
 };
 export const isCycleKind = (k: LogKind) => k === "period" || k === "ovulation";
 
 export const WATER_STEPS = [250, 500] as const;
 
-export const MEALS = [
-  ["BREAKFAST", "Breakfast"],
-  ["LUNCH", "Lunch"],
-  ["DINNER", "Dinner"],
-  ["SNACK", "Snack"],
+export const mealOptions = () => [
+  ["BREAKFAST", tr("queries.log.breakfast")],
+  ["LUNCH", tr("queries.log.lunch")],
+  ["DINNER", tr("queries.log.dinner")],
+  ["SNACK", tr("queries.log.snack")],
 ] as const;
-export type Meal = (typeof MEALS)[number][0];
+export type Meal = (ReturnType<typeof mealOptions>)[number][0];
 
 /** Google's valence enum, in the order the sheet shows it. */
-export const VALENCES = [
-  ["UNPLEASANT", "Unpleasant"],
-  ["BASELINE", "Neutral"],
-  ["PLEASANT", "Pleasant"],
+export const valenceOptions = () => [
+  ["UNPLEASANT", tr("queries.log.unpleasant")],
+  ["BASELINE", tr("queries.log.neutral")],
+  ["PLEASANT", tr("queries.log.pleasant")],
 ] as const;
-export type Valence = (typeof VALENCES)[number][0];
+export type Valence = (ReturnType<typeof valenceOptions>)[number][0];
 
 /** A short list from Google's 70-odd moods: the ones a daily log reaches for. No NEUTRAL: the valence row has it. */
-export const MOODS = [
-  ["HAPPY", "Happy"],
-  ["CALM", "Calm"],
-  ["ENERGIZED", "Energized"],
-  ["CONTENT", "Content"],
-  ["GRATEFUL", "Grateful"],
-  ["EXCITED", "Excited"],
-  ["FATIGUED", "Tired"],
-  ["STRESSED", "Stressed"],
-  ["ANXIOUS", "Anxious"],
-  ["IRRITATED", "Irritated"],
-  ["SAD", "Sad"],
-  ["OVERWHELMED", "Overwhelmed"],
-  ["LONELY", "Lonely"],
+export const moodOptions = () => [
+  ["HAPPY", tr("queries.log.happy")],
+  ["CALM", tr("queries.log.calm")],
+  ["ENERGIZED", tr("queries.log.energized")],
+  ["CONTENT", tr("queries.log.content")],
+  ["GRATEFUL", tr("queries.log.grateful")],
+  ["EXCITED", tr("queries.log.excited")],
+  ["FATIGUED", tr("queries.log.tired")],
+  ["STRESSED", tr("queries.log.stressed")],
+  ["ANXIOUS", tr("queries.log.anxious")],
+  ["IRRITATED", tr("queries.log.irritated")],
+  ["SAD", tr("queries.log.sad")],
+  ["OVERWHELMED", tr("queries.log.overwhelmed")],
+  ["LONELY", tr("queries.log.lonely")],
 ] as const;
-export type Mood = (typeof MOODS)[number][0];
+export type Mood = (ReturnType<typeof moodOptions>)[number][0];
 
 /** A short list from Google's symptom enum. `cycle` ones show on female profiles only. */
-export const SYMPTOMS = [
-  ["HEADACHE", "Headache", false],
-  ["FATIGUE", "Fatigue", false],
-  ["SICK", "Feeling sick", false],
-  ["FEVER", "Fever", false],
-  ["COUGH", "Cough", false],
-  ["NAUSEA", "Nausea", false],
-  ["DIZZINESS", "Dizziness", false],
-  ["BRAIN_FOG", "Brain fog", false],
-  ["BACK_PAIN", "Back pain", false],
-  ["JOINT_PAIN", "Joint pain", false],
-  ["INSOMNIA", "Insomnia", false],
-  ["HEARTBURN", "Heartburn", false],
-  ["BLOATED", "Bloating", false],
-  ["DIARRHEA", "Diarrhea", false],
-  ["CONSTIPATION", "Constipation", false],
-  ["CRAMPS", "Cramps", true],
-  ["TENDER_BREASTS", "Tender breasts", true],
+export const symptomOptions = () => [
+  ["HEADACHE", tr("lib.behaviors.headache"), false],
+  ["FATIGUE", tr("health.LoadChart.fatigue"), false],
+  ["SICK", tr("queries.log.feelingSick"), false],
+  ["FEVER", tr("lib.behaviors.fever"), false],
+  ["COUGH", tr("queries.log.cough"), false],
+  ["NAUSEA", tr("queries.log.nausea"), false],
+  ["DIZZINESS", tr("queries.log.dizziness"), false],
+  ["BRAIN_FOG", tr("queries.log.brainFog"), false],
+  ["BACK_PAIN", tr("queries.log.backPain"), false],
+  ["JOINT_PAIN", tr("queries.log.jointPain"), false],
+  ["INSOMNIA", tr("queries.log.insomnia"), false],
+  ["HEARTBURN", tr("queries.log.heartburn"), false],
+  ["BLOATED", tr("queries.log.bloating"), false],
+  ["DIARRHEA", tr("queries.log.diarrhea"), false],
+  ["CONSTIPATION", tr("queries.log.constipation"), false],
+  ["CRAMPS", tr("queries.log.cramps"), true],
+  ["TENDER_BREASTS", tr("queries.log.tenderBreasts"), true],
   ["PMS", "PMS", true],
-  ["ACNE", "Acne", true],
-  ["HOT_FLASHES", "Hot flashes", true],
+  ["ACNE", tr("lib.behaviors.acne"), true],
+  ["HOT_FLASHES", tr("queries.log.hotFlashes"), true],
 ] as const;
-export type Symptom = (typeof SYMPTOMS)[number][0];
-export const CYCLE_SYMPTOMS: ReadonlySet<string> = new Set(SYMPTOMS.filter((s) => s[2]).map((s) => s[0]));
+export type Symptom = (ReturnType<typeof symptomOptions>)[number][0];
+export const CYCLE_SYMPTOMS: ReadonlySet<string> = new Set(symptomOptions().filter((s) => s[2]).map((s) => s[0]));
 
 /** Google records period flow nowhere but free-text notes, so Pulse keeps it locally and writes it into `notes`. */
-export const FLOWS = [
-  ["SPOTTING", "Spotting"],
-  ["LIGHT", "Light"],
-  ["MEDIUM", "Medium"],
-  ["HEAVY", "Heavy"],
+export const flowOptions = () => [
+  ["SPOTTING", tr("queries.log.spotting")],
+  ["LIGHT", tr("ui.metrics.SleepStages.light")],
+  ["MEDIUM", tr("queries.trendView.medium")],
+  ["HEAVY", tr("queries.log.heavy")],
 ] as const;
-export type Flow = (typeof FLOWS)[number][0];
+export type Flow = (ReturnType<typeof flowOptions>)[number][0];
 
-export const OVULATION_RESULTS = [
-  ["NEGATIVE", "Negative"],
-  ["POSITIVE", "Positive"],
-  ["LUTEINIZING_HORMONE_SURGE", "LH surge"],
-  ["ESTROGEN_SURGE", "Estrogen surge"],
-  ["INDETERMINATE", "Unclear"],
+export const ovulationOptions = () => [
+  ["NEGATIVE", tr("queries.log.negative")],
+  ["POSITIVE", tr("queries.log.positive")],
+  ["LUTEINIZING_HORMONE_SURGE", tr("queries.log.lhSurge")],
+  ["ESTROGEN_SURGE", tr("queries.log.estrogenSurge")],
+  ["INDETERMINATE", tr("queries.log.unclear")],
 ] as const;
-export type OvulationResult = (typeof OVULATION_RESULTS)[number][0];
+export type OvulationResult = (ReturnType<typeof ovulationOptions>)[number][0];
 
 const labelOf = (list: readonly (readonly [string, string, ...unknown[]])[], v: string) => list.find((x) => x[0] === v)?.[1] ?? v;
 
@@ -152,36 +153,37 @@ export type LogData = {
 export function describeEntry(type: LogType, data: unknown): { title: string; detail: string } {
   // The web's toLocaleString("en-US"): grouped whole numbers.
   const n = (v: number) => FORMATS.grouped(v);
+  const grams = (v: number) => Number.isInteger(v) ? FORMATS.int(v) : FORMATS.decimal1(v);
   switch (type) {
     case "hydration-log":
-      return { title: "Water", detail: `${n((data as LogData[typeof type]).ml)} ml` };
+      return { title: tr("lib.extraMetrics.water"), detail: `${n((data as LogData[typeof type]).ml)} ml` };
     case "nutrition-log": {
       const f = data as LogData[typeof type];
-      const macros = [f.protein != null && `${f.protein} g protein`, f.carbs != null && `${f.carbs} g carbs`, f.fat != null && `${f.fat} g fat`];
-      const meal = MEALS.find((m) => m[0] === f.meal)?.[1] ?? "Food";
+      const macros = [f.protein != null && tr("log.protein", { value: grams(f.protein) }), f.carbs != null && tr("log.carbs", { value: grams(f.carbs) }), f.fat != null && tr("log.fat", { value: grams(f.fat) })];
+      const meal = mealOptions().find((m) => m[0] === f.meal)?.[1] ?? tr("journal.WeekCard.food");
       const detail = [`${n(f.kcal)} kcal`, ...macros].filter(Boolean).join(", ");
       return { title: f.name ?? meal, detail: f.portion ? `${f.portion} · ${detail}` : detail };
     }
     case "weight":
-      return { title: "Weight", detail: `${(data as LogData[typeof type]).kg} kg` };
+      return { title: tr("lib.dashboard.weight"), detail: `${(data as LogData[typeof type]).kg} kg` };
     case "body-fat":
-      return { title: "Body fat", detail: `${(data as LogData[typeof type]).pct}%` };
+      return { title: tr("lib.dashboard.bodyFat"), detail: `${(data as LogData[typeof type]).pct}%` };
     case "oxygen-saturation":
-      return { title: "Blood oxygen", detail: `${(data as LogData[typeof type]).pct}%` };
+      return { title: tr("lib.dashboard.bloodOxygen"), detail: `${(data as LogData[typeof type]).pct}%` };
     case "moods": {
       const m = data as LogData[typeof type];
-      return { title: "Mood", detail: [m.valence && labelOf(VALENCES, m.valence), ...m.moods.map((x) => labelOf(MOODS, x))].filter(Boolean).join(", ") };
+      return { title: tr("queries.log.mood"), detail: [m.valence && labelOf(valenceOptions(), m.valence), ...m.moods.map((x) => labelOf(moodOptions(), x))].filter(Boolean).join(", ") };
     }
     case "symptoms":
-      return { title: "Symptoms", detail: (data as LogData[typeof type]).symptoms.map((x) => labelOf(SYMPTOMS, x)).join(", ") };
+      return { title: tr("app.log.symptoms"), detail: (data as LogData[typeof type]).symptoms.map((x) => labelOf(symptomOptions(), x)).join(", ") };
     case "menstrual-period": {
       const p = data as LogData[typeof type];
-      if (p.spotting) return { title: "Spotting", detail: "between periods" };
+      if (p.spotting) return { title: tr("queries.log.spotting"), detail: tr("queries.log.betweenPeriods") };
       const days = Math.round((Date.parse(p.end) - Date.parse(p.start)) / 86_400_000) + 1;
-      return { title: "Period", detail: [`${days} ${days === 1 ? "day" : "days"}`, p.flow && `${labelOf(FLOWS, p.flow).toLowerCase()} flow`].filter(Boolean).join(", ") };
+      return { title: tr("queries.log.period"), detail: [tr("log.periodDays", { count: days }), p.flow && tr("log.flow", { flow: labelOf(flowOptions(), p.flow).toLowerCase() })].filter(Boolean).join(", ") };
     }
     case "ovulation-test":
-      return { title: "Ovulation test", detail: labelOf(OVULATION_RESULTS, (data as LogData[typeof type]).result) };
+      return { title: tr("queries.log.ovulationTest"), detail: labelOf(ovulationOptions(), (data as LogData[typeof type]).result) };
   }
 }
 

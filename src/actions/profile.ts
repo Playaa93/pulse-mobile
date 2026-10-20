@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Onboarding and Settings › Profile: one action for both. The form hands over its fields as typed (strings), checked
 // with pulse's rules; `save` writes the profile (src/state/app.ts saveProfile, which also reruns the scores).
 import { z } from "zod";
@@ -11,12 +12,12 @@ export const ProfileInput = z.object({
   birthDate: z.iso.date().refine((d) => {
     const age = wholeYears(d, new Date().toISOString().slice(0, 10));
     return age >= 13 && age <= 100;
-  }, "Enter a birth date between 13 and 100 years ago"),
-  sex: z.enum(["male", "female"], "Choose one"),
-  maxHr: z.coerce.number().int().min(100, "Between 100 and 240").max(240, "Between 100 and 240").nullable(),
-  heightCm: z.coerce.number().min(100, "Between 100 and 250 cm").max(250, "Between 100 and 250 cm").nullable(),
-  timeZone: z.string().refine(isTimeZone, "Choose a time zone"),
-  name: z.string().max(60, "Up to 60 characters").nullable(),
+  }, { error: () => tr("actions.profile.enterABirthDateBetween13And") }),
+  sex: z.enum(["male", "female"], { error: () => tr("onboarding.ProfileForm.chooseOne") }),
+  maxHr: z.coerce.number({ error: () => tr("nutrition.targets.enterANumber") }).int({ error: () => tr("nutrition.targets.wholeNumbersOnly") }).min(100, { error: () => tr("actions.profile.between100And240") }).max(240, { error: () => tr("actions.profile.between100And240") }).nullable(),
+  heightCm: z.coerce.number({ error: () => tr("nutrition.targets.enterANumber") }).min(100, { error: () => tr("actions.profile.between100And250Cm") }).max(250, { error: () => tr("actions.profile.between100And250Cm") }).nullable(),
+  timeZone: z.string({ error: () => tr("actions.profile.chooseATimeZone") }).refine(isTimeZone, { error: () => tr("actions.profile.chooseATimeZone") }),
+  name: z.string().max(60, { error: () => tr("actions.profile.upTo60Characters") }).nullable(),
 });
 // eslint-disable-next-line @typescript-eslint/no-redeclare -- pulse's pattern: the schema and its type share a name
 export type ProfileInput = z.infer<typeof ProfileInput>;
@@ -46,21 +47,21 @@ export async function saveProfileAction(form: ProfileFields, previous: Profile |
   const r = ProfileInput.safeParse({
     birthDate: form.birthDate,
     sex: form.sex ?? undefined,
-    maxHr: optional(form.maxHr),
-    heightCm: optional(form.heightCm),
+    maxHr: optional(form.maxHr.replace(",", ".")),
+    heightCm: optional(form.heightCm.replace(",", ".")),
     timeZone: form.timeZone ?? undefined,
     name: optional(form.name),
   });
   if (!r.success) {
     const fields: Partial<Record<keyof ProfileInput, string>> = {};
-    for (const i of r.error.issues) fields[i.path[0] as keyof ProfileInput] ??= i.path[0] === "birthDate" && i.code !== "custom" ? "Enter your birth date" : i.message;
+    for (const i of r.error.issues) fields[i.path[0] as keyof ProfileInput] ??= i.path[0] === "birthDate" && i.code !== "custom" ? tr("actions.profile.enterYourBirthDate") : i.message;
     return { ok: false, fields };
   }
   try {
     const goal = { hours: defaultSleepGoal(wholeYears(r.data.birthDate, new Date().toISOString().slice(0, 10))), method: "automatic" as const };
     await save({ ...(previous ?? { sleepGoal: goal }), ...r.data });
   } catch {
-    return { ok: false, error: "Couldn’t save. Try again." };
+    return { ok: false, error: tr("actions.profile.couldnTSaveTryAgain") };
   }
   return { ok: true };
 }

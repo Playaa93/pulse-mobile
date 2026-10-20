@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // The "current heart rate": Pulse cannot talk to the band, so the newest reading is whatever the Google Health app has
 // written to Health Connect (a Fitbit sync lands a batch of samples every ~15 minutes, sooner while that app is open),
 // or, with a Google account as the source, what the Google Health API has (src/google/live.ts, passed in as
@@ -95,9 +96,9 @@ export async function refreshRecentHeartRate(store: Store, opts: LiveHrOptions =
 
 /** One HeartRate read over [from, to) unix seconds; only samples the Store lacks (or has with another bpm) are written. */
 async function pullFromHealthConnect(store: Store, from: number, to: number, timeZone: string): Promise<number> {
-  if ((await availability()) !== "available") throw new Error("Health Connect is not available on this phone.");
+  if ((await availability()) !== "available") throw new Error(tr("health.live.healthConnectIsNotAvailableOnThis"));
   const perms = await permissionState();
-  if (!perms.granted.includes("HeartRate")) throw new Error("Heart-rate permission is missing in Health Connect.");
+  if (!perms.granted.includes("HeartRate")) throw new Error(tr("health.live.heartRatePermissionIsMissingInHealth"));
 
   // The same source policy as the sync, so the ticker never writes samples the sync would leave out.
   const policy = await getSourcePolicy();

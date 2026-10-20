@@ -1,3 +1,5 @@
+import { displayUnit } from "@/lib/format";
+import { tr } from "@/i18n";
 // The Trend View chart's numbers, apart from any drawing: its y domain and ticks, the x ticks and the bar rows. Ported
 // from pulse src/components/charts/TrendViewChart.tsx (the code that sat above the JSX) so they run once per data set,
 // not per frame, and so Node can test them. Nothing here reads the theme or the width.
@@ -123,8 +125,8 @@ export function buildModel(p: TrendViewChartProps, fmt: (v: number) => string): 
   const yTicks = p.chart === "range" ? Array.from({ length: Math.round((domain[1] - domain[0]) / 240) + 1 }, (_, i) => domain[0] + i * 240) : niced;
 
   const summary = values.length
-    ? `${p.label}: ${values.length} ${weekly ? "weeks" : "days"} with data, from ${fmt(Math.min(...values))} to ${fmt(Math.max(...values))}.`
-    : `No ${p.label} data in this period.`;
+    ? tr("trends.trendViewLayout.withDataFromTo", { v0: p.label, v1: values.length, v2: displayUnit(weekly ? "weeks" : "days"), v3: fmt(Math.min(...values)), v4: fmt(Math.max(...values)) })
+    : tr("trends.trendViewLayout.noDataInThisPeriod", { v0: p.label });
 
   return {
     rows,

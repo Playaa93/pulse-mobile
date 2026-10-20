@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState, type ReactNode } from "react";
 import { Info } from "lucide-react-native";
 import { cn } from "../cn";
@@ -12,6 +14,7 @@ export type { InfoContent };
  * `header`: the reference app's ringed "i", 24 px inside 44 px (DetailHeader).
  */
 export function InfoButton({ info, label, variant }: { info: InfoContent; label: string; variant: "card" | "header" }) {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const { c } = useTheme();
   const header = variant === "header";
@@ -20,7 +23,7 @@ export function InfoButton({ info, label, variant }: { info: InfoContent; label:
       <Press
         activeScale={0.96}
         accessibilityRole="button"
-        accessibilityLabel={`About ${label}`}
+        accessibilityLabel={tr("breathe.BreatheScreen.about", { v0: label })}
         onPress={() => setOpen(true)}
         // card: 44 px hit area pulled into the header's padding, as the web's -my-1 -mr-2 size-8 + after:-inset-1.5
         hitSlop={header ? 0 : 6}
@@ -36,6 +39,7 @@ export function InfoButton({ info, label, variant }: { info: InfoContent; label:
 
 /** Any element as the trigger of an info card (Home's day banner, "Add activity"). */
 export function InfoCardTrigger({ info, className, children, accessibilityLabel, activeScale }: { info: InfoContent; className?: string; children: ReactNode; accessibilityLabel?: string; activeScale?: number }) {
+  useLanguage();
   const [open, setOpen] = useState(false);
   return (
     <>

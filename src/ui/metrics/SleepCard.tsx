@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { Moon } from "lucide-react-native";
 import { clock, durationWords, hmm } from "@/lib/format";
 import { Icon } from "../Icon";
@@ -18,7 +20,8 @@ export type SleepCardProps = {
 
 /** Sleep or nap row on the day's timeline (spec §5.12). */
 export function SleepCard({ kind, minutes, start, end, href, timeZone }: SleepCardProps) {
-  const name = kind === "nap" ? "Nap" : "Sleep";
+  useLanguage();
+  const name = kind === "nap" ? tr("lib.behaviors.nap") : tr("ui.shells.HomeHeader.sleep");
   const s = clock(start, timeZone);
   const e = clock(end, timeZone);
   return (
@@ -36,7 +39,7 @@ export function SleepCard({ kind, minutes, start, end, href, timeZone }: SleepCa
       name={name}
       start={s}
       end={e}
-      label={`${name}, ${durationWords(minutes)}, ${s} to ${e}`}
+      label={tr("ui.metrics.SleepCard.to", { v0: name, v1: durationWords(minutes), v2: s, v3: e })}
     />
   );
 }

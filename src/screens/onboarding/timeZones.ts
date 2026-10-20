@@ -1,3 +1,4 @@
+import { language, tr } from "@/i18n";
 // The time zone list behind the picker. Ported from pulse src/components/profile/TimeZoneCombobox.tsx (the data half):
 // the same names, offsets, order and search. Two differences, both forced by Hermes: the zone ids come from
 // `Intl.supportedValuesOf` when the runtime has it and from the static list otherwise, and the offset is read with
@@ -37,16 +38,18 @@ export function offsetOf(id: string, now: number): { offset: string; minutes: nu
 }
 
 let cached: Zone[] | undefined;
+let cachedLanguage: string | undefined;
 /** Every zone the runtime knows, by offset then city. Built once, on first open (about 420 formatters). */
 export function zones(now = Math.floor(Date.now() / 1000)): Zone[] {
-  if (cached) return cached;
+  if (cached && cachedLanguage === language()) return cached;
+  cachedLanguage = language();
   const supported = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ZONE_IDS;
   const ids = [...new Set(supported.map(canonicalZone))].filter(isTimeZone);
   cached = ids
     .map((id) => {
       const parts = id.split("/");
       const city = parts.at(-1)!.replaceAll("_", " ");
-      const region = parts.length > 1 ? parts.slice(0, -1).join(" / ").replaceAll("_", " ") : "Other";
+      const region = parts.length > 1 ? parts.slice(0, -1).join(" / ").replaceAll("_", " ") : tr("onboarding.timeZones.other");
       const o = offsetOf(id, now);
       return { id, city, region, ...o, search: `${city} ${region} ${id} ${o.offset}`.toLowerCase() };
     })

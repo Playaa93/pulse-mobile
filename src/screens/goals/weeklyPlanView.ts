@@ -1,20 +1,22 @@
+import { language, tr } from "@/i18n";
+import { PLAN_LIMITS, parsePlanTarget } from "@/core/algorithms/weeklyPlan";
 // The Weekly Plan sheet's words (src/screens/goals/WeeklyPlan.tsx; halo src/screens/home/weeklyPlanView.ts): value and
 // target text, the status word and its DeltaMark, the line under each target, and Pulse Age's years. Pure, so it is tested without React.
-import type { PlanStatus } from "@/core/algorithms/weeklyPlan";
+import type { PlanKey, PlanStatus } from "@/core/algorithms/weeklyPlan";
 import type { DeltaDir, Tone } from "@/lib/bands";
-import { formatValue, MISSING, NBSP } from "@/lib/format";
+import { displayUnit, FORMATS, formatValue, MISSING, NBSP } from "@/lib/format";
 import type { PlanRow } from "@/queries/weeklyPlan";
 
 /** Each status's word and its DeltaMark, as KeyStatRow marks a value: done up and good, behind and missed down and bad, on pace a grey dot, no data none. */
 export const PLAN_STATUS: Record<PlanStatus, { word: string; mark: { dir: DeltaDir; tone: Tone } | null }> = {
-  done: { word: "Done", mark: { dir: "up", tone: "good" } },
-  on_pace: { word: "On pace", mark: { dir: "flat", tone: "neutral" } },
-  behind: { word: "Behind", mark: { dir: "down", tone: "bad" } },
-  missed: { word: "Missed", mark: { dir: "down", tone: "bad" } },
-  no_data: { word: "No data", mark: null },
+  done: { get word() { return tr("common.done"); }, mark: { dir: "up", tone: "good" } },
+  on_pace: { get word() { return tr("goals.weeklyPlanView.onPace"); }, mark: { dir: "flat", tone: "neutral" } },
+  behind: { get word() { return tr("goals.weeklyPlanView.behind"); }, mark: { dir: "down", tone: "bad" } },
+  missed: { get word() { return tr("goals.weeklyPlanView.missed"); }, mark: { dir: "down", tone: "bad" } },
+  no_data: { get word() { return tr("lib.reasons.noData"); }, mark: null },
 };
 
-const plural = (n: number, one: string, many = `${one}s`) => `${formatValue("grouped", n)}${NBSP}${n === 1 ? one : many}`;
+const plural = (n: number, one: string, many = `${one}s`) => `${formatValue("grouped", n)}${NBSP}${displayUnit(n === 1 ? one : many)}`;
 
 type Row = Pick<PlanRow, "key" | "value" | "target" | "format" | "status" | "expected" | "streak">;
 
@@ -27,15 +29,15 @@ export function planTargetText(it: Pick<Row, "key" | "target" | "format">): stri
   switch (it.key) {
     case "zone13":
     case "zone45":
-      return `of ${t}${NBSP}min`;
+      return tr("goals.Goals.ofMin", { v0: t, v1: NBSP });
     case "strength":
-      return `of ${plural(it.target, "session")}`;
+      return tr("goals.Goals.of", { v0: plural(it.target, "session") });
     case "consistency":
-      return `of ${t}%`;
+      return tr("goals.weeklyPlanView.of", { v0: t });
     case "sleepNeed":
-      return `of ${plural(it.target, "night")}`;
+      return tr("goals.Goals.of", { v0: plural(it.target, "night") });
     default:
-      return `of ${t}`;
+      return tr("goals.Goals.of", { v0: t });
   }
 }
 
@@ -48,7 +50,7 @@ function leftText(it: Row, left: number): string {
     case "strength":
       return plural(Math.ceil(left), "session");
     case "steps":
-      return `${plural(Math.ceil(left), "step")} a day`;
+      return tr("goals.weeklyPlanView.aDay", { v0: plural(Math.ceil(left), "step") });
     case "consistency":
       return plural(Math.ceil(left), "point");
     case "sleepNeed":
@@ -62,17 +64,17 @@ export function planCaption(it: Row): string {
   const left = it.value === null ? it.target : Math.max(0, it.target - it.value);
   switch (it.status) {
     case "done":
-      return n > 1 ? `Done · ${n}-week streak` : "Done this week";
+      return n > 1 ? tr("goals.weeklyPlanView.doneWeekStreak", { v0: n }) : tr("goals.weeklyPlanView.doneThisWeek");
     case "on_pace":
-      return n > 0 ? `${leftText(it, left)} to go · ${n}-week streak on the line` : `On pace · ${leftText(it, left)} to go`;
+      return n > 0 ? tr("goals.weeklyPlanView.toGoWeekStreakOnTheLine", { v0: leftText(it, left), v1: n }) : tr("goals.weeklyPlanView.onPaceToGo", { v0: leftText(it, left) });
     case "behind":
       // Totals: how far under an even pace; averages and counts: how far from the target.
-      if ((it.key === "zone13" || it.key === "zone45") && it.expected !== null) return `${leftText(it, it.expected - (it.value ?? 0))} behind pace`;
-      return it.key === "steps" || it.key === "consistency" ? `${leftText(it, left)} short` : `${leftText(it, left)} to go`;
+      if ((it.key === "zone13" || it.key === "zone45") && it.expected !== null) return tr("goals.weeklyPlanView.behindPace", { v0: leftText(it, it.expected - (it.value ?? 0)) });
+      return it.key === "steps" || it.key === "consistency" ? tr("goals.weeklyPlanView.short", { v0: leftText(it, left) }) : tr("goals.weeklyPlanView.toGo", { v0: leftText(it, left) });
     case "missed":
-      return it.streak.longest > 1 ? `Missed · best run ${it.streak.longest} weeks` : "Missed this week";
+      return it.streak.longest > 1 ? tr("goals.weeklyPlanView.missedBestRunWeeks", { v0: it.streak.longest }) : tr("goals.weeklyPlanView.missedThisWeek");
     case "no_data":
-      return "No data yet";
+      return tr("goals.weeklyPlanView.noDataYet");
   }
 }
 
@@ -80,6 +82,18 @@ export function planCaption(it: Row): string {
 export function ageText(years: number | null): string | null {
   if (years === null) return null;
   const r = Math.round(years * 10) / 10;
-  if (r === 0) return `0.0${NBSP}yr`;
-  return `${r > 0 ? "+" : "−"}${Math.abs(r).toFixed(1)}${NBSP}yr`;
+  if (r === 0) return `${FORMATS.decimal1(0)}${NBSP}${displayUnit("yr")}`;
+  return `${r > 0 ? "+" : "−"}${FORMATS.decimal1(Math.abs(r))}${NBSP}${language() === "fr" && Math.abs(r) >= 2 ? displayUnit("years") : displayUnit("yr")}`;
+}
+
+/** Language-aware entry; validation and stored target numbers remain the engine's. */
+export function parseWeeklyTarget(key: PlanKey, text: string) {
+  const normalized = text.replace(/[\s\u00a0\u202f]/g, "");
+  const result = parsePlanTarget(key, language() === "fr" ? normalized.replace(",", ".") : normalized);
+  if (!result.error || language() !== "fr") return result;
+  const { min, max } = PLAN_LIMITS[key];
+  const error = result.error === "Enter a number" ? tr("nutrition.targets.enterANumber")
+    : result.error === "Whole numbers only" ? tr("nutrition.targets.wholeNumbersOnly")
+    : tr("state.goals.betweenAnd", { v0: FORMATS.grouped(min), v1: FORMATS.grouped(max) });
+  return { ...result, error };
 }

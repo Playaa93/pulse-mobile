@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 import { router } from "expo-router";
@@ -36,9 +38,9 @@ const CALENDAR = { today: fx.TODAY, firstDay: addDays(fx.TODAY, -179), timeZone:
 
 type Preference = "system" | "light" | "dark";
 const THEMES = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+  { value: "system", get label() { return tr("settings.AppSettings.system"); } },
+  { value: "light", get label() { return tr("ui.metrics.SleepStages.light"); } },
+  { value: "dark", get label() { return tr("settings.AppSettings.dark"); } },
 ] as const;
 
 /**
@@ -46,11 +48,12 @@ const THEMES = [
  * class and every Skia chart follows. "System" hands control back to the phone's setting.
  */
 export function ThemeToggle() {
+  useLanguage();
   const { setColorScheme } = useColorScheme();
   const [pref, setPref] = useState<Preference>("system");
   return (
     <Segmented
-      label="Theme"
+      label={tr("settings.AppSettings.theme")}
       value={pref}
       options={THEMES}
       textClassName="text-[13px] font-bold"
@@ -64,6 +67,7 @@ export function ThemeToggle() {
 
 /** A kit screen: the ground, a header with Back and the theme toggle, then the entries. The calendar fixtures make the DateSwitcher work. */
 export function KitScreen({ title, blurb, children }: { title: string; blurb?: string; children: ReactNode }) {
+  useLanguage();
   const insets = useSafeAreaInsets();
   return (
     <ShellCalendarProvider value={CALENDAR}>
@@ -72,7 +76,7 @@ export function KitScreen({ title, blurb, children }: { title: string; blurb?: s
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 48 }} showsVerticalScrollIndicator={false}>
           <View className="gap-4 px-4 pb-6">
             <View className="flex-row items-center justify-between gap-2">
-              <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace("/dev/kit"))} className="-ml-2 size-11 items-center justify-center rounded-full">
+              <Press activeBg="bg-fill-hover" accessibilityRole="button" accessibilityLabel={tr("common.back")} onPress={() => (router.canGoBack() ? router.back() : router.replace("/dev/kit"))} className="-ml-2 size-11 items-center justify-center rounded-full">
                 <Icon icon={ChevronLeft} size={26} tone="foreground" strokeWidth={1.75} />
               </Press>
               <ThemeToggle />
@@ -91,6 +95,7 @@ export function KitScreen({ title, blurb, children }: { title: string; blurb?: s
 
 /** A group of entries with a heading (the web's Shells / Metrics / Charts sections). */
 export function Group({ title, blurb, children }: { title: string; blurb?: string; children: ReactNode }) {
+  useLanguage();
   return (
     <View className="gap-8">
       <View className="gap-2 border-b border-border pb-4">
@@ -106,6 +111,7 @@ export function Group({ title, blurb, children }: { title: string; blurb?: strin
 
 /** One component: its name, file, where the app uses it, its key props, then its states in frames. */
 export function Entry({ name, file, use, props = [], children }: { name: string; file: string; use: string; props?: string[]; children: ReactNode }) {
+  useLanguage();
   return (
     <View className="gap-4">
       <View className="gap-2">
@@ -131,6 +137,7 @@ export function Entry({ name, file, use, props = [], children }: { name: string;
 
 /** One labelled state of a component. `narrow`: inside a 320 px column, the narrowest phone Pulse supports. `center`: centred (dials, marks). */
 export function Frame({ name, narrow, center, children }: { name: string; narrow?: boolean; center?: boolean; children: ReactNode }) {
+  useLanguage();
   return (
     <View className="overflow-hidden rounded-2xl border border-border">
       <View className="flex-row items-baseline justify-between gap-3 border-b border-border px-3 py-2">
@@ -151,5 +158,6 @@ export { Divided };
 
 /** The calendar fixtures alone, for the whole-screen demos (home, detail), which bring their own scroll view and header. */
 export function KitCalendar({ children }: { children: ReactNode }) {
+  useLanguage();
   return <ShellCalendarProvider value={CALENDAR}>{children}</ShellCalendarProvider>;
 }

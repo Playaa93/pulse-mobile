@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 import { formatDay } from "./format";
 import { addDays } from "./url";
 
@@ -101,13 +102,13 @@ export function bandCounts<B extends BreakdownBand>(values: readonly (number | n
 }
 
 const WORD: Record<TrendViewRange, { this: string; prior: string }> = {
-  w: { this: "this week", prior: "previous 7-day" },
-  m: { this: "this month", prior: "previous 30-day" },
-  "6m": { this: "over this period", prior: "previous 6-month" },
+  w: { get this() { return tr("lib.trend.thisWeek"); }, get prior() { return tr("lib.trend.previous7Day"); } },
+  m: { get this() { return tr("lib.trend.thisMonth"); }, get prior() { return tr("lib.trend.previous30Day"); } },
+  "6m": { get this() { return tr("lib.trend.overThisPeriod"); }, get prior() { return tr("lib.trend.previous6Month"); } },
 };
 
-const WEEKS: Record<TrendViewRange, string> = { w: "this week", m: "over these four weeks", "6m": "over this period" };
-const WEEKS_PRIOR: Record<TrendViewRange, string> = { w: "previous 7-day total", m: "previous four-week average", "6m": "previous 6-month average" };
+const WEEKS: Record<TrendViewRange, string> = { get w() { return tr("lib.trend.thisWeek"); }, get m() { return tr("lib.trend.overTheseFourWeeks"); }, get "6m"() { return tr("lib.trend.overThisPeriod"); } };
+const WEEKS_PRIOR: Record<TrendViewRange, string> = { get w() { return tr("lib.trend.previous7DayTotal"); }, get m() { return tr("lib.trend.previousFourWeekAverage"); }, get "6m"() { return tr("lib.trend.previous6MonthAverage"); } };
 
 /**
  * The one-sentence verdict. `typical` (the normal range) wins for vitals on W, as the reference app words RHR;
@@ -123,20 +124,20 @@ export function verdict(o: {
   typical?: [number, number] | null;
 }) {
   const { label, range, now, prior, fmt } = o;
-  if (now === null) return `No ${label} data ${WORD[range].this}.`;
+  if (now === null) return tr("lib.trend.noData", { v0: label, v1: WORD[range].this });
   if (o.typical && range === "w") {
     const [lo, hi] = o.typical;
-    const where = now < lo ? "below" : now > hi ? "above" : "within";
-    return `Your average ${label} during this 7-day period was ${where} its typical range (${fmt(lo)} - ${fmt(hi)}).`;
+    const where = now < lo ? tr("lib.trend.below") : now > hi ? tr("lib.trend.above") : tr("lib.trend.within");
+    return tr("lib.trend.yourAverageDuringThis7DayPeriod", { v0: label, v1: where, v2: fmt(lo), v3: fmt(hi) });
   }
   const change = prior === null ? null : relativeChange(now, prior);
-  const cmp = change === 0 || change === null ? "consistent with" : change > 0 ? "above" : "below";
+  const cmp = change === 0 || change === null ? tr("lib.trend.consistentWith") : change > 0 ? tr("lib.trend.above") : tr("lib.trend.below");
   if (o.agg === "weekly") {
-    const lead = range === "w" ? `During this 7-day period, your total ${label} (${fmt(now)})` : `Your average weekly ${label} ${WEEKS[range]} (${fmt(now)})`;
+    const lead = range === "w" ? tr("lib.trend.duringThis7DayPeriodYourTotal", { v0: label, v1: fmt(now) }) : tr("lib.trend.yourAverageWeekly", { v0: label, v1: WEEKS[range], v2: fmt(now) });
     if (prior === null) return `${lead}.`;
-    return `${lead} was ${cmp} your ${range === "w" ? "previous 7-day total" : WEEKS_PRIOR[range]} of ${fmt(prior)}.`;
+    return tr("lib.trend.wasYourOf", { v0: lead, v1: cmp, v2: range === "w" ? tr("lib.trend.previous7DayTotal") : WEEKS_PRIOR[range], v3: fmt(prior) });
   }
-  const lead = `Your average ${label} ${WORD[range].this} (${fmt(now)})`;
+  const lead = tr("lib.trend.yourAverage", { v0: label, v1: WORD[range].this, v2: fmt(now) });
   if (prior === null) return `${lead}.`;
-  return `${lead} was ${cmp} your ${WORD[range].prior} average of ${fmt(prior)}.`;
+  return tr("lib.trend.wasYourAverageOf", { v0: lead, v1: cmp, v2: WORD[range].prior, v3: fmt(prior) });
 }

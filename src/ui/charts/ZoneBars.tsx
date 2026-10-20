@@ -1,7 +1,9 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { View } from "react-native";
 
 import { DATA_COLORS, ZONE_COLOR, type DataColor } from "@/lib/bands";
-import { durationWords, hmm } from "@/lib/format";
+import { displayUnit, durationWords, hmm } from "@/lib/format";
 import type { Metric } from "@/lib/reasons";
 import { cn } from "../cn";
 import { Hatch } from "../Hatch";
@@ -51,6 +53,7 @@ function share(part: number, total: number) {
 }
 
 function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; noteLink?: { label: string; href: string } }) {
+  useLanguage();
   const total = zones.reduce((a, z) => a + z.seconds, 0);
   const sorted = [...zones].sort((a, b) => b.zone - a.zone);
   const typical = sorted.some((z) => z.typical);
@@ -60,7 +63,7 @@ function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; note
     return (
       <View>
         <Text className={cn(SECONDARY_ROW, "px-3 py-3 text-[15px] leading-[22px] text-foreground-secondary")}>
-          Heart rate stayed under the {lowest.label} zone ({lowest.min}{" "}bpm) the whole time.
+          {tr("zone.below", { zone: lowest.label, bpm: lowest.min })}
         </Text>
         <Note note={note} link={noteLink} />
       </View>
@@ -71,10 +74,10 @@ function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; note
       <View accessibilityElementsHidden className="mb-2 flex-row items-baseline justify-between px-1">
         <View className={cn("shrink flex-row items-center gap-1.5", !typical && "opacity-0")}>
           <Hatch className="size-2.5 rounded-xs border border-border" />
-          <Text className={cn(LABEL, "text-muted-foreground")}>Typical range</Text>
+          <Text className={cn(LABEL, "text-muted-foreground")}>{tr("ui.charts.ZoneBars.typicalRange")}</Text>
         </View>
         <View className="flex-row items-baseline gap-2">
-          <Text className={cn(LABEL, "text-muted-foreground")}>Duration</Text>
+          <Text className={cn(LABEL, "text-muted-foreground")}>{tr("queries.activity.duration")}</Text>
           <Text className="font-numeric text-[15px] font-bold leading-5 tabular-nums text-foreground">
             {hmm(Math.floor(T / 60))}
             <Text className="text-xs text-muted-foreground">{`:${String(T % 60).padStart(2, "0")}`}</Text>
@@ -85,7 +88,7 @@ function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; note
         {sorted.map((z) => {
           const below = z.zone === 0;
           const range = below ? `<${z.max! + 1} bpm` : z.max === null ? `${z.min}+ bpm` : `${z.min}-${z.max} bpm`;
-          const spoken = below ? `under ${z.max! + 1} bpm` : range.replace("-", " to ").replace("+", " and above");
+          const spoken = below ? tr("ui.charts.ZoneBars.underBpm", { v0: z.max! + 1 }) : range.replace("-", tr("strain.StrainScreen.to")).replace("+", tr("ui.charts.ZoneBars.andAbove"));
           const sh = share(z.seconds, total);
           const t = Math.round(z.seconds);
           const minutes = Math.floor(t / 60);
@@ -96,7 +99,7 @@ function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; note
             <View
               key={z.zone}
               accessible
-              accessibilityLabel={`${z.label} zone, ${spoken}, ${durationWords(minutes)}, ${sh === "<1%" ? "under 1 percent" : sh.replace("%", " percent")}`}
+              accessibilityLabel={tr("ui.charts.ZoneBars.zone", { v0: z.label, v1: spoken, v2: durationWords(minutes), v3: sh === "<1%" ? tr("ui.charts.ZoneBars.under1Percent") : sh.replace("%", tr("reports.ReportsScreen.percent")) })}
               className={cn(SECONDARY_ROW, "gap-2 px-3 py-2.5", !z.seconds && "opacity-40")}
             >
               <View className="flex-row items-baseline gap-2">
@@ -129,6 +132,7 @@ function Rows({ zones, note, noteLink }: { zones: ZoneRow[]; note?: string; note
 }
 
 function Note({ note, link }: { note?: string; link?: { label: string; href: string } }) {
+  useLanguage();
   if (!note) return null;
   return (
     <Text className="mt-3 text-xs font-medium leading-4 text-muted-foreground">
@@ -146,6 +150,7 @@ function Note({ note, link }: { note?: string; link?: { label: string; href: str
 }
 
 function Stacked({ segments, unit }: { segments: StackedSegment[]; unit: "days" | "minutes" }) {
+  useLanguage();
   const shown = segments.filter((s) => s.count > 0);
   const count = (n: number) => (unit === "days" ? `${n}x` : hmm(n));
   return (
@@ -157,7 +162,7 @@ function Stacked({ segments, unit }: { segments: StackedSegment[]; unit: "days" 
       </View>
       <View className="mt-3 gap-1.5">
         {segments.map((s) => (
-          <View key={s.key} accessible accessibilityLabel={`${s.label}: ${unit === "days" ? `${s.count} ${s.count === 1 ? "day" : "days"}` : durationWords(s.count)}`} className="flex-row items-center gap-3">
+          <View key={s.key} accessible accessibilityLabel={`${s.label}: ${unit === "days" ? `${s.count} ${displayUnit(s.count === 1 ? "day" : "days")}` : durationWords(s.count)}`} className="flex-row items-center gap-3">
             <View className={cn("size-2.5 shrink-0 rounded-sm", DATA_COLORS[s.color].bg)} />
             <Text className="w-12 font-numeric text-[15px] font-bold leading-5 tabular-nums">{count(s.count)}</Text>
             <Text className={cn(LABEL, "text-muted-foreground")}>{s.label}</Text>
@@ -170,7 +175,8 @@ function Stacked({ segments, unit }: { segments: StackedSegment[]; unit: "days" 
 
 /** Time in zones as rows, or a stacked breakdown bar (spec §5.8, D5): plain views, not a chart. */
 export function ZoneBars(p: ZoneBarsProps) {
-  const empty = <EmptyState body={p.emptyCopy ?? (p.variant === "rows" ? "No heart-rate zones yet today." : "No days with Recovery in this period.")} />;
+  useLanguage();
+  const empty = <EmptyState body={p.emptyCopy ?? (p.variant === "rows" ? tr("health.HeartRateScreen.noHeartRateZonesYetToday") : tr("ui.charts.ZoneBars.noDaysWithRecoveryInThisPeriod"))} />;
   if (p.variant === "rows")
     return (
       <MetricState metric={p.data} skeleton={<ZoneBarsSkeleton variant="rows" />} empty={empty}>
@@ -185,6 +191,7 @@ export function ZoneBars(p: ZoneBarsProps) {
 }
 
 export function ZoneBarsSkeleton({ variant }: { variant: "rows" | "stacked" }) {
+  useLanguage();
   if (variant === "rows")
     return (
       // Each zone row's own box: the real zone name, bars for range and time, the hatched track.

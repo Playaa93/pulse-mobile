@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { View } from "react-native";
 import { Circle } from "@shopify/react-native-skia";
@@ -32,6 +34,7 @@ const HEIGHT = 140;
 const AXIS_H = 30;
 
 function Chart({ e }: { e: EnergySeries }) {
+  useLanguage();
   const { c, css } = useTheme();
   const tz = useOptionalShellCalendar()?.timeZone;
   const [x, setX] = useState<number | null>(null);
@@ -44,7 +47,7 @@ function Chart({ e }: { e: EnergySeries }) {
   const valueAt = (t: number) => e.points.reduce((best, p) => (Math.abs(p.t - t) < Math.abs(best.t - t) ? p : best), e.points[0]).value;
   const drains = [...(e.drains ?? [])].sort((a, b) => b.amount - a.amount).slice(0, 3);
   const startV = e.points.find((p) => p.value !== null)?.value;
-  const summary = `Energy from ${clock(first, tz)}: started at ${formatValue("int", startV)} percent, now ${formatValue("int", latest?.value)} percent.`;
+  const summary = tr("ui.charts.EnergyBankChart.energyFromStartedAtPercentNowPercent", { v0: clock(first, tz), v1: formatValue("int", startV), v2: formatValue("int", latest?.value) });
 
   return (
     <ChartFigure summary={summary} height={HEIGHT}>
@@ -62,7 +65,7 @@ function Chart({ e }: { e: EnergySeries }) {
         const valid = e.points.filter((p) => p.value !== null);
         const ai = x === null ? -1 : nearestIndex(valid.map((p) => tx(p.t)), x);
         const a = ai >= 0 ? valid[ai] : null;
-        const naps = e.naps?.map((n) => ({ kind: "sleep" as const, start: n.start, end: n.end, label: "Nap" }));
+        const naps = e.naps?.map((n) => ({ kind: "sleep" as const, start: n.start, end: n.end, label: tr("lib.behaviors.nap") }));
         return (
           <>
             <PlotCanvas width={width} height={height}>
@@ -106,9 +109,10 @@ function Chart({ e }: { e: EnergySeries }) {
 
 /** another app's Energy Bank in the reference app's language (spec §5.9). */
 export function EnergyBankChart({ data }: EnergyBankChartProps) {
+  useLanguage();
   const empty = (
     <View className="items-center">
-      <EmptyState body="Energy Bank starts once you wake up." />
+      <EmptyState body={tr("ui.charts.EnergyBankChart.energyBankStartsOnceYouWakeUp")} />
     </View>
   );
   return (
@@ -128,6 +132,7 @@ export function EnergyBankChart({ data }: EnergyBankChartProps) {
 }
 
 export function EnergyBankChartSkeleton() {
+  useLanguage();
   return <Skeleton className="h-[140px] rounded-lg" />;
 }
 EnergyBankChart.Skeleton = EnergyBankChartSkeleton;

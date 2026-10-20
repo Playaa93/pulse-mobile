@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // A searchable time zone picker. Ported from pulse src/components/profile/TimeZoneCombobox.tsx: type a city, region or
 // offset, or tap. The list opens in the flow under the field, so a sheet's scroll area never clips it. Differences
 // forced by touch: there is no hover or arrow-key highlight (the row last pressed is the active one), and the list closes
@@ -17,6 +19,7 @@ const ROW = 48;
 const LIST = ROW * 3 + 8;
 
 export function TimeZonePicker({ value, onChange, invalid, inputRef, compact }: { value: string; onChange: (zone: string) => void; invalid?: boolean; inputRef?: RefObject<TextInput | null>; /** The Edit profile sheet's smaller field. */ compact?: boolean }) {
+  const locale = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -25,7 +28,9 @@ export function TimeZonePicker({ value, onChange, invalid, inputRef, compact }: 
   const own = useRef<TextInput>(null);
   const input = inputRef ?? own;
 
-  const matches = useMemo(() => (open ? matchZones(query) : []), [open, query]);
+  // matchZones reads the current language when building its cached labels.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const matches = useMemo(() => (open ? matchZones(query) : []), [open, query, locale]);
 
   const show = (next: boolean) => {
     setOpen(next);
@@ -48,12 +53,12 @@ export function TimeZonePicker({ value, onChange, invalid, inputRef, compact }: 
       <TextField
         variant={compact ? "compact" : "field"}
         ref={input}
-        accessibilityLabel="Time zone"
+        accessibilityLabel={tr("onboarding.ProfileForm.timeZone")}
         accessibilityState={{ expanded: open }}
         invalid={invalid}
         autoCapitalize="none"
         spellCheck={false}
-        placeholder={open || !value ? "Search city or GMT offset" : describeZone(value)}
+        placeholder={open || !value ? tr("onboarding.TimeZonePicker.searchCityOrGmtOffset") : describeZone(value)}
         value={open ? query : value ? describeZone(value) : ""}
         onFocus={() => !open && show(true)}
         onChangeText={(t) => {
@@ -67,7 +72,7 @@ export function TimeZonePicker({ value, onChange, invalid, inputRef, compact }: 
           </View>
         }
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel={open ? "Close time zones" : "Show time zones"} onPress={() => {
+          <Pressable accessibilityRole="button" accessibilityLabel={open ? tr("onboarding.TimeZonePicker.closeTimeZones") : tr("onboarding.TimeZonePicker.showTimeZones")} onPress={() => {
               haptic.tap();
               show(!open);
             }} className={cn(compact ? "h-11" : "h-13", "w-12 items-center justify-center rounded-r-xl")}>
@@ -78,9 +83,9 @@ export function TimeZonePicker({ value, onChange, invalid, inputRef, compact }: 
         }
       />
       {open && (
-        <View accessibilityLabel="Time zones" className="overflow-hidden rounded-xl bg-field p-1" style={{ height: matches.length ? Math.min(LIST, matches.length * ROW + 8) : undefined }}>
+        <View accessibilityLabel={tr("onboarding.TimeZonePicker.timeZones")} className="overflow-hidden rounded-xl bg-field p-1" style={{ height: matches.length ? Math.min(LIST, matches.length * ROW + 8) : undefined }}>
           {matches.length === 0 ? (
-            <Text className="px-3 py-3 text-[15px] leading-5 text-muted-foreground">No time zone matches “{query}”.</Text>
+            <Text className="px-3 py-3 text-[15px] leading-5 text-muted-foreground">{tr("onboarding.TimeZonePicker.noMatches", { query })}</Text>
           ) : (
             // A plain ScrollView, not a FlatList: a virtualized list may not nest inside the form's scroll view. About 420
             // rows at most, drawn only while the list is open. ponytail: move the list into its own sheet if opening it hitches.

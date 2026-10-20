@@ -1,8 +1,10 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import { deltaTone, type ChipTone, type DeltaDir, type GoodDirection, type Tone } from "@/lib/bands";
-import { formatValue, MISSING, statSentence, type FormatKey } from "@/lib/format";
+import { displayUnit, formatValue, MISSING, statSentence, type FormatKey } from "@/lib/format";
 import { reasonCopy, type Metric, type ReasonCode } from "@/lib/reasons";
 import { CARD_CLASS, CardFill, useCardStyle } from "../Card";
 import { cn } from "../cn";
@@ -64,6 +66,7 @@ function compute(p: KeyStatRowProps, value: number | null, meta?: MetricMeta, re
 
 /** The row's outer element: a link, a button, or a plain view. It reads as one sentence to a screen reader and hides its parts. */
 function Frame({ p, className, children, sentence, style }: { p: KeyStatRowProps; className: string; children: ReactNode; sentence: string; style?: object }) {
+  useLanguage();
   const href = p.href;
   const press = href ? () => push(href) : p.onSelect;
   if (press)
@@ -80,9 +83,10 @@ function Frame({ p, className, children, sentence, style }: { p: KeyStatRowProps
 }
 
 const TONE_TEXT: Record<Tone, string> = { good: "text-optimal-text", bad: "text-warning-text", neutral: "text-foreground-secondary" };
-const unitSuffix = (unit?: string) => (unit ? (unit === "%" ? "%" : ` ${unit}`) : "");
+const unitSuffix = (unit?: string) => (unit ? (unit === "%" ? "%" : ` ${displayUnit(unit)}`) : "");
 
 function Row({ p, c }: { p: KeyStatRowProps; c: Computed }) {
+  useLanguage();
   const card = p.variant === "card";
   const shadow = useCardStyle();
   const sentence = c.loading
@@ -137,6 +141,7 @@ function Row({ p, c }: { p: KeyStatRowProps; c: Computed }) {
 }
 
 function Tile({ p, c }: { p: KeyStatRowProps; c: Computed }) {
+  useLanguage();
   const { c: colors } = useTheme();
   const flagged = !c.reason && !c.loading && (p.chip?.tone === "warning" || p.chip?.tone === "alert");
   const wide = !!p.wide;
@@ -190,7 +195,7 @@ function Tile({ p, c }: { p: KeyStatRowProps; c: Computed }) {
                   c.avgText && (
                     <StatusChip tone="neutral" delta={c.dir} className={TILE_CHIP} textClassName="text-[11px]">
                       {c.avgText}
-                      {p.unit && <Text className="font-semibold">{p.unit === "%" ? "%" : ` ${p.unit}`}</Text>}
+                      {p.unit && <Text className="font-semibold">{p.unit === "%" ? "%" : ` ${displayUnit(p.unit)}`}</Text>}
                     </StatusChip>
                   )
                 ))}
@@ -203,7 +208,7 @@ function Tile({ p, c }: { p: KeyStatRowProps; c: Computed }) {
       )}
       {wide && !p.spark && !c.loading && !c.reason && (p.chip || c.avgText) && (
         <View className="shrink-0 items-end gap-1">
-          <Text className={CAPTION}>{p.chip ? "Your range" : (p.averageLabel ?? "30-day avg")}</Text>
+          <Text className={CAPTION}>{p.chip ? tr("ui.metrics.KeyStatRow.yourRange") : (p.averageLabel ?? tr("copy.fallback.30_day_avg"))}</Text>
           {p.chip ? (
             <StatusChip tone={p.chip.tone} className={TILE_CHIP} textClassName="text-[11px]">
               {p.chip.text}
@@ -214,8 +219,7 @@ function Tile({ p, c }: { p: KeyStatRowProps; c: Computed }) {
               {c.diffText && (
                 <Text className={cn("font-numeric text-xs font-bold leading-4 tabular-nums", TONE_TEXT[c.tone ?? "neutral"])}>
                   {c.diffText}
-                  {unitSuffix(p.unit)} vs avg
-                </Text>
+                  {unitSuffix(p.unit)} {tr("ui.metrics.KeyStatRow.vsAvg")}</Text>
               )}
             </>
           )}
@@ -226,6 +230,7 @@ function Tile({ p, c }: { p: KeyStatRowProps; c: Computed }) {
 }
 
 export function KeyStatRow(p: KeyStatRowProps) {
+  useLanguage();
   const View_ = p.variant === "tile" ? Tile : Row;
   return (
     <MetricState
@@ -240,6 +245,7 @@ export function KeyStatRow(p: KeyStatRowProps) {
 }
 
 export function KeyStatRowSkeleton({ variant, label = "", icon }: { variant: KeyStatRowProps["variant"]; label?: string; icon?: ReactNode }) {
+  useLanguage();
   const p: KeyStatRowProps = { variant, label, icon, metric: undefined, format: "int", direction: "none" };
   return variant === "tile" ? <Tile p={p} c={LOADING} /> : <Row p={p} c={LOADING} />;
 }

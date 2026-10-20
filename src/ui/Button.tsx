@@ -11,6 +11,9 @@ import { Press } from "./Press";
 type Variant = "default" | "outline" | "secondary" | "ghost" | "outline-pill";
 type Size = "touch" | "icon-touch";
 
+/** Shared action typography from the design spec; text can wrap and the touch target grows with it. */
+export const BUTTON_LABEL = "min-w-0 shrink text-center text-[13px] leading-4 font-bold uppercase tracking-[0.06em]";
+
 // Every web button is `border border-transparent bg-clip-padding`: a 1 px border in the box, the fill inside it. React
 // Native paints a background under the border, so the fill is its own view, which an absolute child places inside
 // the border (the padding box), with the radius 1 px smaller, as the browser clips it.
@@ -25,7 +28,7 @@ const VARIANT: Record<Variant, { box?: string; fill?: string; text: string }> = 
   "outline-pill": { text: "text-foreground" },
 };
 const SIZE: Record<Size, { box: string; fill: string; text: string }> = {
-  touch: { box: "h-11 gap-2 rounded-xl px-4", fill: "rounded-[11px]", text: "text-[13px] font-bold uppercase tracking-[0.1em]" },
+  touch: { box: "min-h-11 gap-2 rounded-xl px-4 py-3", fill: "rounded-[11px]", text: BUTTON_LABEL },
   "icon-touch": { box: "size-11 rounded-full", fill: "rounded-full", text: "" },
 };
 

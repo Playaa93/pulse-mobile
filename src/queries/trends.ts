@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Trends `/trends?metric=&r=` (More): one daily metric over up to a year, with each range's average against
 // the range before it. Ported from Pulse's src/server/queries/trends.ts.
 import { addDays } from "@/lib/time";
@@ -25,6 +26,14 @@ export type TrendMetricKey =
 /** The Trends picker's sections, in order. */
 export const TREND_GROUPS = ["Recovery & sleep", "Activity", "Body", "Nutrition", "Vitals"] as const;
 export type TrendGroup = (typeof TREND_GROUPS)[number];
+
+export const trendGroupLabel = (group: TrendGroup): string => tr(({
+  "Recovery & sleep": "lib.dashboard.recoverySleep",
+  "Activity": "lib.dashboard.activity",
+  "Body": "lib.dashboard.body",
+  "Nutrition": "lib.behaviors.nutrition",
+  "Vitals": "lib.dashboard.vitals",
+} as const)[group]);
 
 export type TrendMetric = {
   key: TrendMetricKey;
@@ -70,20 +79,20 @@ const columnOf = (key: string, unit: string | undefined, format: FormatKey) =>
   unit ? `${key}_${unit.replace("°", "").replace("/", "_").toLowerCase()}` : format === "duration" && !key.endsWith("_minutes") ? `${key}_minutes` : key;
 
 const CORE: readonly TrendMetric[] = [
-  { key: "recovery", group: "Recovery & sleep", label: "Recovery", unit: "%", format: "int", colorBy: "band", direction: "up", href: "/recovery", column: "recovery_pct", pick: (r) => r.recovery?.value, provisional: (r) => !!r.recovery?.provisional },
-  { key: "strain", group: "Activity", label: "Strain", unit: "%", format: "int", colorBy: "strain", direction: "neutral", href: "/strain", column: "strain_pct", pick: (r) => dayStrainOf(r.s1), partialToday: true },
-  { key: "sleep", group: "Recovery & sleep", label: "Sleep performance", unit: "%", format: "int", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_performance_pct", pick: (r) => r.sleep?.performance },
-  { key: "hours", group: "Recovery & sleep", label: "Hours of sleep", format: "duration", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_minutes", pick: (r) => r.sleep?.main?.asleepMin },
-  { key: "consistency", group: "Recovery & sleep", label: "Sleep consistency", unit: "%", format: "int", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_consistency_pct", pick: (r) => r.sleep?.consistency },
-  { key: "hrv", group: "Vitals", label: "Heart rate variability", unit: "ms", format: "int", colorBy: "single", direction: "up", href: metricHref("hrv"), column: "hrv_ms", pick: (r) => r.metrics?.hrvMs },
-  { key: "rhr", group: "Vitals", label: "Resting heart rate", unit: "bpm", format: "int", colorBy: "single", direction: "down", href: metricHref("rhr"), column: "resting_hr_bpm", pick: (r) => r.metrics?.rhrBpm },
-  { key: "resp", group: "Vitals", label: "Respiratory rate", unit: "rpm", format: "decimal1", colorBy: "single", direction: "neutral", href: metricHref("resp"), column: "respiratory_rate_rpm", pick: (r) => r.metrics?.respBpm },
-  { key: "spo2", group: "Vitals", label: "Blood oxygen", unit: "%", format: "int", colorBy: "single", direction: "up", href: metricHref("spo2"), column: "spo2_pct", pick: (r) => r.metrics?.spo2Pct },
-  { key: "skin", group: "Vitals", label: "Skin temperature", unit: "°C", format: "decimal1", colorBy: "single", direction: "toward_zero", href: metricHref("skin"), column: "skin_temperature_deviation_c", pick: (r) => r.recovery?.inputs.skinTempDev },
-  { key: "stress", group: "Recovery & sleep", label: "Stress", format: "int", colorBy: "stress", direction: "down", href: "/health/stress", column: "stress_avg", pick: (r) => r.stress?.average, provisional: (r) => !!r.stress?.provisional, partialToday: true },
-  { key: "steps", group: "Activity", label: "Steps", format: "grouped", colorBy: "single", direction: "up", href: metricHref("steps"), column: "steps", pick: (r) => r.metrics?.steps, partialToday: true },
-  { key: "weight", group: "Body", label: "Weight", unit: "kg", format: "decimal1", colorBy: "single", direction: "neutral", href: metricHref("weight"), column: "weight_kg", pick: (r) => r.metrics?.weightKg },
-  { key: "body_fat", group: "Body", label: "Body fat", unit: "%", format: "decimal1", colorBy: "single", direction: "down", href: metricHref("body_fat"), column: "body_fat_pct", pick: (r) => r.metrics?.bodyFatPct },
+  { key: "recovery", group: "Recovery & sleep", get label() { return tr("ui.shells.HomeHeader.recovery"); }, unit: "%", format: "int", colorBy: "band", direction: "up", href: "/recovery", column: "recovery_pct", pick: (r) => r.recovery?.value, provisional: (r) => !!r.recovery?.provisional },
+  { key: "strain", group: "Activity", get label() { return tr("ui.shells.HomeHeader.strain"); }, unit: "%", format: "int", colorBy: "strain", direction: "neutral", href: "/strain", column: "strain_pct", pick: (r) => dayStrainOf(r.s1), partialToday: true },
+  { key: "sleep", group: "Recovery & sleep", get label() { return tr("lib.dashboard.sleepPerformance"); }, unit: "%", format: "int", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_performance_pct", pick: (r) => r.sleep?.performance },
+  { key: "hours", group: "Recovery & sleep", get label() { return tr("lib.dashboard.hoursOfSleep"); }, format: "duration", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_minutes", pick: (r) => r.sleep?.main?.asleepMin },
+  { key: "consistency", group: "Recovery & sleep", get label() { return tr("lib.dashboard.sleepConsistency"); }, unit: "%", format: "int", colorBy: "sleep", direction: "up", href: "/sleep", column: "sleep_consistency_pct", pick: (r) => r.sleep?.consistency },
+  { key: "hrv", group: "Vitals", get label() { return tr("lib.dashboard.heartRateVariability"); }, unit: "ms", format: "int", colorBy: "single", direction: "up", href: metricHref("hrv"), column: "hrv_ms", pick: (r) => r.metrics?.hrvMs },
+  { key: "rhr", group: "Vitals", get label() { return tr("lib.dashboard.restingHeartRate"); }, unit: "bpm", format: "int", colorBy: "single", direction: "down", href: metricHref("rhr"), column: "resting_hr_bpm", pick: (r) => r.metrics?.rhrBpm },
+  { key: "resp", group: "Vitals", get label() { return tr("lib.dashboard.respiratoryRate"); }, unit: "rpm", format: "decimal1", colorBy: "single", direction: "neutral", href: metricHref("resp"), column: "respiratory_rate_rpm", pick: (r) => r.metrics?.respBpm },
+  { key: "spo2", group: "Vitals", get label() { return tr("lib.dashboard.bloodOxygen"); }, unit: "%", format: "int", colorBy: "single", direction: "up", href: metricHref("spo2"), column: "spo2_pct", pick: (r) => r.metrics?.spo2Pct },
+  { key: "skin", group: "Vitals", get label() { return tr("lib.dashboard.skinTemperature"); }, unit: "°C", format: "decimal1", colorBy: "single", direction: "toward_zero", href: metricHref("skin"), column: "skin_temperature_deviation_c", pick: (r) => r.recovery?.inputs.skinTempDev },
+  { key: "stress", group: "Recovery & sleep", get label() { return tr("cardInfo.title.stress"); }, format: "int", colorBy: "stress", direction: "down", href: "/health/stress", column: "stress_avg", pick: (r) => r.stress?.average, provisional: (r) => !!r.stress?.provisional, partialToday: true },
+  { key: "steps", group: "Activity", get label() { return tr("health.dataCheckSummary.steps"); }, format: "grouped", colorBy: "single", direction: "up", href: metricHref("steps"), column: "steps", pick: (r) => r.metrics?.steps, partialToday: true },
+  { key: "weight", group: "Body", get label() { return tr("lib.dashboard.weight"); }, unit: "kg", format: "decimal1", colorBy: "single", direction: "neutral", href: metricHref("weight"), column: "weight_kg", pick: (r) => r.metrics?.weightKg },
+  { key: "body_fat", group: "Body", get label() { return tr("lib.dashboard.bodyFat"); }, unit: "%", format: "decimal1", colorBy: "single", direction: "down", href: metricHref("body_fat"), column: "body_fat_pct", pick: (r) => r.metrics?.bodyFatPct },
 ];
 
 /** Every metric: Pulse's own first, then the source's extras from their catalogue, each in a picker section. */
@@ -92,7 +101,7 @@ export const TREND_METRICS: readonly TrendMetric[] = [
   ...EXTRA_METRICS.map((m): TrendMetric => ({
     key: m.key,
     group: EXTRA_GROUP[m.key],
-    label: m.label,
+    get label() { return m.label; },
     ...("unit" in m && { unit: m.unit }),
     format: m.format,
     colorBy: "single",

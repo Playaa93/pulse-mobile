@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
@@ -16,10 +18,10 @@ import { Press } from "../Press";
 function syncView(s: ShellSync, now: number): { dot: string; label: string } {
   const last = s.sync.lastSuccessAt;
   const rel = last ? ago(last, now) : null;
-  if (s.connection === "auth_revoked" || s.sync.state === "error") return { dot: "bg-recovery-red", label: "Sync failed" };
-  if (s.sync.state === "syncing") return { dot: "bg-coach", label: "Syncing…" };
-  if (s.sync.state === "stale") return { dot: "bg-warning", label: rel ? `Last sync ${rel}` : "Sync is behind" };
-  return { dot: "bg-optimal", label: rel ? `Synced ${rel}` : "Synced" };
+  if (s.connection === "auth_revoked" || s.sync.state === "error") return { dot: "bg-recovery-red", label: tr("ui.shells.SyncStatus.syncFailed") };
+  if (s.sync.state === "syncing") return { dot: "bg-coach", label: tr("settings.DataSource.syncing") };
+  if (s.sync.state === "stale") return { dot: "bg-warning", label: rel ? tr("ui.shells.SyncStatus.lastSync", { v0: rel }) : tr("ui.shells.SyncStatus.syncIsBehind") };
+  return { dot: "bg-optimal", label: rel ? tr("ui.shells.SyncStatus.synced", { v0: rel }) : tr("settings.DataSource.synced") };
 }
 
 /** Re-renders once a minute, so "12m" stays true. */
@@ -39,6 +41,7 @@ function useMinute() {
  * narrow phones (the band, its dot and the accessible name still carry it).
  */
 export function SyncStatus({ hideText = false }: { hideText?: boolean }) {
+  useLanguage();
   const s = useShellSync();
   const now = useMinute();
   const { c } = useTheme();
@@ -63,6 +66,7 @@ export function SyncStatus({ hideText = false }: { hideText?: boolean }) {
 
 /** The web's Band while a sync runs: a faint circle round the band with two opposite arcs turning every 1.4 s. */
 function SyncRing({ color }: { color: string }) {
+  useLanguage();
   const reduce = useReducedMotion();
   const turn = useSharedValue(0);
   useEffect(() => {

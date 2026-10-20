@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Fitness (CTL), fatigue (ATL) and form (TSB) over 90 days (spec §7.10). Ported from pulse
 // src/app/(app)/health/fitness/LoadChart.tsx: Recharts' ComposedChart as Skia marks on the kit's chart frame.
 import { useMemo, useState } from "react";
@@ -12,7 +14,7 @@ import { alpha } from "@/ui/color";
 import { Text } from "@/ui/Text";
 import { useTheme } from "@/ui/theme";
 
-const LABELS = { ctl: "Fitness", atl: "Fatigue", tsb: "Form" } as const;
+const LABELS = { get ctl() { return tr("health.FirstAge.fitness"); }, get atl() { return tr("health.LoadChart.fatigue"); }, get tsb() { return tr("health.LoadChart.form"); } } as const;
 const HEIGHT = 220;
 const AXIS_H = 30;
 const MAX_BAR = 4;
@@ -20,12 +22,13 @@ const MAX_BAR = 4;
 const finite = (v: number | null): v is number => v !== null;
 
 export function LoadChart({ load }: { load: FitnessVM["load"] }) {
+  useLanguage();
   const { c } = useTheme();
   const [x, setX] = useState<number | null>(null);
   const last = [...load].reverse().find((p) => p.ctl !== null);
   const summary = last
-    ? `Training load over 90 days: fitness ${formatValue("int", last.ctl)}, fatigue ${formatValue("int", last.atl)}, form ${formatValue("signedInt", last.tsb)} today.`
-    : "No training load data yet.";
+    ? tr("health.LoadChart.trainingLoadOver90DaysFitnessFatigue", { v0: formatValue("int", last.ctl), v1: formatValue("int", last.atl), v2: formatValue("signedInt", last.tsb) })
+    : tr("health.LoadChart.noTrainingLoadDataYet");
   // The y axis: zero is always in, then the data, then round ticks (Recharts' auto domain with tickCount 4).
   const ticks = useMemo(() => {
     const all = load.flatMap((p) => [p.ctl, p.atl, p.tsb]).filter(finite);

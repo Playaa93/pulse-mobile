@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState } from "react";
 import { View } from "react-native";
 import { Circle, Group } from "@shopify/react-native-skia";
@@ -36,6 +38,7 @@ export type IntradayHrChartProps = {
 const AXIS_H = 30;
 
 function Chart({ hr, variant }: { hr: HrSeries; variant: "day" | "activity" }) {
+  useLanguage();
   const { c, css } = useTheme();
   const tz = useOptionalShellCalendar()?.timeZone;
   const [x, setX] = useState<number | null>(null);
@@ -44,7 +47,7 @@ function Chart({ hr, variant }: { hr: HrSeries; variant: "day" | "activity" }) {
   const domain = paddedDomain(hr.points.map((p) => p.bpm));
   const bpms = hr.points.map((p) => p.bpm).filter((b): b is number => b !== null);
   const zoneOf = (bpm: number) => hr.zones?.find((z) => bpm >= z.min && bpm <= z.max)?.label;
-  const summary = `Heart rate from ${clock(first, tz)} to ${clock(last, tz)}: low ${Math.min(...bpms)}, high ${Math.max(...bpms)} beats per minute.`;
+  const summary = tr("ui.charts.IntradayHrChart.heartRateFromToLowHighBeats", { v0: clock(first, tz), v1: clock(last, tz), v2: Math.min(...bpms), v3: Math.max(...bpms) });
   // The day chart draws heart rate grey and colours it by zone only inside workouts (WHOOP's day view); an activity is all workout.
   const workouts = (hr.spans ?? []).filter((s) => s.kind === "workout");
   const inWorkout = (t: number) => variant === "activity" || workouts.some((s) => t >= s.start && t <= s.end);
@@ -129,14 +132,16 @@ function Chart({ hr, variant }: { hr: HrSeries; variant: "day" | "activity" }) {
 }
 
 function ZoneName({ name }: { name: string }) {
+  useLanguage();
   return <Text className="text-xs font-medium leading-4 text-muted-foreground">{name}</Text>;
 }
 
 /** Heart rate across the day or an activity, with zones and markers (spec §5.7). */
 export function IntradayHrChart({ data, variant = "day" }: IntradayHrChartProps) {
+  useLanguage();
   const empty = (
     <View className="items-center">
-      <EmptyState body="No heart-rate data for this day." />
+      <EmptyState body={tr("ui.charts.IntradayHrChart.noHeartRateDataForThisDay")} />
     </View>
   );
   return (
@@ -156,6 +161,7 @@ export function IntradayHrChart({ data, variant = "day" }: IntradayHrChartProps)
 }
 
 export function IntradayHrChartSkeleton({ variant = "day" }: { variant?: "day" | "activity" }) {
+  useLanguage();
   return <Skeleton className={`${variant === "day" ? "h-[200px]" : "h-[180px]"} rounded-lg bg-skeleton`} />;
 }
 IntradayHrChart.Skeleton = IntradayHrChartSkeleton;

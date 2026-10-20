@@ -1,10 +1,12 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // A metric's own screen `/metric/[key]?d=&r=` (web: (app)/metric/[key]/page.tsx, loading.tsx; spec §11 MD1): the day, its
 // history, then the metric's own sections.
 import { useMemo } from "react";
 import { View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { DATA_COLORS, deltaTone } from "@/lib/bands";
-import { DAY, formatDay, formatValue } from "@/lib/format";
+import { displayUnit, DAY, formatDay, formatValue } from "@/lib/format";
 import { parseRange, RANGES, type TrendRange } from "@/lib/url";
 import { getMetricDetail, isDetailKey, type DetailKey, type MetricDetailVM } from "@/queries/metric";
 import { Divided, LoadError, RangedTrendChart } from "@/screens/trends/parts";
@@ -30,12 +32,12 @@ import { MetricSection } from "./sections";
 
 const STACK: Record<"calories" | "distance", readonly TrendSeries[]> = {
   calories: [
-    { key: "resting", label: "Resting", color: DATA_COLORS["energy-resting"].css },
-    { key: "active", label: "Active", color: DATA_COLORS["energy-active"].css },
+    { key: "resting", get label() { return tr("health.HeartRateScreen.resting"); }, color: DATA_COLORS["energy-resting"].css },
+    { key: "active", get label() { return tr("queries.goals.active"); }, color: DATA_COLORS["energy-active"].css },
   ],
   distance: [
-    { key: "everyday", label: "Everyday", color: DATA_COLORS["energy-resting"].css },
-    { key: "workouts", label: "Workouts", color: DATA_COLORS["energy-active"].css },
+    { key: "everyday", get label() { return tr("metric.MetricScreen.everyday"); }, color: DATA_COLORS["energy-resting"].css },
+    { key: "workouts", get label() { return tr("activity.ActivitiesScreen.workouts"); }, color: DATA_COLORS["energy-active"].css },
   ],
 };
 
@@ -50,6 +52,7 @@ function shape(vm: MetricDetailVM) {
 }
 
 export default function MetricScreen() {
+  useLanguage();
   const { key, r } = useLocalSearchParams<{ key: string; r?: string }>();
   const [d] = useSelectedDay();
   const range = parseRange(r);
@@ -60,8 +63,8 @@ export default function MetricScreen() {
   const vm = data?.key === key ? data : undefined;
   const shaped = useMemo(() => (vm ? shape(vm) : undefined), [vm]);
 
-  if (!valid) return <DetailShell title="Metric" dateSwitcher={{ mode: "day" }} primary={<EmptyState body="There is no screen for this metric." />} />;
-  if (error && !vm) return <LoadError title="Metric" reload={reload} />;
+  if (!valid) return <DetailShell title={tr("chart.ChartExplorer.metric")} dateSwitcher={{ mode: "day" }} primary={<EmptyState body={tr("metric.MetricScreen.thereIsNoScreenForThisMetric")} />} />;
+  if (error && !vm) return <LoadError title={tr("chart.ChartExplorer.metric")} reload={reload} />;
   if (!vm || !shaped) return <Loading />;
 
   const empty = vm.value.value === null && vm.history.value === null;
@@ -74,25 +77,25 @@ export default function MetricScreen() {
   return (
     <DetailShell
       title={vm.label}
-      bodySkeleton={LOADING_PRIMARY}
+      bodySkeleton={renderLoadingPrimary()}
       dateSwitcher={{ mode: "day" }}
       hero={<Hero vm={vm} />}
       summary={lead && <MetricSection s={lead} vm={vm} timeZone={timeZone} />}
       primary={
         empty ? (
-          <SectionShell variant="card" title="History">
+          <SectionShell variant="card" title={tr("cardInfo.title.history")}>
             <EmptyState
               body={
                 vm.group === "nutrition"
-                  ? `No ${vm.label.toLowerCase()} logged yet. Log it in Journal, or in Fitbit, and it shows here.`
-                  : `No ${vm.label.toLowerCase()} from Health Connect yet. It shows here once your phone, Fitbit or a connected device records it and syncs.`
+                  ? tr("metric.MetricScreen.noLoggedYetLogItInJournal", { v0: vm.label.toLowerCase() })
+                  : tr("metric.MetricScreen.noFromHealthConnectYetItShows", { v0: vm.label.toLowerCase() })
               }
-              action={vm.group === "nutrition" ? { label: "Open Journal", href: "/journal" } : undefined}
+              action={vm.group === "nutrition" ? { label: tr("home.HomeScreen.openJournal"), href: "/journal" } : undefined}
             />
           </SectionShell>
         ) : (
           <View className="gap-3">
-            <SectionShell variant="card" title="History" action={chartDef(vm.key) ? { label: "Explore", href: chartHref({ metric: vm.key, r: range as ChartRange, d }) } : undefined}>
+            <SectionShell variant="card" title={tr("cardInfo.title.history")} action={chartDef(vm.key) ? { label: tr("metric.MetricScreen.explore"), href: chartHref({ metric: vm.key, r: range as ChartRange, d }) } : undefined}>
               <RangedTrendChart
                 key={vm.key}
                 range={range}
@@ -115,7 +118,7 @@ export default function MetricScreen() {
       }
       secondary={empty ? [] : more.map((s) => <MetricSection key={s.kind} s={s} vm={vm} timeZone={timeZone} />)}
       footer={
-        <SectionShell variant="card" title={`About ${vm.label.toLowerCase()}`}>
+        <SectionShell variant="card" title={tr("breathe.BreatheScreen.about", { v0: vm.label.toLowerCase() })}>
           <View className="gap-2">
             <Text className="text-[15px] leading-[22px] text-foreground-secondary">{vm.about}</Text>
             <Text className="text-[15px] leading-[22px] text-foreground-secondary">{vm.source}</Text>
@@ -126,12 +129,13 @@ export default function MetricScreen() {
   );
 }
 
-const unitText = (unit?: string) => (unit ? (unit === "%" ? "%" : ` ${unit}`) : "");
+const unitText = (unit?: string) => (unit ? (unit === "%" ? "%" : ` ${displayUnit(unit)}`) : "");
 
 /** The day's value (a reading metric's latest reading) against its 30-day average. */
 function Hero({ vm }: { vm: MetricDetailVM }) {
+  useLanguage();
   // The date switcher names the day; a reading from an earlier day says which.
-  const when = vm.valueDay && vm.valueDay !== vm.day ? `Latest reading, ${formatDay(vm.valueDay, DAY.short)}` : null;
+  const when = vm.valueDay && vm.valueDay !== vm.day ? tr("metric.MetricScreen.latestReading", { v0: formatDay(vm.valueDay, DAY.short) }) : null;
   return (
     <View className="w-full max-w-[360px] items-center gap-2 py-4">
       {when && <Text className={cn(LABEL, "text-center text-muted-foreground")}>{when}</Text>}
@@ -143,13 +147,13 @@ function Hero({ vm }: { vm: MetricDetailVM }) {
           return (
             <>
               <ValueUnit value={formatValue(vm.format, value)} unit={vm.unit} className="font-numeric text-[64px] font-bold leading-[64px] tracking-[-0.02em]" unitClassName="text-xl font-semibold leading-7 text-foreground-secondary" />
-              {/* A running total against whole days would always read "below": today shows the average alone. */}
+              {/* A running total against whole days would always read tr("display.below"): today shows the average alone. */}
               {t && diff !== null && !vm.soFar && (
                 <StatusChip tone={t.tone === "good" ? "optimal" : t.tone === "bad" ? "warning" : "neutral"} delta={t.dir} className="mt-1 self-center">
-                  {t.dir === "flat" ? "In line with your 30-day average" : `${formatValue(vm.format, Math.abs(diff))}${unitText(vm.unit)} ${t.dir === "up" ? "above" : "below"} your 30-day average`}
+                  {t.dir === "flat" ? tr("metric.MetricScreen.inLineWithYour30DayAverage") : tr("metric.MetricScreen.your30DayAverage", { v0: formatValue(vm.format, Math.abs(diff)), v1: unitText(vm.unit), v2: t.dir === "up" ? tr("display.above") : tr("display.below") })}
                 </StatusChip>
               )}
-              <Text className={cn(CAPTION, "text-center")}>{avg === null ? "No 30-day average yet" : `30-day average ${formatValue(vm.format, avg)}${unitText(vm.unit)}`}</Text>
+              <Text className={cn(CAPTION, "text-center")}>{avg === null ? tr("metric.MetricScreen.no30DayAverageYet") : tr("metric.MetricScreen.30DayAverage", { v0: formatValue(vm.format, avg), v1: unitText(vm.unit) })}</Text>
             </>
           );
         }}
@@ -158,14 +162,14 @@ function Hero({ vm }: { vm: MetricDetailVM }) {
   );
 }
 
-const LOADING_PRIMARY = (
+const renderLoadingPrimary = () => (
   <View accessibilityElementsHidden className="gap-3">
-    <SectionShell variant="card" title="History">
+    <SectionShell variant="card" title={tr("cardInfo.title.history")}>
       <TrendChartSkeleton chip ranges={RANGES} />
     </SectionShell>
-    <SectionShell variant="card" title="Last 30 days">
+    <SectionShell variant="card" title={tr("activity.ActivitiesScreen.last30Days")}>
       <Divided>
-        {["Daily average", "Highest", "Lowest", "Days with data"].map((l) => (
+        {[tr("metric.MetricScreen.dailyAverage"), tr("metric.MetricScreen.highest"), tr("metric.MetricScreen.lowest"), tr("metric.MetricScreen.daysWithData")].map((l) => (
           <KeyStatRowSkeleton key={l} variant="row" label={l} />
         ))}
       </Divided>
@@ -175,6 +179,7 @@ const LOADING_PRIMARY = (
 
 /** Metric detail: the hero's label and value, the History card and its stats with their real labels (spec §5.19). */
 function Loading() {
+  useLanguage();
   return (
     <DetailShell
       loading
@@ -187,8 +192,8 @@ function Loading() {
           <SkeletonText className="w-40" />
         </View>
       }
-      primary={LOADING_PRIMARY}
-      bodySkeleton={LOADING_PRIMARY}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderLoadingPrimary()}
     />
   );
 }

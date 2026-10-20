@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // "● 2 minutes ago": the dot pulses while the reading is under 5 minutes old. Ported from pulse
 // src/app/(app)/health/heart-rate/LiveHeartRate.tsx (LastReading). The web re-renders it from a shared minute clock;
 // the app has no clock timer (screen-rules.md), so `now` is when the screen last loaded, or the live screen's last pull.
@@ -14,6 +16,7 @@ export const LIVE_MS = 5 * 60_000;
 
 /** Tailwind's `animate-ping` over 2 s (the ring grows to twice its size and fades in the first 75 %), on the UI thread. */
 function Ping() {
+  useLanguage();
   const reduced = useReducedMotion();
   const p = useSharedValue(0);
   useEffect(() => {
@@ -26,6 +29,7 @@ function Ping() {
 
 /** `now` is epoch ms from the screen's last load (or last live pull): rendering never reads the clock. */
 export function LastReading({ t, now, className }: { t: number; now: number; className?: string }) {
+  useLanguage();
   const fresh = now - t < LIVE_MS;
   return (
     <View className={cn("flex-row items-center gap-1.5", className)}>
@@ -35,7 +39,7 @@ export function LastReading({ t, now, className }: { t: number; now: number; cla
           <View className="size-2 rounded-full bg-strain" />
         </View>
       )}
-      <Text className={cn(CAPTION, "tabular-nums")} accessibilityLabel={`${fresh ? "Live, " : ""}${ago(t, now)}`}>
+      <Text className={cn(CAPTION, "tabular-nums")} accessibilityLabel={`${fresh ? tr("health.LastReading.live") : ""}${ago(t, now)}`}>
         {ago(t, now)}
       </Text>
     </View>

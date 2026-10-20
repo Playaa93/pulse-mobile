@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Trend View `/trend/[key]?d=&r=&p=` (web: (app)/trend/[key]/page.tsx, spec §11 R29): one metric over a W / M / 6M window,
 // stepped back `p` periods, against the window before it, with a verdict, a breakdown and an explainer.
 import { View } from "react-native";
@@ -32,13 +34,14 @@ import { TrendMetricMenu } from "./TrendMetricMenu";
 import { TrendViewChart } from "./TrendViewChart";
 import { Press } from "@/ui/Press";
 
-const RANGE_TEXT: Record<TrendViewRange, string> = { w: "W", m: "M", "6m": "6M" };
-const RANGE_ARIA: Record<TrendViewRange, string> = { w: "1 week", m: "1 month", "6m": "6 months" };
+const RANGE_TEXT: Record<TrendViewRange, string> = { get w() { return tr("chart.range.week"); }, m: "M", "6m": "6M" };
+const RANGE_ARIA: Record<TrendViewRange, string> = { get w() { return tr("ui.charts.TrendChart.1Week"); }, get m() { return tr("ui.charts.TrendChart.1Month"); }, get "6m"() { return tr("queries.trendView.6Months"); } };
 
 /** The route's `?r=` and `?p=`, replaced in place, so Back leaves the screen. */
 const go = (o: { r?: TrendViewRange; p?: number }) => router.setParams({ ...(o.r !== undefined && { r: o.r }), ...(o.p !== undefined && { p: o.p ? String(o.p) : "" }) });
 
 export default function TrendViewScreen() {
+  useLanguage();
   const { key, r, p } = useLocalSearchParams<{ key: string; r?: string; p?: string }>();
   const [d] = useSelectedDay();
   const range = parseTrendRange(r);
@@ -49,13 +52,13 @@ export default function TrendViewScreen() {
   // it navigates); another metric never draws the old one under its title.
   const vm = data?.key === key ? data : undefined;
 
-  if (!valid) return <DetailShell title="Trend view" primary={<EmptyState body="This metric has no trend view." />} />;
-  if (error && !vm) return <LoadError title="Trend view" reload={reload} />;
-  if (!vm) return <DetailShell loading title="Trend view" />;
+  if (!valid) return <DetailShell title={tr("trends.TrendViewScreen.trendView")} primary={<EmptyState body={tr("trends.TrendViewScreen.thisMetricHasNoTrendView")} />} />;
+  if (error && !vm) return <LoadError title={tr("trends.TrendViewScreen.trendView")} reload={reload} />;
+  if (!vm) return <DetailShell loading title={tr("trends.TrendViewScreen.trendView")} />;
 
   return (
     <DetailShell
-      title="Trend view"
+      title={tr("trends.TrendViewScreen.trendView")}
       primary={
         <View className="gap-6">
           <TrendMetricMenu
@@ -86,7 +89,7 @@ export default function TrendViewScreen() {
             {/* The whole history, zoomable, in the chart explorer. */}
             {chartDef(key) && (
               <View className="mt-3 items-end">
-                <ActionLink label="Explore" href={chartHref({ metric: key, r: vm.range, d })} />
+                <ActionLink label={tr("metric.MetricScreen.explore")} href={chartHref({ metric: key, r: vm.range, d })} />
               </View>
             )}
             {vm.footnote && (
@@ -107,7 +110,7 @@ export default function TrendViewScreen() {
           {vm.actions.addActivity && (
             <InfoCardTrigger info={ADD_ACTIVITY_INFO} activeScale={0.96} className={CARD_BUTTON}>
               <Icon icon={Plus} size={20} tone="foreground" strokeWidth={2} />
-              <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">Add activity</Text>
+              <Text className="text-[13px] font-bold uppercase leading-4 tracking-[0.1em]">{tr("home.HomeScreen.addActivity")}</Text>
             </InfoCardTrigger>
           )}
         </View>
@@ -127,6 +130,7 @@ export default function TrendViewScreen() {
 }
 
 function Headline({ vm }: { vm: TrendViewVM }) {
+  useLanguage();
   const { c } = useTheme();
   const arrow = "size-10 items-center justify-center rounded-full";
   return (
@@ -143,9 +147,9 @@ function Headline({ vm }: { vm: TrendViewVM }) {
       <View className="shrink-0 items-end gap-2">
         {/* Three 56 px segments: the web's `min-w-14` on each. */}
         <View className="w-44">
-          <Segmented label="Range" fill value={vm.range} options={TREND_VIEW_RANGES.map((r) => ({ value: r, label: RANGE_TEXT[r], accessibilityLabel: RANGE_ARIA[r] }))} onChange={(r) => go({ r, p: 0 })} />
+          <Segmented label={tr("chart.ChartExplorer.range")} fill value={vm.range} options={TREND_VIEW_RANGES.map((r) => ({ value: r, label: RANGE_TEXT[r], accessibilityLabel: RANGE_ARIA[r] }))} onChange={(r) => go({ r, p: 0 })} />
         </View>
-        <View accessibilityRole="toolbar" accessibilityLabel="Period" className="flex-row items-center gap-1">
+        <View accessibilityRole="toolbar" accessibilityLabel={tr("trends.TrendViewScreen.period")} className="flex-row items-center gap-1">
           <PeriodStep dir="prev" enabled={vm.canPrev} onPress={() => go({ p: vm.offset + 1 })} className={arrow} color={c.foreground} dim={c["muted-foreground"]} />
           <Text className="whitespace-nowrap font-numeric text-[13px] font-bold uppercase leading-4 tracking-[0.06em] tabular-nums">{vm.period}</Text>
           <PeriodStep dir="next" enabled={vm.offset > 0} onPress={() => go({ p: vm.offset - 1 })} className={arrow} color={c.foreground} dim={c["muted-foreground"]} />
@@ -157,8 +161,9 @@ function Headline({ vm }: { vm: TrendViewVM }) {
 
 /** The period stepper's arrow: a 40 px button, or a dim glyph where there is nothing further. */
 function PeriodStep({ dir, enabled, onPress, className, color, dim }: { dir: "prev" | "next"; enabled: boolean; onPress: () => void; className: string; color: string; dim: string }) {
+  useLanguage();
   const Glyph = dir === "prev" ? ChevronLeft : ChevronRight;
-  const label = `${dir === "prev" ? "Previous" : "Next"} period`;
+  const label = tr("trends.TrendViewScreen.period_cf83ff", { v0: dir === "prev" ? tr("ui.shells.DateSwitcher.previous") : tr("common.next") });
   return enabled ? (
     <Press accessibilityRole="button" accessibilityLabel={label} onPress={() => (haptic.tap(), onPress())} activeScale={0.96} activeBg="bg-fill-pressed" className={className}>
       <Glyph size={20} color={color} strokeWidth={2.5} />

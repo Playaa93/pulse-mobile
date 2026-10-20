@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Sleep's measure cards drawn the way WHOOP draws them: hours against need as two bars, the last five nights' bed and
 // wake times against your usual ones, and efficiency as asleep and awake bars marked where you woke. Ported from pulse
 // (app)/sleep/SleepCards.tsx. Left out: the Sleep Stress card (`FEATURES.sleepStress`, off until Pulse scores stress
@@ -26,6 +28,7 @@ const NUM_LG = "font-numeric text-lg font-bold leading-6 tabular-nums";
 
 /** WHOOP's card headline: the percentage large with its arrow against the prior 30 nights, and their mean under it. */
 function Headline({ value, stat, down = false }: { value: number; stat?: Pick<KeyStat, "average" | "sd">; down?: boolean }) {
+  useLanguage();
   const avg = stat?.average ?? null;
   const t = avg === null ? null : deltaTone(down ? "down" : "up", value, avg, stat?.sd);
   return (
@@ -35,7 +38,7 @@ function Headline({ value, stat, down = false }: { value: number; stat?: Pick<Ke
         {t && <DeltaMark dir={t.dir} tone={t.tone} />}
       </View>
       {avg !== null && (
-        <Text accessibilityLabel={`Prior 30-night average ${Math.round(avg)}%`} className="font-numeric text-[13px] font-medium leading-4 tabular-nums text-muted-foreground">
+        <Text accessibilityLabel={tr("sleep.SleepCards.prior30NightAverage", { v0: Math.round(avg) })} className="font-numeric text-[13px] font-medium leading-4 tabular-nums text-muted-foreground">
           {Math.round(avg)}%
         </Text>
       )}
@@ -45,6 +48,7 @@ function Headline({ value, stat, down = false }: { value: number; stat?: Pick<Ke
 
 /** A swatch, a name and a right-aligned value: the legend under a bar. */
 function Legend({ rows }: { rows: { swatch: string; label: string; value: string }[] }) {
+  useLanguage();
   return (
     <View className={cn(INSET_ROW, "mt-4 gap-2 py-3")}>
       {rows.map((r) => (
@@ -59,6 +63,7 @@ function Legend({ rows }: { rows: { swatch: string; label: string; value: string
 }
 
 export function HoursVsNeed({ vm }: { vm: Pick<SleepVM, "hoursVsNeed" | "summary"> }) {
+  useLanguage();
   const { c } = useTheme();
   const m = vm.hoursVsNeed;
   if (m.value === null) return <ReasonPlaceholder reason={m.reason} nightsLeft={m.nightsLeft} size="md" />;
@@ -79,7 +84,7 @@ export function HoursVsNeed({ vm }: { vm: Pick<SleepVM, "hoursVsNeed" | "summary
       <View className="mt-4 gap-4">
         <View>
           <View className="mb-1.5 flex-row items-baseline justify-between gap-3">
-            <Text className={cn(LABEL, "text-muted-foreground")}>Hours of sleep</Text>
+            <Text className={cn(LABEL, "text-muted-foreground")}>{tr("lib.dashboard.hoursOfSleep")}</Text>
             <Text className={NUM_LG}>{hmm(h.asleepMin)}</Text>
           </View>
           {/* The reference app's bar fades in from the track to sleep blue at the night's length. */}
@@ -89,7 +94,7 @@ export function HoursVsNeed({ vm }: { vm: Pick<SleepVM, "hoursVsNeed" | "summary
         </View>
         <View>
           {h.calibrating ? (
-            <Text className={CAPTION}>Your need settles after 7 nights. Using {hmm(h.needMin)} until then.</Text>
+            <Text className={CAPTION}>{tr("sleep.SleepCards.yourNeedSettlesAfter7NightsUsing")}{hmm(h.needMin)} {tr("sleep.SleepCards.untilThen")}</Text>
           ) : (
             <View accessibilityElementsHidden className="flex-row gap-0.5" style={{ width: pct(h.needMin) }}>
               {parts.map((p, i) => (
@@ -105,7 +110,7 @@ export function HoursVsNeed({ vm }: { vm: Pick<SleepVM, "hoursVsNeed" | "summary
             </View>
           )}
           <View className="mt-1.5 flex-row items-baseline justify-between gap-3">
-            <Text className={cn(LABEL, "text-muted-foreground")}>Sleep needed</Text>
+            <Text className={cn(LABEL, "text-muted-foreground")}>{tr("queries.trendView.sleepNeeded")}</Text>
             <Text className={NUM_LG}>{hmm(h.needMin)}</Text>
           </View>
         </View>
@@ -113,10 +118,10 @@ export function HoursVsNeed({ vm }: { vm: Pick<SleepVM, "hoursVsNeed" | "summary
       {!h.calibrating && (
         <Legend
           rows={[
-            { swatch: "bg-foreground/35", label: "Healthy Minimum", value: hmm(baselineMin) },
-            { swatch: "bg-strain", label: "Recent Strain", value: signed(strainMin, "+") },
-            { swatch: "bg-foreground/80", label: "Sleep Debt", value: signed(debtMin, "+") },
-            ...(napMin > 0 ? [{ swatch: "bg-sleep", label: "Naps", value: signed(napMin, "−") }] : []),
+            { swatch: "bg-foreground/35", label: tr("sleep.SleepCards.healthyMinimum"), value: hmm(baselineMin) },
+            { swatch: "bg-strain", label: tr("sleep.SleepCards.recentStrain"), value: signed(strainMin, "+") },
+            { swatch: "bg-foreground/80", label: tr("sleep.SleepCards.sleepDebt"), value: signed(debtMin, "+") },
+            ...(napMin > 0 ? [{ swatch: "bg-sleep", label: tr("sleep.SleepCards.naps"), value: signed(napMin, "−") }] : []),
           ]}
         />
       )}
@@ -158,6 +163,7 @@ function optimalPath(points: ({ x: number; y: number } | null)[], k: number) {
 const PLOT_H = 208;
 
 export function SleepConsistency({ vm }: { vm: Pick<SleepVM, "consistency" | "summary"> }) {
+  useLanguage();
   const { c } = useTheme();
   const [w, setW] = useState(0);
   const m = vm.consistency;
@@ -183,10 +189,10 @@ export function SleepConsistency({ vm }: { vm: Pick<SleepVM, "consistency" | "su
         {/* shrink: at 320 px the legend wraps beside the headline, as on the web. */}
         <View className="shrink flex-row items-center gap-2 pb-px">
           <View accessibilityElementsHidden className="w-5 border-t-[1.5px] border-dashed border-foreground/55" />
-          <Text className="text-[13px] font-medium leading-4 text-foreground-secondary">Optimal bed/wake time</Text>
+          <Text className="text-[13px] font-medium leading-4 text-foreground-secondary">{tr("sleep.SleepCards.optimalBedWakeTime")}</Text>
         </View>
       </View>
-      <View accessible accessibilityRole="image" accessibilityLabel={`Bed and wake times for the last five nights${last ? `, last night ${at(last.bed)} to ${at(last.wake)}` : ""}`} className="mt-4 flex-row gap-3">
+      <View accessible accessibilityRole="image" accessibilityLabel={tr("sleep.SleepCards.bedAndWakeTimesForTheLast", { v0: last ? tr("sleep.SleepCards.lastNightTo", { v0: at(last.bed), v1: at(last.wake) }) : "" })} className="mt-4 flex-row gap-3">
         <View accessibilityElementsHidden className="w-10 shrink-0" style={{ height: PLOT_H }}>
           {ticks.map((t) => (
             <Text key={t} className="absolute right-0 font-numeric text-[12px] font-semibold leading-3 tabular-nums text-muted-foreground" style={{ top: yOf(t) - 6 }}>
@@ -245,6 +251,7 @@ export function SleepConsistency({ vm }: { vm: Pick<SleepVM, "consistency" | "su
 
 /** Tick marks where you woke: thin cuts through a bar, at least 2 px wide. */
 function Wakes({ wakes, className }: { wakes: { at: number; width: number }[]; className: string }) {
+  useLanguage();
   return wakes.map((w, i) => <View key={i} className={cn("absolute inset-y-0", className)} style={{ left: `${w.at * 100}%`, width: `${w.width * 100}%`, minWidth: 2 }} />);
 }
 
@@ -253,6 +260,7 @@ function Wakes({ wakes, className }: { wakes: { at: number; width: number }[]; c
  * cut where each spell awake fell, an awake bar on the hatched track marked at the same places, then the wake events.
  */
 export function SleepEfficiency({ vm }: { vm: Pick<SleepExtras, "efficiency"> }) {
+  useLanguage();
   const m = vm.efficiency;
   if (m.value === null) return <ReasonPlaceholder reason={m.reason} nightsLeft={m.nightsLeft} size="md" />;
   const e = m.value;
@@ -261,7 +269,7 @@ export function SleepEfficiency({ vm }: { vm: Pick<SleepExtras, "efficiency"> })
       <Headline value={e.pct} stat={e} />
       <View className="mt-4 gap-2">
         <View className="flex-row items-baseline justify-between gap-3">
-          <Text className={cn(LABEL, "text-muted-foreground")}>Asleep</Text>
+          <Text className={cn(LABEL, "text-muted-foreground")}>{tr("more.howItWorksContent.asleep")}</Text>
           <Text className={NUM_LG}>{hmm(e.asleepMin)}</Text>
         </View>
         <View accessibilityElementsHidden className={cn("overflow-hidden bg-sleep", BAR)}>
@@ -271,13 +279,13 @@ export function SleepEfficiency({ vm }: { vm: Pick<SleepExtras, "efficiency"> })
           <Wakes wakes={e.wakes} className="bg-foreground" />
         </Hatch>
         <View className="flex-row items-baseline justify-between gap-3">
-          <Text className={cn(LABEL, "text-muted-foreground")}>Awake</Text>
+          <Text className={cn(LABEL, "text-muted-foreground")}>{tr("queries.mobileExtras.awake")}</Text>
           <Text className={NUM_LG}>{hmm(e.awakeMin)}</Text>
         </View>
       </View>
       <View className="mt-4 flex-row items-center gap-3 border-t border-border pt-4">
         <View accessibilityElementsHidden className="size-3.5 shrink-0 rounded-[3px] bg-foreground/80" />
-        <Text className={cn(LABEL, "flex-1")}>Wake events</Text>
+        <Text className={cn(LABEL, "flex-1")}>{tr("queries.sleep.wakeEvents")}</Text>
         <Text className="font-numeric text-xl font-bold leading-6 tabular-nums">{e.wakeEvents ?? "--"}</Text>
       </View>
     </View>

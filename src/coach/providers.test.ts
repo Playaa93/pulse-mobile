@@ -9,7 +9,7 @@ import type { Profile } from "@/data/types";
 import type { QueryCtx } from "@/queries/ctx";
 import { modelFor, PROVIDERS, providerOf, type Fetch } from "./providers";
 import { coachTools } from "./tools";
-import { checkProvider, testKey, TEST_FAILED } from "./validate";
+import { checkProvider, testKey, testFailed } from "./validate";
 
 const TZ = "Asia/Kolkata";
 const PROFILE: Profile = { birthDate: "1990-01-01", sex: "male", maxHr: 183, heightCm: 178, timeZone: TZ };
@@ -159,7 +159,7 @@ describe("key test", () => {
     expect(okJson.calls[0].body).toMatchObject({ model: "claude-opus-5-5", max_tokens: 16 });
     expect(okJson.calls[0].body.stream).toBeFalsy();
     const refused = fakeFetch([{ status: 401, json: { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } } }]);
-    expect(await testKey({ provider: "anthropic", model: "claude-opus-5-5", apiKey: KEY }, refused.fetch)).toEqual({ ok: false, error: TEST_FAILED });
+    expect(await testKey({ provider: "anthropic", model: "claude-opus-5-5", apiKey: KEY }, refused.fetch)).toEqual({ ok: false, error: testFailed() });
     expect(refused.calls).toHaveLength(1);
   });
 });

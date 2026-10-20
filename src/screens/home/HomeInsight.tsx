@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Home's coach card [latest-home-top-1], [latest-home-top-3]: an opaque card with a title and body (no link) and the
 // reference app's check-over-count pill at the right. With several cards a second card peeks out underneath. The tick
 // dismisses the card shown (the count is what is left) and the stack goes once every card is dismissed; dismissals are
@@ -21,6 +23,7 @@ export type HomeInsightItem = { key: string; title: string; body: string };
 
 /** One card's text: it fades (150 ms) when it becomes the active one. */
 function Slide({ active, onHeight, children, label }: { active: boolean; onHeight: (h: number) => void; children: ReactNode; label?: string }) {
+  useLanguage();
   const opacity = useSharedValue(active ? 1 : 0);
   useEffect(() => {
     opacity.value = withTiming(active ? 1 : 0, { duration: DURATION.fast });
@@ -44,6 +47,7 @@ function Slide({ active, onHeight, children, label }: { active: boolean; onHeigh
 const DISMISSED_KEY = "pulse.home.insights.dismissed";
 
 export function HomeInsight({ day, items: all }: { day: string; items: HomeInsightItem[] }) {
+  useLanguage();
   const [dismissed, setDismissed] = useState<string[] | null>(null);
   const [heights, setHeights] = useState<number[]>([]);
   const shadow = useCardStyle();
@@ -73,7 +77,7 @@ export function HomeInsight({ day, items: all }: { day: string; items: HomeInsig
     AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify({ day, keys })).catch(() => {});
   };
   return (
-    <View accessibilityLabel="Insights" className={several ? "pb-2" : undefined}>
+    <View accessibilityLabel={tr("app.journal.insights")} className={several ? "pb-2" : undefined}>
       {several && <View accessibilityElementsHidden className="absolute inset-x-5 bottom-0 h-8 rounded-b-2xl bg-card-peek" />}
       {/* The reference app's card: text inset 20 px, the counter pill 8 px from the top and right corner (spec §11 F6). */}
       <View className={`${CARD_CLASS} p-5 pr-12`} style={shadow}>
@@ -84,7 +88,7 @@ export function HomeInsight({ day, items: all }: { day: string; items: HomeInsig
               key={it.key}
               active={k === at}
               onHeight={(h) => setHeights((hs) => (hs[k] === h ? hs : Object.assign([...hs], { [k]: h })))}
-              label={several ? `${k + 1} of ${n}` : undefined}
+              label={several ? tr("home.HomeInsight.of", { v0: k + 1, v1: n }) : undefined}
             >
               <View className="gap-0.5">
                 <Text className="text-base font-medium leading-[22px]">{it.title}</Text>
@@ -96,7 +100,7 @@ export function HomeInsight({ day, items: all }: { day: string; items: HomeInsig
         <Press
           activeScale={0.96}
           accessibilityRole="button"
-          accessibilityLabel={`Dismiss this insight (${n} left)`}
+          accessibilityLabel={tr("home.HomeInsight.dismissThisInsightLeft", { v0: n })}
           onPress={dismiss}
           hitSlop={{ left: 10, right: 10, top: 2, bottom: 2 }}
           className="absolute right-2 top-2 h-12 w-6 items-center justify-center gap-1 rounded-lg bg-fill-hover"

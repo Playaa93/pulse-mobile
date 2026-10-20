@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { Circle } from "@shopify/react-native-skia";
@@ -33,6 +35,7 @@ const AXIS_H = 30;
 const MIN = 60_000;
 
 function Chart({ hr, highlight }: { hr: SleepHr; highlight?: { start: number; end: number }[] }) {
+  useLanguage();
   const { c } = useTheme();
   const tz = useOptionalShellCalendar()?.timeZone;
   const [x, setX] = useState<number | null>(null);
@@ -55,7 +58,7 @@ function Chart({ hr, highlight }: { hr: SleepHr; highlight?: { start: number; en
   const avg = night.length ? Math.round(night.reduce((a, b) => a + b, 0) / night.length) : null;
   // The night's lowest minute, marked as a point with a pill: the number people look for on this chart.
   const low = points.reduce<{ t: number; v: number } | null>((m, p) => (p.t >= bed && p.t < wake && p.v !== null && (!m || p.v < m.v) ? { t: p.t, v: p.v } : m), null);
-  const summary = `Heart rate during sleep from ${clock(bed, tz)} to ${clock(wake, tz)}: low ${Math.min(...night)}, average ${avg}, high ${Math.max(...night)} beats per minute.`;
+  const summary = tr("ui.charts.SleepHrChart.heartRateDuringSleepFromToLow", { v0: clock(bed, tz), v1: clock(wake, tz), v2: Math.min(...night), v3: avg, v4: Math.max(...night) });
 
   return (
     <ChartFigure summary={summary} height={HEIGHT}>
@@ -98,7 +101,7 @@ function Chart({ hr, highlight }: { hr: SleepHr; highlight?: { start: number; en
             {[bed, wake].map((t) => (
               <ChartLabel key={t} x={tx(t)} y={xTickY(y1)} color={c["foreground-secondary"]}>{clock(t, tz)}</ChartLabel>
             ))}
-            {low && <Pill x={tx(low.t)} y={y(low.v) + 14} anchor="middle" text={`Low ${low.v}`} />}
+            {low && <Pill x={tx(low.t)} y={y(low.v) + 14} anchor="middle" text={tr("ui.charts.SleepHrChart.low", { v0: low.v })} />}
             <ScrubLayer width={width} height={height} onScrub={setX} />
             <ScrubTick index={ai} />
             {a && a.v !== null && (
@@ -115,9 +118,10 @@ function Chart({ hr, highlight }: { hr: SleepHr; highlight?: { start: number; en
 
 /** Heart rate across the main sleep with its bed and wake markers; the chosen stage lit (spec §7.5, §11 R9). */
 export function SleepHrChart({ data, highlight }: SleepHrChartProps) {
+  useLanguage();
   const empty = (
     <View className="items-center">
-      <EmptyState body="No heart-rate data for this night." />
+      <EmptyState body={tr("ui.charts.SleepHrChart.noHeartRateDataForThisNight")} />
     </View>
   );
   return (
@@ -137,6 +141,7 @@ export function SleepHrChart({ data, highlight }: SleepHrChartProps) {
 }
 
 export function SleepHrChartSkeleton() {
+  useLanguage();
   return <Skeleton className="h-[180px] rounded-lg bg-skeleton" />;
 }
 SleepHrChart.Skeleton = SleepHrChartSkeleton;

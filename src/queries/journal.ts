@@ -1,3 +1,5 @@
+import { tr } from "@/i18n";
+import { behaviorLabel } from "@/lib/behaviors";
 // Journal `/journal`, Behaviour insights `/journal/insights` and More › Behaviours, ported from Pulse's
 // src/server/queries/journal.ts, with the tag-table helpers of src/server/journalTags.ts. Every Postgres read is a
 // Store read; the VM shapes are the web's (types.ts).
@@ -100,7 +102,7 @@ const GROUP: Record<string, JournalTag["group"]> = {
 /** Every tag, hidden ones included, in check-in order (position inside a group, then insertion order). */
 async function tagsOf(ctx: QueryCtx): Promise<JournalTag[]> {
   const rows = await tagRows(ctx.store);
-  return rows.map((r) => ({ tag: r.tag, label: r.label, isDefault: r.isDefault, hidden: r.hidden, group: GROUP[r.tag] ?? "custom" }));
+  return rows.map((r) => ({ tag: r.tag, label: behaviorLabel(r.tag, r.label), sourceLabel: r.label, isDefault: r.isDefault, hidden: r.hidden, group: GROUP[r.tag] ?? "custom" }));
 }
 
 /** More › Behaviours: every tag, hidden ones included, with how many days answered it. */
@@ -153,9 +155,9 @@ export async function getJournal(day: string, ctx: QueryCtx): Promise<JournalVM>
   const teaser = strongest
     ? {
         ready: true,
-        text: `Your strongest effect so far: ${(label.get(strongest.tag) ?? strongest.tag).toLowerCase()} ${strongest.effects.recovery.delta! < 0 ? "lowers" : "raises"} next-day Recovery by ${Math.abs(Math.round(strongest.effects.recovery.delta!))}%.`,
+        text: tr("queries.journal.yourStrongestEffectSoFarNextDay", { v0: (label.get(strongest.tag) ?? strongest.tag).toLowerCase(), v1: strongest.effects.recovery.delta! < 0 ? tr("journal.lowers") : tr("journal.raises"), v2: Math.abs(Math.round(strongest.effects.recovery.delta!)) }),
       }
-    : { ready: false, text: "Insights appear after 5 days with and 5 without a behaviour." };
+    : { ready: false, text: tr("queries.journal.insightsAppearAfter5DaysWithAnd") };
 
   const history: JournalVM["history"] = [];
   for (let d = today; d >= addDays(today, -29); d = addDays(d, -1)) {

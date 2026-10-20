@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Shared by the screen queries: the batched day loader over the Store and the Metric builders.
 // Ported from Pulse's src/server/queries/common.ts; every Postgres read is a Store read.
 import type { DetectedActivity } from "@/core/algorithms/autoWorkout";
@@ -245,11 +246,11 @@ export function activityKind(type: string): ActivityKind {
 }
 
 export const ACTIVITY_NAME: Record<ActivityKind, string> = {
-  run: "Running",
-  ride: "Cycling",
-  walk: "Walking",
-  strength: "Strength training",
-  workout: "Workout",
+  get run() { return tr("queries.activityCost.running"); },
+  get ride() { return tr("queries.common.cycling"); },
+  get walk() { return tr("queries.activityCost.walking"); },
+  get strength() { return tr("queries.common.strengthTraining"); },
+  get workout() { return tr("workout.LiveWorkoutScreen.workout"); },
 };
 
 export type ExerciseRow = Exercise;
@@ -291,7 +292,7 @@ export function timelineOf(row: DayRow | undefined, day: string, exs: ExerciseRo
   return items.sort((a, b) => b.start - a.start); // newest first, like the Activities page
 }
 
-const SPAN_LABEL: Record<ActivityKind, string> = { run: "Run", ride: "Ride", walk: "Walk", strength: "Strength", workout: "Workout" };
+const SPAN_LABEL: Record<ActivityKind, string> = { get run() { return tr("queries.common.run"); }, get ride() { return tr("queries.common.ride"); }, get walk() { return tr("queries.common.walk"); }, get strength() { return tr("activity.ActivitiesScreen.strength"); }, get workout() { return tr("workout.LiveWorkoutScreen.workout"); } };
 
 /** Chart spans for the day: main sleep (clipped to `dayStart`), naps and workouts. */
 export async function daySpans(ctx: QueryCtx, row: DayRow | undefined, day: string, dayStart: number): Promise<Span[]> {
@@ -302,16 +303,16 @@ export async function daySpans(ctx: QueryCtx, row: DayRow | undefined, day: stri
 export function daySpansOf(row: DayRow | undefined, dayStart: number, exs: ExerciseRow[]): Span[] {
   const spans: Span[] = [];
   const s = row?.sleep;
-  if (s?.main) spans.push({ kind: "sleep", label: "Sleep", start: ms(Math.max(s.main.start, dayStart)), end: ms(s.main.end) });
-  for (const n of s?.naps ?? []) spans.push({ kind: "nap", label: "Nap", start: ms(n.start), end: ms(n.end) });
+  if (s?.main) spans.push({ kind: "sleep", label: tr("ui.shells.HomeHeader.sleep"), start: ms(Math.max(s.main.start, dayStart)), end: ms(s.main.end) });
+  for (const n of s?.naps ?? []) spans.push({ kind: "nap", label: tr("lib.behaviors.nap"), start: ms(n.start), end: ms(n.end) });
   for (const e of exs) spans.push({ kind: "workout", label: SPAN_LABEL[activityKind(e.type)], start: ms(e.startTs), end: ms(e.endTs) });
   return spans;
 }
 
-const PLAN_LABELS = [
-  ["peak", "Peak"],
-  ["perform", "Perform"],
-  ["get_by", "Get by"],
+const planLabels = () => [
+  ["peak", tr("more.howItWorksContent.peak")],
+  ["perform", tr("queries.common.perform")],
+  ["get_by", tr("queries.common.getBy")],
 ] as const;
 
 export function planVM(ctx: QueryCtx, row: DayRow | undefined, isToday: boolean): Metric<SleepPlanVM> {
@@ -327,8 +328,8 @@ export function planVM(ctx: QueryCtx, row: DayRow | undefined, isToday: boolean)
     weekend: p.weekend,
     latencyMin: p.latencyMin ?? 0,
     plans: p.plans.map((x, i) => ({
-      key: PLAN_LABELS[i][0],
-      label: PLAN_LABELS[i][1],
+      key: planLabels()[i][0],
+      label: planLabels()[i][1],
       share: x.share,
       sleepMin: x.sleepMin,
       bedtimeAt: ms(wakeMidnight + Math.round(x.bedtimeMin * 60)),

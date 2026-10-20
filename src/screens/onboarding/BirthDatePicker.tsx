@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // A birth date picker (U19). Ported from pulse src/components/profile/BirthDatePicker.tsx: the field opens three wheels
 // (month, day, year) inline under it, so nothing floats over the form and it works the same inside a sheet. Each wheel is
 // a snapping scroll view whose centred row is the value; scrolling or tapping a row picks. A plain ScrollView, not a
@@ -28,6 +30,7 @@ const daysIn = (year: number, month: number) => new Date(year, month + 1, 0).get
 
 /** One wheel column: the row at `index` sits in the middle; a scroll that comes to rest on another row, or a tap on one, picks it. */
 function Wheel({ label, items, index, onIndex }: { label: string; items: string[]; index: number; onIndex: (i: number) => void }) {
+  useLanguage();
   const ref = useRef<ScrollView>(null);
   const offset = useRef(index * ROW);
   // Follow outside changes (open, a shorter month) without fighting the user's own scroll: only when the wheel is not already there.
@@ -91,6 +94,7 @@ function Wheel({ label, items, index, onIndex }: { label: string; items: string[
 
 /** `value` is yyyy-MM-dd, or "" before one is chosen. */
 export function BirthDatePicker({ value, onChange, invalid, compact }: { value: string; onChange: (value: string) => void; invalid?: boolean; /** The Edit profile sheet's smaller field. */ compact?: boolean }) {
+  useLanguage();
   const { c } = useTheme();
   const youngest = useMemo(() => new Date().getFullYear() - 13, []);
   const years = useMemo(() => Array.from({ length: youngest - OLDEST + 1 }, (_, i) => String(OLDEST + i)), [youngest]);
@@ -105,8 +109,8 @@ export function BirthDatePicker({ value, onChange, invalid, compact }: { value: 
     <View className="gap-2">
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Birth date"
-        accessibilityValue={{ text: value ? formatDay(value, { ...DAY.full, month: "long" }) : "Not chosen" }}
+        accessibilityLabel={tr("onboarding.BirthDatePicker.birthDate")}
+        accessibilityValue={{ text: value ? formatDay(value, { ...DAY.full, month: "long" }) : tr("onboarding.BirthDatePicker.notChosen") }}
         accessibilityState={{ expanded: open }}
         onPress={() => {
           haptic.tap();
@@ -115,22 +119,22 @@ export function BirthDatePicker({ value, onChange, invalid, compact }: { value: 
         className={cn(compact ? FIELD_BOX_COMPACT : FIELD_BOX, "w-full min-w-0 flex-row items-center justify-between gap-3", compact ? "px-3.5" : "px-4")}
         style={ringStyle(invalid ? c["recovery-red-text"] : open ? c["focus-ring"] : null)}
       >
-        <Text className={cn(compact ? "text-[15px] leading-5" : "text-[17px] leading-6", "tabular-nums", !value && "text-muted-foreground")}>{value ? formatDay(value, { ...DAY.full, month: "long" }) : "Choose your birth date"}</Text>
+        <Text className={cn(compact ? "text-[15px] leading-5" : "text-[17px] leading-6", "tabular-nums", !value && "text-muted-foreground")}>{value ? formatDay(value, { ...DAY.full, month: "long" }) : tr("onboarding.BirthDatePicker.chooseYourBirthDate")}</Text>
         <Icon icon={CalendarDays} size={20} tone="foreground-secondary" strokeWidth={1.75} />
       </Pressable>
       {open && (
-        <View accessibilityLabel="Birth date" className="overflow-hidden rounded-xl bg-field">
+        <View accessibilityLabel={tr("onboarding.BirthDatePicker.birthDate")} className="overflow-hidden rounded-xl bg-field">
           <View className="flex-row gap-1 px-2 pt-1">
             {/* The selection band behind the centre row. */}
             <View accessibilityElementsHidden pointerEvents="none" className="absolute inset-x-2 h-10 rounded-lg bg-fill-hover" style={{ top: 4 + ROW }} />
             <View style={{ flex: 1.6 }}>
-              <Wheel label="Month" items={MONTHS} index={m - 1} onIndex={(i) => set(y, i + 1, d)} />
+              <Wheel label={tr("onboarding.BirthDatePicker.month")} items={MONTHS} index={m - 1} onIndex={(i) => set(y, i + 1, d)} />
             </View>
             <View style={{ flex: 1 }}>
-              <Wheel label="Day" items={days} index={Math.min(d, days.length) - 1} onIndex={(i) => set(y, m, i + 1)} />
+              <Wheel label={tr("onboarding.BirthDatePicker.day")} items={days} index={Math.min(d, days.length) - 1} onIndex={(i) => set(y, m, i + 1)} />
             </View>
             <View style={{ flex: 1.2 }}>
-              <Wheel label="Year" items={years} index={Math.max(0, years.indexOf(String(y)))} onIndex={(i) => set(OLDEST + i, m, d)} />
+              <Wheel label={tr("onboarding.BirthDatePicker.year")} items={years} index={Math.max(0, years.indexOf(String(y)))} onIndex={(i) => set(OLDEST + i, m, d)} />
             </View>
             {/* The web fades the wheels' top and bottom with a mask; the same two edges here, as gradients over the rows. */}
             <LinearGradient pointerEvents="none" colors={[solid, clear]} style={{ position: "absolute", top: 4, left: 0, right: 0, height: 50 }} />
@@ -138,12 +142,11 @@ export function BirthDatePicker({ value, onChange, invalid, compact }: { value: 
           </View>
           <View className="flex-row items-center justify-between gap-3 border-t border-foreground/[0.06] py-1.5 pl-4 pr-1.5">
             <Text numberOfLines={1} className="shrink text-[13px] leading-[18px] text-muted-foreground">
-              Scroll or tap to pick
-            </Text>
+              {tr("onboarding.BirthDatePicker.scrollOrTapToPick")}</Text>
             {/* Done keeps what the wheels show, even if they were never moved. */}
             <SmallButton
               solid
-              label="Done"
+              label={tr("common.done")}
               onPress={() => {
                 set(y, m, d);
                 setOpen(false);

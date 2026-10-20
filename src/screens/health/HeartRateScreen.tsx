@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Heart rate `/health/heart-rate?d=`: the day's minutes (today up to now), resting heart rate and time in zones. Ported
 // from pulse src/app/(app)/health/heart-rate/page.tsx, LiveHeartRate.tsx and loading.tsx. The web's poll of
 // `/heart-rate` is the app's live ticker (src/state/liveHr.tsx, halo's): it reads Health Connect every minute, and when
@@ -49,13 +51,14 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
 /** The latest reading (today) or the day's average (a past day), over the day's range, average and resting HR. */
 function HeartRateHero({ v, now }: { v: HeartRateVM; now: number }) {
+  useLanguage();
   const bpms = v.points.flatMap((p) => (p.v === null ? [] : [p.v]));
   const avg = bpms.length ? Math.round(mean(bpms)) : null;
   const big = v.isToday ? (v.latest?.bpm ?? null) : avg;
   const stats = [
-    { label: "Range", value: bpms.length ? `${Math.min(...bpms)}–${Math.max(...bpms)}` : MISSING, spoken: bpms.length ? `${Math.min(...bpms)} to ${Math.max(...bpms)}` : "no readings" },
-    ...(v.isToday ? [{ label: "Average", value: avg === null ? MISSING : String(avg), spoken: avg === null ? "no readings" : String(avg) }] : []),
-    { label: "Resting", value: v.restingHr === null ? MISSING : String(v.restingHr), spoken: v.restingHr === null ? "not yet" : String(v.restingHr) },
+    { label: tr("health.HeartRateScreen.range"), value: bpms.length ? `${Math.min(...bpms)}–${Math.max(...bpms)}` : MISSING, spoken: bpms.length ? tr("health.HeartRateScreen.to", { v0: Math.min(...bpms), v1: Math.max(...bpms) }) : tr("health.HeartRateScreen.noReadings") },
+    ...(v.isToday ? [{ label: tr("health.HeartRateScreen.average"), value: avg === null ? MISSING : String(avg), spoken: avg === null ? tr("health.HeartRateScreen.noReadings") : String(avg) }] : []),
+    { label: tr("health.HeartRateScreen.resting"), value: v.restingHr === null ? MISSING : String(v.restingHr), spoken: v.restingHr === null ? tr("health.HeartRateScreen.notYet") : String(v.restingHr) },
   ];
   return (
     <View className="w-full max-w-[360px] items-center gap-2 py-4">
@@ -64,14 +67,14 @@ function HeartRateHero({ v, now }: { v: HeartRateVM; now: number }) {
         v.latest ? (
           <LastReading t={v.latest.t} now={now} />
         ) : (
-          <Text className={CAPTION}>No readings yet today</Text>
+          <Text className={CAPTION}>{tr("health.HeartRateScreen.noReadingsYetToday")}</Text>
         )
       ) : (
-        <Text className={CAPTION}>{avg === null ? "No readings on this day" : "Day average"}</Text>
+        <Text className={CAPTION}>{avg === null ? tr("health.HeartRateScreen.noReadingsOnThisDay") : tr("chart.model.dayAverage")}</Text>
       )}
       <View className="mt-4 w-full flex-row gap-3">
         {stats.map((s) => (
-          <View key={s.label} accessible accessibilityLabel={`${s.label}: ${s.spoken}${/\d/.test(s.spoken) ? " beats per minute" : ""}`} className="flex-1 items-center">
+          <View key={s.label} accessible accessibilityLabel={`${s.label}: ${s.spoken}${/\d/.test(s.spoken) ? tr("health.HeartRateScreen.beatsPerMinute") : ""}`} className="flex-1 items-center">
             <Text accessibilityElementsHidden className="font-numeric text-xl font-bold leading-6 tabular-nums">
               {s.value}
             </Text>
@@ -86,6 +89,7 @@ function HeartRateHero({ v, now }: { v: HeartRateVM; now: number }) {
 }
 
 export function HeartRateScreen() {
+  useLanguage();
   const { data, error, reload } = useDayScreen("heartRate", getHeartRate);
   const now = useLiveDay(data?.vm.isToday ?? false, reload);
   const vm = data?.vm;
@@ -107,8 +111,8 @@ export function HeartRateScreen() {
   const { d, today } = data;
   return (
     <DetailShell
-      title="Heart rate"
-      bodySkeleton={BODY_SKELETON}
+      title={tr("queries.chart.heartRate")}
+      bodySkeleton={renderBodySkeleton()}
       dateSwitcher={{ mode: "day" }}
       info={HEART_RATE_INFO}
       hero={
@@ -117,52 +121,53 @@ export function HeartRateScreen() {
         </LiveHeartRateHero>
       }
       primary={
-        <SectionShell variant="card" title={vm.isToday ? "Today" : dayLabel(d, today)} info={{ title: "Daily heart rate", body: "Heartbeats per minute across the selected day. Gaps mean no heart rate reading was available." }}>
+        <SectionShell variant="card" title={vm.isToday ? tr("common.today") : dayLabel(d, today)} info={{ title: tr("health.HeartRateScreen.dailyHeartRate"), body: tr("health.HeartRateScreen.heartbeatsPerMinuteAcrossTheSelectedDay") }}>
           <IntradayHrChart data={series} />
         </SectionShell>
       }
       secondary={[
-        <SectionShell key="zones" variant="card" title="Time in zones">
-          <ZoneBars variant="rows" data={zoneBars(vm.zones)} note={vm.zoneNote} emptyCopy={vm.isToday ? "No heart-rate zones yet today." : "No heart-rate zones on this day."} />
+        <SectionShell key="zones" variant="card" title={tr("activity.ActivityScreen.timeInZones")}>
+          <ZoneBars variant="rows" data={zoneBars(vm.zones)} note={vm.zoneNote} emptyCopy={vm.isToday ? tr("health.HeartRateScreen.noHeartRateZonesYetToday") : tr("health.HeartRateScreen.noHeartRateZonesOnThisDay")} />
         </SectionShell>,
       ]}
     />
   );
 }
 
-const LOADING_PRIMARY = (
-  <SectionShell variant="card" title="Today">
+const renderLoadingPrimary = () => (
+  <SectionShell variant="card" title={tr("common.today")}>
     <IntradayHrChartSkeleton />
   </SectionShell>
 );
 
-const LOADING_SECONDARY = [
-  <SectionShell key="zones" variant="card" title="Time in zones">
+const renderLoadingSecondary = () => [
+  <SectionShell key="zones" variant="card" title={tr("activity.ActivityScreen.timeInZones")}>
     <ZoneBarsSkeleton variant="rows" />
   </SectionShell>,
 ];
 
 /** Below the fold while a cold push slides in: the loading state's first sections. */
-const BODY_SKELETON = (
+const renderBodySkeleton = () => (
   <>
-    {LOADING_PRIMARY}
-    <View className="gap-3">{LOADING_SECONDARY.slice(0, 2)}</View>
+    {renderLoadingPrimary()}
+    <View className="gap-3">{renderLoadingSecondary().slice(0, 2)}</View>
   </>
 );
 
 /** Heart rate loading: the date row, the reading with its three stats, the day's chart, then time in zones. */
 function HeartRateLoading() {
+  useLanguage();
   return (
     <DetailShell
       loading
-      title="Heart rate"
+      title={tr("queries.chart.heartRate")}
       dateSwitcher={{ mode: "day" }}
       hero={
         <View accessibilityElementsHidden className="w-full max-w-[360px] items-center gap-2 py-4">
           <SkeletonText lh={64} fs={64} className="w-[100px]" />
           <SkeletonText className="w-28" />
           <View className="mt-4 w-full flex-row gap-3">
-            {["Range", "Average", "Resting"].map((w) => (
+            {[tr("health.HeartRateScreen.range"), tr("health.HeartRateScreen.average"), tr("health.HeartRateScreen.resting")].map((w) => (
               <View key={w} className="flex-1 items-center">
                 <SkeletonText lh={24} fs={20} className="w-[42px]" />
                 <Text className={cn(LABEL, "mt-1 text-muted-foreground")}>{w}</Text>
@@ -171,9 +176,9 @@ function HeartRateLoading() {
           </View>
         </View>
       }
-      primary={LOADING_PRIMARY}
-      bodySkeleton={BODY_SKELETON}
-      secondary={LOADING_SECONDARY}
+      primary={renderLoadingPrimary()}
+      bodySkeleton={renderBodySkeleton()}
+      secondary={renderLoadingSecondary()}
     />
   );
 }

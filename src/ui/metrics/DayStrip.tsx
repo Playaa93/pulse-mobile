@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { haptic } from "../haptics";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, View, type LayoutRectangle } from "react-native";
@@ -34,6 +36,7 @@ export type DayStripProps = {
 };
 
 function Strip({ indicator, days, variant = "tile", value: controlled, onSelect }: DayStripProps) {
+  useLanguage();
   const { c } = useTheme();
   const [urlDay, setUrlDay] = useSelectedDay();
   const selected = controlled ?? urlDay;
@@ -51,13 +54,13 @@ function Strip({ indicator, days, variant = "tile", value: controlled, onSelect 
   }, [selected, viewport, days.length]);
 
   return (
-    <ScrollView ref={scroller} horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setViewport(e.nativeEvent.layout.width)} accessibilityLabel="Choose a day" contentContainerClassName={cn("px-4 py-1", variant === "pill" ? "gap-2" : "gap-1")} className="-my-1">
+    <ScrollView ref={scroller} horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setViewport(e.nativeEvent.layout.width)} accessibilityLabel={tr("log.DateTimeField.chooseADay")} contentContainerClassName={cn("px-4 py-1", variant === "pill" ? "gap-2" : "gap-1")} className="-my-1">
       {days.map((day) => {
         const r = day.recovery ?? null;
         const label =
           indicator === "recovery"
-            ? `${formatDay(day.date, DAY.long)}, ${r === null ? "no Recovery" : `Recovery ${Math.round(r)} percent, ${BAND_WORD[recoveryBand(r)].toLowerCase()}`}`
-            : `${formatDay(day.date, DAY.long)}, ${day.done ? "checked in" : "not checked in"}`;
+            ? `${formatDay(day.date, DAY.long)}, ${r === null ? tr("ui.metrics.DayStrip.noRecovery") : tr("ui.metrics.DayStrip.recoveryPercent", { v0: Math.round(r), v1: BAND_WORD[recoveryBand(r)].toLowerCase() })}`
+            : `${formatDay(day.date, DAY.long)}, ${day.done ? tr("home.HomeScreen.checkedIn") : tr("ui.metrics.DayStrip.notCheckedIn")}`;
         const on = day.date === selected;
         const pill = variant === "pill";
         return (
@@ -104,10 +107,12 @@ function Strip({ indicator, days, variant = "tile", value: controlled, onSelect 
 
 /** Scrub the last 30 days (spec §5.11). Changes the route's `d` (or calls `onSelect`). */
 export function DayStrip(props: DayStripProps) {
+  useLanguage();
   return <Strip {...props} />;
 }
 
 export function DayStripSkeleton({ indicator = "recovery" }: { indicator?: DayStripProps["indicator"] }) {
+  useLanguage();
   return (
     // The strip's 30 tiles, clipped like the real one, so wide columns fill too.
     <View accessibilityElementsHidden className="flex-row gap-1 overflow-hidden px-4">

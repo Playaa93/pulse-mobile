@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // A Healthspan group (Sleep, Strain, Fitness): one row per factor that opens in place (health-03), showing how the
 // factor stands ("Outperforming"), the target for your age, the evidence and VIEW TREND. `?contributor=` opens a row on
 // arrival. Ported from pulse src/app/(app)/health/healthspan/ContributorCard.tsx (Radix Accordion, type "multiple").
@@ -6,7 +8,7 @@ import { View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, withTiming } from "react-native-reanimated";
 import { ChevronDown, CircleGauge, Dumbbell, Footprints, Heart, Moon, Timer } from "lucide-react-native";
-import { formatValue, isSymbolUnit, NBSP, type FormatKey } from "@/lib/format";
+import { displayUnit, formatValue, isSymbolUnit, NBSP, type FormatKey } from "@/lib/format";
 import type { HealthspanContributor } from "@/queries/types";
 import { cn } from "@/ui/cn";
 import { haptic } from "@/ui/haptics";
@@ -58,9 +60,10 @@ const SHOW: Record<string, { format: FormatKey; unit?: string; scale?: number }>
   leanMass: { format: "decimal1", unit: "kg" },
 };
 
-const withUnit = (text: string, unit?: string) => (unit ? `${text}${isSymbolUnit(unit) ? "" : NBSP}${unit}` : text);
+const withUnit = (text: string, unit?: string) => (unit ? `${text}${isSymbolUnit(unit) ? "" : NBSP}${displayUnit(unit)}` : text);
 
 function Chevron({ open }: { open: boolean }) {
+  useLanguage();
   const reduced = useReducedMotion();
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: reduced ? (open ? "180deg" : "0deg") : withTiming(open ? "180deg" : "0deg", { duration: DURATION.base }) }] }), [open, reduced]);
   return (
@@ -71,6 +74,7 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export function ContributorCard({ title, items }: { title: string; items: HealthspanContributor[] }) {
+  useLanguage();
   const { contributor } = useLocalSearchParams<{ contributor?: string }>();
   const [open, setOpen] = useState<string[]>(contributor ? [contributor] : []);
   const toggle = (key: string) => {
@@ -81,7 +85,7 @@ export function ContributorCard({ title, items }: { title: string; items: Health
     <SectionShell
       variant="card"
       title={title}
-      info={{ title: `${title} and Pulse Age`, body: "Each factor's bar marks your average over the 28 days up to the latest Sunday, from poor to good for your age. The years beside it are what that factor adds to or takes off Pulse Age." }}
+      info={{ title: tr("health.ContributorCard.andPulseAge", { v0: title }), body: tr("health.ContributorCard.eachFactorSBarMarksYourAverage") }}
       fill
     >
       <View>
@@ -117,11 +121,11 @@ export function ContributorCard({ title, items }: { title: string; items: Health
                       <Text className="text-[15px] leading-[22px] text-foreground-secondary">{factorCopy(c.label, c.years).body}</Text>
                     </View>
                   )}
-                  <Text className="text-[15px] leading-[22px] text-foreground-secondary">Target for your age: {show(c.target)}</Text>
+                  <Text className="text-[15px] leading-[22px] text-foreground-secondary">{tr("health.ContributorCard.targetForYourAge")}{show(c.target)}</Text>
                   {c.caption && c.metric.value !== null && <Text className={CAPTION}>{c.caption}</Text>}
                   <Text className="text-[15px] leading-[22px]">{c.explanation}</Text>
-                  <Text className={CAPTION}>Source: {c.source}.</Text>
-                  {HS_TREND[c.key] && <TextLink href={trendHref(HS_TREND[c.key])}>View trend</TextLink>}
+                  <Text className={CAPTION}>{tr("health.ContributorCard.source")}{c.source}.</Text>
+                  {HS_TREND[c.key] && <TextLink href={trendHref(HS_TREND[c.key])}>{tr("health.ContributorCard.viewTrend")}</TextLink>}
                 </Animated.View>
               )}
             </Animated.View>

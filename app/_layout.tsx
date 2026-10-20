@@ -1,6 +1,11 @@
+import { applyBedtime } from "@/background/alerts";
+import { applyCheckIn } from "@/background/startup";
+import { readSettings } from "@/background/settings";
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import "../global.css";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -20,7 +25,7 @@ import { Figtree_700Bold } from "@expo-google-fonts/figtree/700Bold";
 import { useNotificationDeepLinks, useTabLinks } from "@/background/links";
 import { Opening } from "@/screens/Opening";
 import { ShellData } from "@/screens/ShellData";
-import { boot, useApp } from "@/state/app";
+import { boot, useApp, appState, deviceTimeZone } from "@/state/app";
 import { AppProviders } from "@/ui/providers";
 import { useTheme } from "@/ui/theme";
 
@@ -37,6 +42,8 @@ SplashScreen.setOptions({ duration: 0, fade: false });
 export const unstable_settings = { anchor: "(tabs)" };
 
 export default function RootLayout() {
+  const locale = useLanguage();
+  const reminderLanguage = useRef<string | null>(null);
   // Fonts: Figtree for text, Barlow for numerals, as the web (pulse src/app/layout.tsx). Each weight is its own file
   // and its own family name; src/ui/Text.tsx picks the name from the web's font classes.
   const [fonts, fontError] = useFonts({ Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold, Barlow_500Medium, Barlow_600SemiBold, Barlow_700Bold });
@@ -45,6 +52,17 @@ export default function RootLayout() {
   useEffect(() => void boot((theme) => colorScheme.set(theme as "light" | "dark" | "system")), []);
   const status = useApp((s) => s.status);
   const opened = useApp((s) => s.store !== null);
+  useEffect(() => {
+    if (!opened || reminderLanguage.current === locale) return;
+    const changedWhileOpen = reminderLanguage.current !== null;
+    reminderLanguage.current = locale;
+    const { store, profile } = appState();
+    // Replace the same scheduled identifiers; changing language never sends a new alert.
+    void Promise.all([
+      ...(changedWhileOpen ? [readSettings().then(applyCheckIn)] : []),
+      applyBedtime(store, profile?.timeZone ?? deviceTimeZone()),
+    ]).catch(() => {});
+  }, [locale, opened]);
   // Onboarded: a profile, a source and a first completed run (pulse's (app) layout sends anyone else to onboarding).
   const onboarded = useApp((s) => s.onboarded);
   const bootError = useApp((s) => (s.store ? null : s.error));
@@ -56,7 +74,7 @@ export default function RootLayout() {
     <>
       {bootError && !opened ? (
         <View className="flex-1 items-center justify-center bg-background p-6">
-          <Text className="text-destructive">Couldn’t open the database: {bootError}</Text>
+          <Text className="text-destructive">{tr("app.couldnTOpenTheDatabase")}{bootError}</Text>
         </View>
       ) : (
         ready && (
@@ -75,6 +93,7 @@ export default function RootLayout() {
 }
 
 function Screens({ onboarded }: { onboarded: boolean }) {
+  useLanguage();
   const { c, scheme } = useTheme();
   // A tapped notification opens its screen once the navigator exists, a cold start included (src/background/links.ts).
   useNotificationDeepLinks();

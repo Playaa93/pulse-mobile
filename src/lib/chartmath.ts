@@ -1,3 +1,6 @@
+import { language } from "@/i18n";
+import { formatDay } from "./format";
+
 // Pure chart maths shared by the GPU (Skia) charts and the chart explorer: hit-testing a finger against the plot,
 // viewport zoom and pan, nice and aligned axes, range windows, window statistics and the axis tick levels. Every
 // function that runs inside a gesture or a derived value is a worklet (the "worklet" directive is a plain string
@@ -236,13 +239,13 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const weekdayOf = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay();
 
 /** "Sep 28". */
-export const monthDayText = (day: string) => `${MONTHS[Number(day.slice(5, 7)) - 1]} ${Number(day.slice(8, 10))}`;
+export const monthDayText = (day: string) => language() === "fr" ? formatDay(day, { day: "numeric", month: "short" }) : `${MONTHS[Number(day.slice(5, 7)) - 1]} ${Number(day.slice(8, 10))}`;
 
 /** "Mon, Sep 28". */
-export const shortDayText = (day: string) => `${WEEKDAYS[weekdayOf(day)]}, ${monthDayText(day)}`;
+export const shortDayText = (day: string) => language() === "fr" ? formatDay(day, { weekday: "short", day: "numeric", month: "short" }) : `${WEEKDAYS[weekdayOf(day)]}, ${monthDayText(day)}`;
 
 /** "Sep 28, 2026". */
-export const fullDayText = (day: string) => `${monthDayText(day)}, ${day.slice(0, 4)}`;
+export const fullDayText = (day: string) => language() === "fr" ? formatDay(day, { day: "numeric", month: "short", year: "numeric" }) : `${monthDayText(day)}, ${day.slice(0, 4)}`;
 
 /** "06:05" for minutes from local midnight (wrapping past either midnight). */
 export function minuteText(m: number): string {
@@ -268,14 +271,16 @@ export function dayTickLevels(days: readonly string[]): TickLevel[] {
   const monthly: Tick[] = [];
   const quarterly: Tick[] = [];
   const yearly: Tick[] = [];
+  const months = language() === "fr" ? MONTHS.map((_, i) => formatDay(`2026-${String(i + 1).padStart(2, "0")}-01`, { month: "short" })) : MONTHS;
+  const weekdays = language() === "fr" ? WEEKDAYS.map((_, i) => formatDay(`2026-01-${String(4 + i).padStart(2, "0")}`, { weekday: "short" })) : WEEKDAYS;
   days.forEach((d, i) => {
     const dom = Number(d.slice(8, 10));
     const month = Number(d.slice(5, 7));
     const wd = weekdayOf(d);
-    daily.push({ x: i, text: `${WEEKDAYS[wd]} ${dom}` });
+    daily.push({ x: i, text: `${weekdays[wd]} ${dom}` });
     if (wd === 1) weekly.push({ x: i, text: monthDayText(d) });
     if (dom === 1) {
-      const text = month === 1 ? d.slice(0, 4) : MONTHS[month - 1];
+      const text = month === 1 ? d.slice(0, 4) : months[month - 1];
       monthly.push({ x: i, text });
       if ((month - 1) % 3 === 0) quarterly.push({ x: i, text });
       if (month === 1) yearly.push({ x: i, text });

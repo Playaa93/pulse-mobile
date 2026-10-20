@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Weekly plan (halo src/screens/home/WeeklyPlanCard.tsx, after WHOOP's Weekly Plan), in the look of Strain's key stat
 // rows. The card (on Strain, under the goals): how many of the week's targets are on track beside the title, the plan's
 // streak, and a row per target with a ZoneBars-style bar (a tick where an even pace would be), the status word and a
@@ -30,8 +32,8 @@ import { PLAN_STATUS, planCaption, planTargetText, planValueText } from "./weekl
 
 export const PLAN_ICON: Record<PlanKey, LucideIcon> = { zone13: HeartPulse, zone45: Flame, strength: Dumbbell, steps: Footprints, consistency: CalendarCheck, sleepNeed: Moon };
 
-const titleOf = (vm: { isCurrentWeek: boolean; monday: string }) => (vm.isCurrentWeek ? "This week" : `Week of ${formatDay(vm.monday, DAY.monthDay)}`);
-const streakText = (weeks: number) => (weeks === 1 ? "Every target met last week" : `Every target met ${weeks} weeks running`);
+const titleOf = (vm: { isCurrentWeek: boolean; monday: string }) => (vm.isCurrentWeek ? tr("cardInfo.title.this.week") : tr("goals.WeeklyPlan.weekOf", { v0: formatDay(vm.monday, DAY.monthDay) }));
+const streakText = (weeks: number) => (weeks === 1 ? tr("goals.WeeklyPlan.everyTargetMetLastWeek") : tr("goals.WeeklyPlan.everyTargetMetWeeksRunning", { v0: weeks }));
 /** Where an even pace would be by now, on [0, 1]; null once done or missed. */
 const paceOf = (it: PlanRow) => (it.expected !== null && it.status !== "done" && it.status !== "missed" && it.target > 0 ? Math.min(1, it.expected / it.target) : null);
 
@@ -44,20 +46,21 @@ function usePlanWeek(day: string) {
 
 /** Strain's Weekly plan card. */
 export function WeeklyPlanCard({ day }: { day: string }) {
+  useLanguage();
   const { keys, ready, data } = usePlanWeek(day);
   if (ready && keys.length === 0)
     return (
-      <SectionShell variant="card" title="Weekly plan">
-        <EmptyState body="No weekly targets switched on." action={{ label: "Set weekly targets", href: GOALS_SETTINGS }} />
+      <SectionShell variant="card" title={tr("goals.GoalsSettings.weeklyPlan")}>
+        <EmptyState body={tr("goals.WeeklyPlan.noWeeklyTargetsSwitchedOn")} action={{ label: tr("goals.WeeklyPlan.setWeeklyTargets"), href: GOALS_SETTINGS }} />
       </SectionShell>
     );
   const streak = data?.planStreak.current ?? 0;
   return (
     <SectionShell
       variant="card"
-      title={data ? `Weekly plan · ${titleOf(data).toLowerCase()}` : "Weekly plan"}
+      title={data ? tr("goals.WeeklyPlan.weeklyPlan", { v0: titleOf(data).toLowerCase() }) : tr("goals.GoalsSettings.weeklyPlan")}
       href={`/weekly-plan?d=${day}`}
-      aside={data && <Text className={ASIDE}>{`${data.onTrack} of ${data.items.length} on track`}</Text>}
+      aside={data && <Text className={ASIDE}>{tr("goals.WeeklyPlan.ofOnTrack", { v0: data.onTrack, v1: data.items.length })}</Text>}
     >
       {data ? (
         <View>
@@ -79,6 +82,7 @@ export function WeeklyPlanCard({ day }: { day: string }) {
 }
 
 function PlanRowCompact({ it }: { it: PlanRow }) {
+  useLanguage();
   const { c } = useTheme();
   const status = PLAN_STATUS[it.status];
   return (
@@ -99,6 +103,7 @@ function PlanRowCompact({ it }: { it: PlanRow }) {
 /** The last 8 weeks as small grey squares, oldest first: filled when the target was met, outlined otherwise. */
 /** One target's full row in the sheet; the head links to its screen. */
 function PlanLine({ it, onOpen }: { it: PlanRow; onOpen: () => void }) {
+  useLanguage();
   const { c } = useTheme();
   return (
     <GoalRowShell
@@ -120,12 +125,13 @@ function PlanLine({ it, onOpen }: { it: PlanRow; onOpen: () => void }) {
 // Each row is the target, its bar and one line, so the page reads at a glance (the owner found the week's days, the
 // last 8 weeks and the per-habit Pulse Age effect too noisy here). A tap opens the habit's screen; Pulse Age has its own.
 const WHY_THESE = {
-  title: "Why these",
-  body: "These are the habits Pulse Age scores. The defaults follow the WHO’s 150 moderate or 75 vigorous minutes and two strength days a week, about 8,000 steps a day, and a steady sleep schedule. A tick on a bar marks where an even pace would be by now.",
+  get title() { return tr("goals.WeeklyPlan.whyThese"); },
+  get body() { return tr("goals.WeeklyPlan.theseAreTheHabitsPulseAgeScores"); },
 };
 
 /** The page `/weekly-plan?d=` (halo's PlanPage). */
 export function WeeklyPlanPageBody() {
+  useLanguage();
   const [day] = useSelectedDay();
   const { keys, data } = usePlanWeek(day);
   const go = (href: string) => {
@@ -134,12 +140,12 @@ export function WeeklyPlanPageBody() {
   };
   return (
     <TaskPage
-      title={data ? titleOf(data) : "This week"}
-      description={data ? `${rangeLabel(data.monday, data.sunday)} · ${data.onTrack} of ${data.items.length} on track` : undefined}
-      action={<InfoButton info={WHY_THESE} label="Why these" variant="header" />}
+      title={data ? titleOf(data) : tr("cardInfo.title.this.week")}
+      description={data ? tr("goals.WeeklyPlan.ofOnTrack_480764", { v0: rangeLabel(data.monday, data.sunday), v1: data.onTrack, v2: data.items.length }) : undefined}
+      action={<InfoButton info={WHY_THESE} label={tr("goals.WeeklyPlan.whyThese")} variant="header" />}
       footer={
         <View className="flex-row gap-3">
-          <Button variant="secondary" className="flex-1" onPress={() => go(GOALS_SETTINGS)}>Edit targets</Button>
+          <Button variant="secondary" className="flex-1" onPress={() => go(GOALS_SETTINGS)}>{tr("goals.WeeklyPlan.editTargets")}</Button>
           <Button variant="secondary" className="flex-1" onPress={() => go("/health/healthspan")}>Pulse Age</Button>
         </View>
       }
@@ -152,6 +158,7 @@ export function WeeklyPlanPageBody() {
 }
 
 function PlanList({ data, go }: { data: WeeklyPlanVM; go: (href: string) => void }) {
+  useLanguage();
   return (
     <View>
       {data.planStreak.current > 0 && <Text className={cn(CAPTION, "pb-1")}>{streakText(data.planStreak.current)}</Text>}

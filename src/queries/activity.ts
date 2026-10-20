@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 // Activity `/activity/[id]` (spec §7.4). Ported from Pulse's src/server/queries/activity.ts.
 import type { Metric } from "@/lib/reasons";
 import { addDays } from "@/lib/time";
@@ -55,16 +56,16 @@ export async function getActivity(id: string, ctx: QueryCtx): Promise<ActivityVM
   const travels = kind === "run" || kind === "walk" || kind === "ride";
   const distance = travels
     ? [
-        { ...tile("distance", "Distance", here.distanceKm, "km", same.map((x) => distanceOf(x).distanceKm), "no_data"), format: "decimal2" as const },
-        ...(kind === "ride" ? [] : [{ ...tile("pace", "Pace", here.paceS, "/km", same.map((x) => distanceOf(x).paceS), "no_data"), format: "pace" as const }]),
+        { ...tile("distance", tr("health.dataCheckSummary.distance"), here.distanceKm, "km", same.map((x) => distanceOf(x).distanceKm), "no_data"), format: "decimal2" as const },
+        ...(kind === "ride" ? [] : [{ ...tile("pace", tr("queries.activity.pace"), here.paceS, "/km", same.map((x) => distanceOf(x).paceS), "no_data"), format: "pace" as const }]),
       ]
     : [];
   const stats = [
-    tile("duration", "Duration", durationMin(e), "min", same.map(durationMin), "no_data"),
+    tile("duration", tr("queries.activity.duration"), durationMin(e), "min", same.map(durationMin), "no_data"),
     ...distance,
-    tile("avgHr", "Average heart rate", a?.avgHr, "bpm", same.map((x) => statOf(x)?.avgHr)),
-    tile("maxHr", "Max heart rate", a?.maxHr, "bpm", same.map((x) => statOf(x)?.maxHr)),
-    tile("calories", "Calories", e.calories, "kcal", same.map((x) => x.calories), "no_data"),
+    tile("avgHr", tr("lib.extraMetrics.averageHeartRate"), a?.avgHr, "bpm", same.map((x) => statOf(x)?.avgHr)),
+    tile("maxHr", tr("onboarding.ProfileForm.maxHeartRate"), a?.maxHr, "bpm", same.map((x) => statOf(x)?.maxHr)),
+    tile("calories", tr("health.dataCheckSummary.calories"), e.calories, "kcal", same.map((x) => x.calories), "no_data"),
   ];
 
   // Heart-rate recovery on the Pulse engine: the largest drop within 2 minutes after the workout (null below zone 4).
@@ -72,7 +73,7 @@ export async function getActivity(id: string, ctx: QueryCtx): Promise<ActivityVM
   const hrr: ActivityVM["hrr"] =
     hrr60 == null
       ? none("insufficient_hr_data")
-      : ok(hrr60 >= 20 ? { value: hrr60, tone: "optimal", label: "Good" } : hrr60 >= 12 ? { value: hrr60, tone: "neutral", label: "Typical" } : { value: hrr60, tone: "warning", label: "Low" });
+      : ok(hrr60 >= 20 ? { value: hrr60, tone: "optimal", label: tr("queries.activity.good") } : hrr60 >= 12 ? { value: hrr60, tone: "neutral", label: tr("more.howItWorksContent.typical") } : { value: hrr60, tone: "warning", label: tr("health.StressScreen.low") });
 
   return {
     id,
@@ -143,8 +144,8 @@ export function withTypical(m: Metric<ZoneRow[]>, prior: number[][]): Metric<Zon
 function zoneInsight(seconds: number[]): string | null {
   const min = seconds.map((s) => Math.round(s / 60));
   const hard = min[3] + min[4];
-  if (hard >= 10) return `You spent ${hard} minutes in zones 4 and 5, hard work that builds speed and power.`;
-  if (min[2] >= 10) return `You spent ${min[2]} minutes in zone 3, steady aerobic work that builds your base.`;
-  if (min[0] + min[1] >= 10) return `You spent ${min[0] + min[1]} minutes in zones 1 and 2, easy movement that helps you recover.`;
+  if (hard >= 10) return tr("queries.activity.youSpentMinutesInZones4And", { v0: hard });
+  if (min[2] >= 10) return tr("queries.activity.youSpentMinutesInZone3Steady", { v0: min[2] });
+  if (min[0] + min[1] >= 10) return tr("queries.activity.youSpentMinutesInZones1And", { v0: min[0] + min[1] });
   return null;
 }

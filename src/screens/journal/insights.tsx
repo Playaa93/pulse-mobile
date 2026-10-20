@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 // Journal Insights' own pieces (pulse's (app)/journal/insights/{page,Impacts}.tsx): the metric words, the outcome toggle,
 // the impact list and the "Keep logging to unlock" group. The page is app/journal/insights.tsx.
 import { useCallback, useState } from "react";
@@ -12,13 +14,13 @@ import { DriverList } from "@/ui/metrics/DriverList";
 import { Text } from "@/ui/Text";
 import { push } from "@/ui/navigate";
 
-export const WORD: Record<ImpactMetricKey, string> = { recovery: "Recovery", hrv: "HRV", sleep: "sleep performance" };
-export const TITLE: Record<ImpactMetricKey, string> = { recovery: "Recovery", hrv: "HRV", sleep: "Sleep" };
-export const FOOTER = "Effects are differences in averages, not proof of cause. Change one habit at a time to see what it really does.";
+export const WORD: Record<ImpactMetricKey, string> = { get recovery() { return tr("ui.shells.HomeHeader.recovery"); }, get hrv() { return tr("breathe.BreatheScreen.hrv_49a6fe"); }, get sleep() { return tr("journal.insights.sleepPerformance"); } };
+export const TITLE: Record<ImpactMetricKey, string> = { get recovery() { return tr("ui.shells.HomeHeader.recovery"); }, get hrv() { return tr("breathe.BreatheScreen.hrv_49a6fe"); }, get sleep() { return tr("ui.shells.HomeHeader.sleep"); } };
+export const impactFooter = () => tr("journal.impact.footer");
 const METRICS: { value: ImpactMetricKey; label: string }[] = [
-  { value: "recovery", label: "Recovery" },
-  { value: "hrv", label: "HRV" },
-  { value: "sleep", label: "Sleep" },
+  { value: "recovery", get label() { return tr("ui.shells.HomeHeader.recovery"); } },
+  { value: "hrv", get label() { return tr("breathe.BreatheScreen.hrv_49a6fe"); } },
+  { value: "sleep", get label() { return tr("ui.shells.HomeHeader.sleep"); } },
 ];
 
 export const parseMetric = (raw: string | string[] | undefined): ImpactMetricKey => {
@@ -32,8 +34,9 @@ export const parseMetric = (raw: string | string[] | undefined): ImpactMetricKey
  * the W / M / 6M control) is 2 x 4 px too wide per segment here.
  */
 export function MetricToggle({ metric }: { metric: ImpactMetricKey }) {
+  useLanguage();
   return (
-    <View accessibilityRole="tablist" accessibilityLabel="Outcome" className="flex-row gap-0.5 self-start rounded-lg bg-muted p-0.5">
+    <View accessibilityRole="tablist" accessibilityLabel={tr("journal.insights.outcome")} className="flex-row gap-0.5 self-start rounded-lg bg-muted p-0.5">
       {METRICS.map((o) => {
         const on = o.value === metric;
         return (
@@ -58,6 +61,7 @@ export function MetricToggle({ metric }: { metric: ImpactMetricKey }) {
 
 /** The impact list; a row opens its detail sheet (/journal/impact). */
 export function ImpactList({ vm }: { vm: JournalInsightsVM }) {
+  useLanguage();
   const [selected, setSelected] = useState<string | undefined>();
   // The row stays ringed while its sheet is open; coming back clears it.
   useFocusEffect(useCallback(() => setSelected(undefined), []));
@@ -78,14 +82,14 @@ export function ImpactList({ vm }: { vm: JournalInsightsVM }) {
 
 /** The reference app's "Keep logging to unlock" group [latest-journal-insights-1]: one card row per behaviour. */
 export function Unlock({ needsMore, word }: { needsMore: JournalInsightsVM["needsMore"]; word: string }) {
+  useLanguage();
   const shadow = useCardStyle();
   return (
-    <View accessibilityLabel="Keep logging to unlock" className="gap-3">
+    <View accessibilityLabel={tr("journal.insights.keepLoggingToUnlock")} className="gap-3">
       <View className="gap-1">
         <Text accessibilityRole="header" className="text-xs font-bold uppercase leading-4 tracking-[0.1em]">
-          Keep logging to unlock
-        </Text>
-        <Text className="max-w-[65ch] text-[15px] leading-[22px] text-muted-foreground">Log a behaviour as Yes on at least 5 days and No on at least 5 to see how it changes your next-day {word}.</Text>
+          {tr("journal.insights.keepLoggingToUnlock")}</Text>
+        <Text className="max-w-[65ch] text-[15px] leading-[22px] text-muted-foreground">{tr("journal.unlock.explanation", { outcome: word })}</Text>
       </View>
       <View className="gap-2">
         {needsMore.map((n) => {
@@ -99,11 +103,11 @@ export function Unlock({ needsMore, word }: { needsMore: JournalInsightsVM["need
                 </Text>
                 <Text className="shrink-0 font-numeric text-[13px] font-semibold leading-4 tabular-nums text-foreground-secondary">{have}/10</Text>
               </View>
-              <View accessible accessibilityRole="progressbar" accessibilityLabel={`${n.label}: ${have} of 10 days logged`} accessibilityValue={{ min: 0, max: 10, now: have }} className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <View accessible accessibilityRole="progressbar" accessibilityLabel={tr("journal.insights.of10DaysLogged", { v0: n.label, v1: have })} accessibilityValue={{ min: 0, max: 10, now: have }} className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <View className="h-full bg-optimal" style={{ width: `${(have / 10) * 100}%` }} />
               </View>
               <Text className="text-xs font-medium leading-4 tabular-nums text-muted-foreground">
-                {Math.min(5, n.yes)} of 5 days with, {Math.min(5, n.no)} of 5 without
+                {tr("journal.unlock.progress", { yes: Math.min(5, n.yes), no: Math.min(5, n.no) })}
               </Text>
             </View>
           );

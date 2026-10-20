@@ -105,6 +105,17 @@
           "photosPermission": "Pulse uses a photo you choose as your profile picture, or as a meal photo your own AI provider estimates.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "android": [
+              "en",
+              "fr"
+            ]
+          }
+        }
       ]
     ],
     "experiments": {

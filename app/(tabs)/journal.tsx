@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
@@ -24,6 +26,7 @@ import { push } from "@/ui/navigate";
 
 /** Journal `/journal?d=` (spec §7.11, journey 7). */
 export default function Journal() {
+  useLanguage();
   const { d: raw } = useLocalSearchParams<{ d?: string }>();
   const [, setDay] = useSelectedDay();
   const { data, error, loading, reload } = useScreen(journalQuery(raw), journalKey(raw));
@@ -31,7 +34,7 @@ export default function Journal() {
 
   return (
     <View className="flex-1">
-      <PageShell title="Journal" dateSwitcher={{ mode: "day" }} loading={loading && !data}>
+      <PageShell title={tr("ui.shells.TabBar.journal")} dateSwitcher={{ mode: "day" }} loading={loading && !data}>
         {data ? <Page vm={data.vm} log={data.log} onSelect={setDay} /> : error ? <LoadError retry={reload} /> : <JournalSkeleton />}
       </PageShell>
     </View>
@@ -39,6 +42,7 @@ export default function Journal() {
 }
 
 function Page({ vm, log, onSelect }: { vm: Awaited<ReturnType<typeof getJournal>>; log: Awaited<ReturnType<typeof getDayLog>>; onSelect: (day: string) => void }) {
+  useLanguage();
   const { day: d, today } = vm;
   const date = formatDay(d, DAY.short);
   return (
@@ -50,16 +54,16 @@ function Page({ vm, log, onSelect }: { vm: Awaited<ReturnType<typeof getJournal>
 
       <View className="gap-8">
         {/* Log tiles first: a drink or a weigh-in is a two-tap job; then the check-in, then what the day holds (spec §11 LG1). */}
-        <SectionShell variant="section" title="Log">
+        <SectionShell variant="section" title={tr("app.journal.log")}>
           <LogTiles vm={log} />
         </SectionShell>
 
-        <CollapsibleSection id="check-in" title="Check-in">
+        <CollapsibleSection id="check-in" title={tr("app.journal.checkIn")}>
           <CheckInCard dayLabel={date} day={d} today={today} checkIn={vm.checkIn} />
         </CollapsibleSection>
 
-        <CollapsibleSection id="insights" title="Insights" action={<ActionLink label="See all" href="/journal/insights" />}>
-          <InsightCard body={vm.teaser.text} action={vm.teaser.ready ? { label: "See all insights", href: "/journal/insights" } : undefined} />
+        <CollapsibleSection id="insights" title={tr("app.journal.insights")} action={<ActionLink label={tr("app.journal.seeAll")} href="/journal/insights" />}>
+          <InsightCard body={vm.teaser.text} action={vm.teaser.ready ? { label: tr("app.journal.seeAllInsights"), href: "/journal/insights" } : undefined} />
         </CollapsibleSection>
 
         <SectionShell variant="section" title="This week">

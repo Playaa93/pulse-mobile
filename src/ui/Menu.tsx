@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +30,7 @@ export function useMenu() {
  * The trigger and the modal's own root are both measured in page coordinates, and the panel is placed at the difference.
  */
 export function MenuPanel({ anchor, onClose, align, className, children }: { anchor: Box | null; onClose: () => void; align: "start" | "end" | "stretch"; className?: string; children: ReactNode }) {
+  useLanguage();
   const insets = useSafeAreaInsets();
   const root = useRef<View>(null);
   const [frame, setFrame] = useState<Box | null>(null);
@@ -40,7 +43,7 @@ export function MenuPanel({ anchor, onClose, align, className, children }: { anc
       <Pressable
         ref={root}
         collapsable={false}
-        accessibilityLabel="Close menu"
+        accessibilityLabel={tr("ui.Menu.closeMenu")}
         onPress={onClose}
         onLayout={(e) => {
           const { width, height } = e.nativeEvent.layout;

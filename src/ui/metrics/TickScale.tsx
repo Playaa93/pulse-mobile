@@ -1,3 +1,5 @@
+import { useLanguage } from "@/i18n/react";
+import { tr } from "@/i18n";
 import { useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { DATA_COLORS, recoveryColor } from "@/lib/bands";
@@ -35,6 +37,7 @@ const BAND_TICK = { optimal: "bg-optimal/60", warning: "bg-warning/60" };
 
 /** A tick ruler or meter (spec §5.15, D5). */
 export function TickScale(p: TickScaleProps) {
+  useLanguage();
   return (
     <MetricState metric={p.metric} skeleton={<TickScaleSkeleton variant={p.variant} />} empty={<Scale p={p} value={null} />} renderReason={() => <Scale p={p} value={null} />}>
       {(v, meta) => <Scale p={p} value={v} provisional={meta.provisional} />}
@@ -43,6 +46,7 @@ export function TickScale(p: TickScaleProps) {
 }
 
 function Scale({ p, value, provisional }: { p: TickScaleProps; value: number | null; provisional?: boolean }) {
+  useLanguage();
   const [rowW, setRowW] = useState(0);
   const span = p.max - p.min;
   const at = (i: number) => p.min + (i / (COUNT - 1)) * span;
@@ -50,7 +54,7 @@ function Scale({ p, value, provisional }: { p: TickScaleProps; value: number | n
   const near = frac === null ? -9 : Math.round(frac * (COUNT - 1));
   const text = formatValue(p.format, value);
   const fill = value === null ? null : DATA_COLORS[recoveryColor(value)].bg;
-  const valueText = value === null ? `${p.label}: no data` : `${p.label} ${spoken(text, p.unit)}${p.describe ? `: ${p.describe}` : ""}`;
+  const valueText = value === null ? tr("ui.metrics.TickScale.noData", { v0: p.label }) : `${p.label} ${spoken(text, p.unit)}${p.describe ? `: ${p.describe}` : ""}`;
 
   const tickClass = (i: number) => {
     if (p.variant === "meter") return cn("h-5 w-0.5 rounded-full", fill && i <= near ? fill : "bg-dial-track");
@@ -115,6 +119,7 @@ function Scale({ p, value, provisional }: { p: TickScaleProps; value: number | n
 
 /** The scale's box: the meter's 32 px row, or the marker's 84 px (value row, ticks, end labels). */
 export function TickScaleSkeleton({ variant = "meter" }: { variant?: TickScaleProps["variant"] }) {
+  useLanguage();
   return <Skeleton className={variant === "marker" ? "h-[84px] w-full rounded-lg" : "h-8 w-full"} />;
 }
 TickScale.Skeleton = TickScaleSkeleton;
